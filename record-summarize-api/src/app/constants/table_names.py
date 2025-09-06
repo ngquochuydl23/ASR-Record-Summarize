@@ -1,0 +1,10 @@
+USER_TABLE_NAME = "users"
+RECORD_TABLE_NAME = "records"
+RECORD_PIPELINE_ITEM_TABLE_NAME="record_pipeline_items"
+PARTICIPANT_TABLE_NAME = "participants"
+ATTACHMENT_TABLE_NAME = "attachments"
+MESSAGE_TABLE_NAME = 'messages'
+RAG_DOCUMENT_TABLE_NAME = 'rag_documents'
+RAG_CHUNKS_TABLE_NAME = 'rag_chunks'
+RECORD_MEETING_TABLE_NAME = 'record_meetings'
+CONVERSATION_TABLE_NAME = 'conversations'

@@ -1,0 +1,53 @@
+.chatView {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 15px;
+  border: 1px solid #d3d3d3;
+  background-color: white;
+
+  &Header {
+    display: flex;
+    height: 60px;
+    width: 100%;
+    padding: 0px 10px;
+    z-index: 1;
+    gap: 5px;
+    background-color: white;
+    align-items: center;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,
+      rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+    &Title {
+      width: 100%;
+      margin: 0;
+      font-weight: 600;
+    }
+  }
+
+  &Body {
+    display: flex;
+    flex-direction: column-reverse;
+    padding-bottom: 15px;
+    height: 100%;
+    gap: 10px;
+  }
+}
+
+.menuItem {
+  padding: 5px 15px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  &:focus {
+    background-color: transparent;
+  }
+  //font-family: ProductSans-Medium;
+  &:hover {
+    background-color: #f0f0f0;
+    color: #000;
+  }
+
+  transition: background-color 0.2s ease;
+}

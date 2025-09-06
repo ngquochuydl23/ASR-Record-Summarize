@@ -1,0 +1,14 @@
+[Unit]
+Description=FastAPI application with Uvicorn
+After=network.target
+
+[Service]
+User=social-v2
+WorkingDirectory=/home/social-v2/CV_Project
+Environment=PYTHONPATH=/home/social-v2/CV_Project
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/social-v2/CV_Project/.venv/bin/python3.11 src/app/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

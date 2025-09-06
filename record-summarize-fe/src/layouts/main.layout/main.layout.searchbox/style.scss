@@ -1,0 +1,91 @@
+.search-container {
+  display: block;
+  height: 40px;
+
+  .search-box {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    .search-icon {
+      position: absolute;
+      z-index: 1;
+      top: 8px;
+      left: 12px;
+      color: #696969;
+    }
+
+    .search-input {
+      position: relative;
+      min-width: 400px;
+      border: 1px solid #d3d3d3;
+      border-radius: 30px;
+      border-radius: 1px solid #d3d3d3;
+      font-size: 14px;
+
+      &:focus {
+        //border-color: transparent; // Remove gray border on focus
+        outline: none; // Remove default outline
+        border: 1px solid #6441a5;
+        box-shadow: 0 0 0 1px rgba(100, 65, 165, 0.5); // Add focus ring
+        // box-shadow: none;
+      }
+
+      &::placeholder {
+        font-size: 14px;
+      }
+    }
+
+    .suggestions {
+      display: none;
+    }
+
+    &.any-suggestions {
+      background-color: white;
+      box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+      border-radius: 10px;
+      padding-bottom: 10px;
+
+      .search-input {
+        &:focus {
+          outline: none;
+          border: none;
+          box-shadow: none;
+        }
+      }
+
+      .suggestions {
+        margin-top: 5px;
+        display: flex;
+        flex-direction: column;
+        background-color: whitesmoke;
+
+        .search-item {
+          display: flex;
+          font-size: 14px;
+          padding: 5px 10px;
+          gap: 5px;
+        }
+      }
+    }
+  }
+}
+
+.suggestion-item {
+  display: flex;
+  font-size: 14px;
+  padding: 5px 10px;
+  gap: 5px;
+  background-color: white;
+
+  &:hover {
+    background-color: #fcfcfc;
+  }
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: #d3d3d3;
+  margin: 2px 0px;
+}

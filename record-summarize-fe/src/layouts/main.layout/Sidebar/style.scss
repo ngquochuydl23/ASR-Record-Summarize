@@ -1,0 +1,33 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  // height: 100%;
+  align-items: center;
+  justify-content: space-between;
+  width: 300px;
+  border-right: 1px solid #E5E7EB;
+
+  .store-info {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    width: 100%;
+
+    .avatar {
+      width: 45px;
+      height: 45px;
+    }
+  }
+
+  .sidebar-items {
+    width: 100%;
+    padding: 0px 10px;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-top: 25px;
+    gap: 10px;
+
+  }
+}

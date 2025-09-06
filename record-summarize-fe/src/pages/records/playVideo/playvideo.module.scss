@@ -1,0 +1,87 @@
+.playVideoPage {
+  display: grid;
+  height: calc(100vh - 60px);
+  grid-template-columns: 1fr 500px;
+
+  .mainSection {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 10px;
+    gap: 10px;
+    overflow-y: auto;
+    .videoContainer {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 20px;
+      background-color: black;
+
+      video {
+        border-radius: 20px;
+        height: 100%;
+        width: 100%;
+      }
+    }
+
+    .summaryContainer {
+      padding: 20px;
+      border-radius: 20px;
+      border: 1px solid #d3d3d3;
+
+      .markdown {
+        margin-top: 20px;
+        font-size: 14px;
+        h2 {
+          font-weight: 600;
+          font-size: 16px;
+          line-height: 32px;
+        }
+
+        h3 {
+          font-weight: 600;
+          font-size: 15px;
+          line-height: 32px;
+        }
+
+        pre {
+          font-family: var(
+            --default-mono-font-family,
+            ui-monospace,
+            SFMono-Regular,
+            Menlo,
+            Monaco,
+            Consolas,
+            "Liberation Mono",
+            "Courier New",
+            monospace
+          );
+        }
+
+        strong {
+          font-size: 13px;
+        }
+
+        code {
+          font-family: var(
+            --default-mono-font-family,
+            ui-monospace,
+            SFMono-Regular,
+            Menlo,
+            Monaco,
+            Consolas,
+            "Liberation Mono",
+            "Courier New",
+            monospace
+          );
+        }
+      }
+    }
+  }
+
+  .chatSection {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    width: 100%;
+  }
+}

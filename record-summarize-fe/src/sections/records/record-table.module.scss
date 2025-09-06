@@ -1,0 +1,33 @@
+.wrapper {
+  // border: 3px solid blue;
+  height: 20px;
+}
+
+.container {
+  background-color: #d3d3d3;
+  height: 20px;
+}
+
+.barCompleted {
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+  background-color: #10b981;
+  height: 20px;
+}
+
+.label {
+  color: white;
+  padding-right: 5px;
+  font-size: 12px;
+  height: 20px;
+}
+
+
+.loadingContainer {
+  height: 46px;
+  width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

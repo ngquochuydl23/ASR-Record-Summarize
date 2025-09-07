@@ -1,8 +1,10 @@
+from typing import Optional
+
 from sqlalchemy import String, DateTime, ForeignKey, Text, Enum, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.app.core.db.database import Base, BaseMixin
 from .record_pipeline_items import PipelineItemType
-from ..constants.table_names import RECORD_TABLE_NAME, USER_TABLE_NAME
+from ..constants.table_names import RECORD_TABLE_NAME, USER_TABLE_NAME, SUMMARY_VERSION
 from dataclasses import dataclass
 import uuid
 import datetime
@@ -93,5 +95,29 @@ class RecordModel(Base, BaseMixin):
         back_populates="record",
         cascade="all, delete-orphan",
         default_factory=lambda: [],
-        lazy="select"
+        lazy=False
+    )
+
+    current_version_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey(f"{SUMMARY_VERSION}.id", ondelete="SET NULL"),
+        default=None,
+        nullable=True
+    )
+
+    current_version: Mapped[Optional[object]] = relationship(
+        "SummaryVersionModel",
+        foreign_keys=[current_version_id],
+        post_update=True,
+        uselist=False,
+        default=None,
+        lazy="select",
+    )
+
+    summary_versions: Mapped[list[object]] = relationship(
+        "SummaryVersionModel",
+        back_populates="record",
+        cascade="all, delete-orphan",
+        lazy="select",
+        foreign_keys="SummaryVersionModel.record_id",
+        default_factory=lambda: [],
     )

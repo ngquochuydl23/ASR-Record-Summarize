@@ -53,5 +53,5 @@ RECORD_SUMMARIZE_STRUCTURES = {
         - Trình bày mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
         - Luôn giữ format Markdown.
         Format text để xuống dòng
-    """
+    """,
 }

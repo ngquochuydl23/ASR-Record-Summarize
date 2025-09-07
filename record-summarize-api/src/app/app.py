@@ -1,7 +1,5 @@
-from redis.asyncio import Redis
 import uvicorn
 import json
-import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
@@ -12,6 +10,7 @@ from src.app.core.config import settings
 from src.app.utils.gpu_utils import check_gpu
 from src.app.api import router
 from src.app.core.logger import logging
+
 
 app = FastAPI(title="ASR Meeting Api")
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
@@ -38,29 +37,6 @@ async def ping():
 
 @app.websocket("/ws/{record_id}")
 async def websocket_task_endpoint(websocket: WebSocket, record_id: str):
-    # await websocket.accept()
-    # redis = await Redis(
-    #     host=settings.REDIS_CACHE_HOST,
-    #     port=settings.REDIS_CACHE_PORT,
-    #     password=settings.REDIS_CACHE_PASSWORD,
-    #     db=0)
-    # #channel_name = f"record-{record_id}"
-    # channel_name = "task_updates"
-    # pubsub = redis.pubsub()
-    #
-    # await pubsub.subscribe(channel_name)
-    # try:
-    #     async for message in pubsub.listen():
-    #         if message["type"] == "message":
-    #             data = json.loads(message["data"])
-    #             print(data)
-    #             await websocket.send_json(data)
-    # except asyncio.CancelledError:
-    #     pass
-    # finally:
-    #     await pubsub.unsubscribe(channel_name)
-    #     await pubsub.close()
-    #     await redis.close()
     await manager.connect(websocket)
     try:
         while True:

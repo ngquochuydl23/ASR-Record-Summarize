@@ -34,5 +34,4 @@ class UserModel(Base, BaseMixin):
         default=None)
 
     records = relationship("RecordModel", back_populates="creator", default_factory=lambda: [],)
-    # = relationship("ConversationModel", back_populates="owner", default_factory=lambda: [],)
 

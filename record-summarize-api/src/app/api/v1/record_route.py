@@ -1,29 +1,29 @@
 import uuid
-from datetime import datetime
 import asyncio
+import re
+import json
+from datetime import datetime
 from typing import Annotated, cast, List, Callable, Awaitable
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks
-
-from .llm_route import llm_service
-from ...connection_manager import manager
-from ...constants.record_constants import RECORD_SUMMARIZE_STRUCTURES
-from ...core.db.database import async_get_db
-from ...core.exceptions.app_exception import AppException
-from ...dtos.llm import RequestRAGSearch, SummarizeRecord
-from ...dtos.record import RecordDto, RecordCreateDto
-from ...dtos.user import UserDto
-from fastapi.encoders import jsonable_encoder
-from ...models import RecordModel, UserModel, AttachmentModel, RecordPipelineItemModel, RagDocumentModel
-from ...models.record_pipeline_items import PipelineItemType, PipelineItemStatus
-from ...models.records import PermissionLevel
-from ...services.ffmpeg_service import FFMpegService
-from ...services.rag_index_service import RagIndexService
-from ...services.s3_service import S3Service
-from ..dependencies import get_current_user
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import desc
 from sqlalchemy.orm import selectinload, noload
+from .llm_route import llm_service
+from ...connection_manager import manager
+from ...constants.record_constants import RECORD_SUMMARIZE_STRUCTURES
+from ...core.db.database import async_get_db, local_session
+from ...core.exceptions.app_exception import AppException
+from ...dtos.llm import RequestRAGSearch
+from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecordDto, ResponseGenerateFormRecordDto
+from ...dtos.user import UserDto
+from ...models import RecordModel, UserModel, AttachmentModel, RecordPipelineItemModel, SummaryVersionModel
+from ...models.record_pipeline_items import PipelineItemType, PipelineItemStatus
+from ...models.records import PermissionLevel, RecordContentType
+from ...services.ffmpeg_service import FFMpegService
+from ...services.rag_index_service import RagIndexService
+from ...services.s3_service import S3Service
+from ..dependencies import get_current_user
 from ...core.logger import logging
 from ...utils.extract_text_from_file import extract_text
 
@@ -85,11 +85,12 @@ async def create_records(
                 status=PipelineItemStatus.PENDING,
                 extra={}
             )
-        ]
+        ],
+        summary_versions=[]
     )
     db.add(record)
     await db.commit()
-    background_tasks.add_task(_record_creating_task, record, db, current_user)
+    background_tasks.add_task(_record_creating_task, record.id)
     return record.to_dict()
 
 
@@ -124,7 +125,9 @@ async def get_records(
         .options(
             selectinload(RecordModel.creator),
             noload(RecordModel.attachments),
-            selectinload(RecordModel.pipeline_items),
+            noload(RecordModel.rag_documents),
+            noload(RecordModel.current_version),
+            selectinload(RecordModel.pipeline_items)
         )
         .where(RecordModel.is_deleted == False)
         .order_by(desc(RecordModel.created_at))
@@ -290,40 +293,27 @@ async def search_similar(
     return chunks
 
 
-@router.post("/records/{record_id}/summarize")
-async def summarize_record(
-        record_id: str,
-        body: SummarizeRecord,
-        # current_user: Annotated[UserDto, Depends(get_current_user)],
-        db: Annotated[AsyncSession, Depends(async_get_db)],
-):
-    result = await db.execute(
-        select(RecordModel)
-        .options(
-            selectinload(RecordModel.attachments),
-            selectinload(RecordModel.creator),
-            selectinload(RecordModel.pipeline_items)
-        )
-        .where(RecordModel.id == record_id
-               # and UserModel.id == current_user.id
-               and not RecordModel.is_deleted)
-    )
-    record = result.scalar_one_or_none()
-    if not record:
-        raise AppException("Record is null")
-
-    context = "\n".join([extract_text(item.url) for item in record.attachments])
+@router.post("/records/helper/generate-form")
+async def generate_form_helper(body: RequestGenerateFormRecordDto):
+    record_content_types = ", ".join([e.value for e in RecordContentType])
     prompt = f"""
-    Bạn là một trợ lý thông minh. Tôi sẽ cung cấp cho bạn các đoạn thông tin (chunks) được trích xuất từ:
-    1. Video bài giảng (transcript, phụ đề)
-    2. Tài liệu PDF liên quan (slide, handout, sách tham khảo)
+        Bạn là một trợ lý AI. Nhiệm vụ của bạn là **tạo metadata cho một Record** ở dạng JSON.
+        Dựa trên nội dung đó, hãy sinh ra JSON với cấu trúc sau:
     
-    Nội dung các chunks:
-    {context}
-    
-    {RECORD_SUMMARIZE_STRUCTURES[record.record_content_type]}
-    """
-    return llm_service.generate_text_gemini(prompt)
+        {{
+          "title": "tiêu đề ngắn gọn, xúc tích, tối đa 100 ký tự",
+          "description": "mô tả ngắn gọn, dễ hiểu, 2–3 câu",
+          "record_content_type": "một trong các loại: {record_content_types}"
+        }}
+        Chỉ trả về JSON hợp lệ, không thêm giải thích.
+
+        Nội dung dữ liệu:
+            {body.prompt}
+        """
+    response = llm_service.generate_text_gemini(prompt)
+    match = re.search(r"\{.*\}", response, re.DOTALL)
+    json_str = match.group(0) if match else response.strip()
+    return json.loads(json_str)
 
 
 @router.websocket("/records/ws/{record_id}")
@@ -337,22 +327,47 @@ async def websocket_task_endpoint(websocket: WebSocket, record_id: str):
         manager.disconnect(record_id, websocket)
 
 
-async def _record_creating_task(
-        record: RecordModel,
-        db: Annotated[AsyncSession, Depends(async_get_db)],
-        current_user: Annotated[UserDto, Depends(get_current_user)]):
-    pipeline_items = record.pipeline_items
-    await _execute_step(record, pipeline_items[1], generate_ffmpeg, db)
-    await _execute_step(record, pipeline_items[2], store_vectordb, db)
-    await _execute_step(record, pipeline_items[3], llm_summarize, db)
+async def _record_creating_task(record_id: uuid.UUID):
+    async with local_session() as db:
+        try:
+            result = await db.execute(
+                select(RecordModel)
+                .options(
+                    selectinload(RecordModel.attachments),
+                    selectinload(RecordModel.creator),
+                    selectinload(RecordModel.pipeline_items),
+                    selectinload(RecordModel.rag_documents),
+                    selectinload(RecordModel.summary_versions),
+                )
+                .where(RecordModel.id == record_id, RecordModel.is_deleted.is_(False))
+            )
+            record = result.scalar_one_or_none()
+            if not record:
+                return
 
-    # send email notification
+            await _execute_step(record, record.pipeline_items[1], generate_ffmpeg, db)
+            await _execute_step(record, record.pipeline_items[2], store_vectordb, db)
+
+            summary_result = await _execute_step(record, record.pipeline_items[3], llm_summarize, db)
+            record.summary_versions.append(SummaryVersionModel(
+                id=uuid.uuid4(),
+                title=f"v{len(record.summary_versions) + 1}",
+                summary_content=summary_result["summary"],
+                published=False
+            ))
+            await db.flush()
+            await db.commit()
+
+        except Exception as e:
+            logging.error("Error", str(e))
+            await db.rollback()
+            raise
 
 
 async def _execute_step(
         record: RecordModel,
         pipeline_item: RecordPipelineItemModel,
-        func: Callable[[RecordModel, RecordPipelineItemModel, AsyncSession], Awaitable[dict[str, str] | None]],
+        func: Callable[[RecordModel, AsyncSession], Awaitable[dict[str, str] | None]],
         db: Annotated[AsyncSession, Depends(async_get_db)]
 ):
     logging.info(f"Record-{str(record.id)} - {pipeline_item.type} RUNNING")
@@ -367,7 +382,7 @@ async def _execute_step(
     await manager.broadcast(str(record.id), pipeline_item.to_dict())
 
     try:
-        extra_data = await func(record, pipeline_item, db)
+        extra_data = await func(record, db)
         pipeline_item.status = PipelineItemStatus.SUCCESS
         pipeline_item.finished_at = datetime.utcnow()
         pipeline_item.extra = extra_data if extra_data is not None else {}
@@ -378,6 +393,8 @@ async def _execute_step(
         await db.refresh(pipeline_item)
         await manager.broadcast(str(record.id), pipeline_item.to_dict())
         logging.info(f"Record-{str(record.id)} - {pipeline_item.type} SUCCESS")
+
+        return extra_data
 
     except (RuntimeError, AppException, Exception) as e:
         logging.error(f"Record-{str(record.id)} - {pipeline_item.type} ERROR")
@@ -392,45 +409,30 @@ async def _execute_step(
         await manager.broadcast(str(record.id), pipeline_item.to_dict())
 
 
-async def generate_ffmpeg(
-        record: RecordModel,
-        pipeline_item: RecordPipelineItemModel,
-        db: Annotated[AsyncSession, Depends(async_get_db)]
-):
+async def generate_ffmpeg(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
     # generate vtt
     # generate transcribe
     return await FFMpegService.extract_audio(record.url, f'wavs/record-{str(record.id)}.wav')
 
 
-async def store_vectordb(
-        record: RecordModel,
-        pipeline_item: RecordPipelineItemModel,
-        db: Annotated[AsyncSession, Depends(async_get_db)]
-):
+async def store_vectordb(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
     await rag_index_service.execute_rag_index(db, record)
     return None
 
 
-async def llm_summarize(
-        record: RecordModel,
-        pipeline_item: RecordPipelineItemModel,
-        db: Annotated[AsyncSession, Depends(async_get_db)]
-):
+async def llm_summarize(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
     context = "\n".join([extract_text(item.url) for item in record.attachments])
     prompt = f"""
        Bạn là một trợ lý thông minh. Tôi sẽ cung cấp cho bạn các đoạn thông tin (chunks) được trích xuất từ:
        1. Video bài giảng (transcript, phụ đề)
        2. Tài liệu PDF liên quan (slide, handout, sách tham khảo)
 
-       Nội dung các chunks:
+       Nội dung dữ liệu: 
        {context}
-
+       
        {RECORD_SUMMARIZE_STRUCTURES[record.record_content_type]}
        """
     response_llm = await asyncio.to_thread(llm_service.generate_text_gemini, prompt)
-
-
-    #store to version-summarization
     return {
         "system_prompt": prompt,
         "summary": response_llm

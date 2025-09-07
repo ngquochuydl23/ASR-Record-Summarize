@@ -4,7 +4,6 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from src.app.dtos.attachment import AttachmentCreateDto, AttachmentDto
-from src.app.dtos.user import UserDto
 from src.app.models.records import PermissionLevel
 
 
@@ -48,8 +47,20 @@ class RecordDto(BaseModel):
     published: Optional[bool]
     current_step: Optional[int]
     creator: Optional[object]
+    current_version_id: Optional[uuid.UUID]
+    current_version: Optional[object]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
+
+
+class RequestGenerateFormRecordDto(BaseModel):
+    prompt: str
+
+
+class ResponseGenerateFormRecordDto(BaseModel):
+    title: str
+    description: Optional[str]
+    record_content_type: Optional[str]
 
 
 class RecordDelete(BaseModel):

@@ -12,6 +12,8 @@ record-summarize-api/.venv
 record-summarize-api/src/app/logs
 record-summarize-api/.env.*
 record-summarize-api/.env
+record-summarize-api/models
+record-summarize-api/vtts
 
 .redis
 huggingface-cache

@@ -1,4 +1,5 @@
 import os
+import re
 from ..core.logger import logging
 from typing import Any
 import asyncio
@@ -31,3 +32,20 @@ class FFMpegService:
             "sampling_rate": 16000,
             "output": output_file,
         }
+
+    @staticmethod
+    async def get_duration_video(input_file: str)-> float:
+        process = await asyncio.create_subprocess_exec(
+            "ffmpeg",
+            "-i", input_file,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await process.communicate()
+        output = stderr.decode("utf-8")
+        match = re.search(r"Duration: (\d+):(\d+):(\d+\.\d+)", output)
+        if not match:
+            raise RuntimeError("Cannot parse duration from ffmpeg output")
+        hours, minutes, seconds = map(float, match.groups())
+        return hours * 3600 + minutes * 60 + seconds
+

@@ -26,8 +26,7 @@ class RecordCreateDto(BaseModel):
 class RecordUpdateDto(BaseModel):
     title: Optional[str]
     content: Optional[str]
-    start_time: Optional[datetime]
-    end_time: Optional[datetime]
+    duration: Optional[float]
     permission: Optional[PermissionLevel]
 
 
@@ -41,6 +40,8 @@ class RecordDto(BaseModel):
     description: Optional[str]
     record_content_type: Optional[str]
     url: str
+    subtitle_url: Optional[str]
+    lang: Optional[str]
     emails: List[str]
     attachments: List[AttachmentDto]
     pipeline_items: List[object]
@@ -49,6 +50,7 @@ class RecordDto(BaseModel):
     creator: Optional[object]
     current_version_id: Optional[uuid.UUID]
     current_version: Optional[object]
+    duration: Optional[float]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 

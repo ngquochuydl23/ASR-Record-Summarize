@@ -1,13 +1,12 @@
 from typing import Optional
 
-from sqlalchemy import String, DateTime, ForeignKey, Text, Enum, Boolean
+from sqlalchemy import String, Float, ForeignKey, Text, Enum, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.app.core.db.database import Base, BaseMixin
 from .record_pipeline_items import PipelineItemType
 from ..constants.table_names import RECORD_TABLE_NAME, USER_TABLE_NAME, SUMMARY_VERSION
 from dataclasses import dataclass
 import uuid
-import datetime
 import enum
 from sqlalchemy.dialects.postgresql import ARRAY
 
@@ -16,6 +15,11 @@ class PermissionLevel(str, enum.Enum):
     PUBLIC = "public"
     PRIVATE = "private"
     INVITE_ONLY = "invite_only"
+
+
+class RecordLang(str, enum.Enum):
+    EN = "en"
+    VIE = "vie"
 
 
 class RecordContentType(str, enum.Enum):
@@ -35,8 +39,7 @@ class RecordModel(Base, BaseMixin):
 
     title: Mapped[str] = mapped_column(String, nullable=False, default=None)
     description: Mapped[str] = mapped_column(Text, nullable=True, default=None)
-    start_time: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True, default=None)
-    end_time: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True, default=None)
+    duration: Mapped[float] = mapped_column(Float, nullable=True, default=0)
 
     emails: Mapped[list[str]] = mapped_column(
         ARRAY(String),
@@ -67,6 +70,7 @@ class RecordModel(Base, BaseMixin):
         back_populates="record",
         cascade="all, delete-orphan",
         default_factory=lambda: [],
+        order_by="RecordPipelineItemModel.type.asc()",
         lazy="select"
     )
 
@@ -80,6 +84,12 @@ class RecordModel(Base, BaseMixin):
         Enum(RecordContentType),
         nullable=True,
         default=None
+    )
+    subtitle_url: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
+    lang: Mapped[RecordLang] = mapped_column(
+        Enum(RecordLang),
+        nullable=True,
+        default=RecordLang.VIE
     )
 
     # conversations: Mapped[list[object]] = relationship(

@@ -15,7 +15,7 @@ from ...constants.record_constants import RECORD_SUMMARIZE_STRUCTURES
 from ...core.db.database import async_get_db, local_session
 from ...core.exceptions.app_exception import AppException
 from ...dtos.llm import RequestRAGSearch
-from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecordDto, ResponseGenerateFormRecordDto
+from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecordDto
 from ...dtos.user import UserDto
 from ...models import RecordModel, UserModel, AttachmentModel, RecordPipelineItemModel, SummaryVersionModel
 from ...models.record_pipeline_items import PipelineItemType, PipelineItemStatus
@@ -39,11 +39,13 @@ async def create_records(
         db: Annotated[AsyncSession, Depends(async_get_db)],
         background_tasks: BackgroundTasks
 ) -> dict:
+    duration = await FFMpegService.get_duration_video(body.url)
     record = RecordModel(
         id=uuid.uuid4(),
         title=body.title,
         description=body.description,
         url=body.url,
+        duration=duration,
         permission=PermissionLevel.PRIVATE,
         creator_id=current_user["id"],
         emails=body.emails,
@@ -52,6 +54,7 @@ async def create_records(
             AttachmentModel(
                 id=uuid.uuid4(),
                 url=attachment.url,
+                size=attachment.size,
                 filename=attachment.filename,
                 mime=attachment.mime,
                 owner_id=current_user["id"]
@@ -105,7 +108,9 @@ async def get_record_by_id(
         .options(
             selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
-            selectinload(RecordModel.pipeline_items)
+            selectinload(RecordModel.pipeline_items),
+            noload(RecordModel.rag_documents),
+            noload(RecordModel.current_version),
         )
         .where(RecordModel.id == record_id
                and UserModel.id == current_user.id
@@ -155,9 +160,11 @@ async def delete_user(
     result = await db.execute(
         select(RecordModel)
         .options(
-            selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
-            selectinload(RecordModel.pipeline_items)
+            selectinload(RecordModel.pipeline_items),
+            noload(RecordModel.attachments),
+            noload(RecordModel.rag_documents),
+            noload(RecordModel.current_version),
         )
         .where(RecordModel.id == record_id
                and UserModel.id == current_user.id
@@ -183,7 +190,9 @@ async def publish_record(
         .options(
             selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
-            selectinload(RecordModel.pipeline_items)
+            selectinload(RecordModel.pipeline_items),
+            noload(RecordModel.rag_documents),
+            noload(RecordModel.current_version)
         )
         .where(RecordModel.id == record_id
                and UserModel.id == current_user.id
@@ -355,7 +364,7 @@ async def _record_creating_task(record_id: uuid.UUID):
                 summary_content=summary_result["summary"],
                 published=False
             ))
-            await db.flush()
+            db.add(record)
             await db.commit()
 
         except Exception as e:

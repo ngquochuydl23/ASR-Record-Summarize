@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import {
   Avatar,
   Button,
@@ -21,10 +20,10 @@ import {
 import TuneIcon from '@mui/icons-material/Tune';
 import { useState } from 'react';
 import { Search } from '@mui/icons-material';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { colors } from '@/theme/theme.global';
 import TableLoading from '@/components/TableLoading';
-import { PipelineItemStatus, PipelineItemStep, RecordContentType } from '@/constants/app.constants'
+import { RecordContentType } from '@/constants/app.constants'
 import ProgressBar from '@ramonak/react-progress-bar';
 import styles from './record-table.module.scss';
 import { readUrl } from '@/utils/readUrl';
@@ -36,9 +35,11 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import { deteleRecord, publishRecord } from '@/repositories/record.repository';
 import _ from 'lodash';
+import { useSnackbar } from 'notistack';
 
 
 const ActionTableCell = ({ item, onRefresh, publishable }) => {
+  const { enqueueSnackbar } = useSnackbar();
   const [publishing, setPublishing] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -75,9 +76,25 @@ const ActionTableCell = ({ item, onRefresh, publishable }) => {
     e.preventDefault();
     deteleRecord(item.id)
       .then(() => {
+        enqueueSnackbar('Xóa tóm tắt thành công', {
+          variant: 'success',
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'right'
+          }
+        });
         onRefresh();
       })
-      .catch((err) => { console.log(err) });
+      .catch((err) => {
+        console.log(err);
+        enqueueSnackbar('Xóa tóm tắt thất bại', {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'right'
+          }
+        });
+      });
   }
 
   return (

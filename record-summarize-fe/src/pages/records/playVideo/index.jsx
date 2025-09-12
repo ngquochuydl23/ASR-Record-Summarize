@@ -17,8 +17,18 @@ import ReactMarkdown from "react-markdown";
 
 const PlayVideoPage = () => {
   const { recordId } = useParams();
+
+  async function getBlobUrl(fileKey) {
+    const res = await fetch(readS3Object(fileKey));
+    const blob = await res.blob(); // convert response to Blob
+    const url = URL.createObjectURL(blob); // create temporary URL
+    return url;
+  }
+
   const { loading, value: record } = useAsync(async () => {
     const record = await getRecordById(recordId);
+    const vtt = await getBlobUrl(record.subtitle_url);
+    record.subtitle_url = vtt;
     return record;
   }, [recordId]);
 
@@ -34,17 +44,13 @@ const PlayVideoPage = () => {
     <div className={styles.playVideoPage}>
       <div className={styles.mainSection}>
         <div className={styles.videoContainer}>
-          <ReactPlayer
-            width={"100%"}
-            height={"100%"}
-            controls
-            src={readS3Object(record?.url)} />
+          <ReactPlayer width={"100%"} height={"100%"} controls src={readS3Object(record?.url)}>
+            <track kind="subtitles" src={record?.subtitle_url} srclang="vi" default></track>
+          </ReactPlayer>
         </div>
         <div className='flex flex-col mt-2'>
           <Typography variant='h5'>{record?.title}</Typography>
-          <Typography fontSize="14px" mt="15px">
-            {record?.description}
-          </Typography>
+          <Typography fontSize="14px" mt="15px">{record?.description}</Typography>
           <div className='flex my-4 items-center gap-3'>
             <Avatar src={readUrl(record?.creator?.avatar, false)} />
             <div className='flex flex-col'>
@@ -57,9 +63,7 @@ const PlayVideoPage = () => {
           <div className='flex items-center gap-2'>
             <Typography sx={{ fontSize: '18px', fontWeight: 600 }}>Tóm tắt nội dung video</Typography>
             <Tooltip title="Nội dung này được AI tạo tự động - chỉ mang tính tham khảo.">
-              <div>
-                <IcInfo />
-              </div>
+              <div><IcInfo /></div>
             </Tooltip>
           </div>
           <div></div>

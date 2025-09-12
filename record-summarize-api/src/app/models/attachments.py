@@ -1,4 +1,4 @@
-from sqlalchemy import String, ForeignKey, Boolean
+from sqlalchemy import String, ForeignKey, Boolean, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from dataclasses import dataclass
 
@@ -15,6 +15,8 @@ class AttachmentModel(Base, BaseMixin):
     filename: Mapped[str] = mapped_column(String, nullable=False, default=None)
     url: Mapped[str] = mapped_column(String, nullable=False, default=None)
     mime: Mapped[str] = mapped_column(String, nullable=False, default=None)
+    size: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
+
     owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey(f"{USER_TABLE_NAME}.id"), default=None)
     record_id: Mapped[uuid.UUID] = mapped_column(ForeignKey(f"{RECORD_TABLE_NAME}.id"), default=None)
 

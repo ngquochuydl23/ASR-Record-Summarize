@@ -22,7 +22,8 @@ class S3Service:
 
     async def upload_file(self, file: UploadFile, local_cache=True) -> UploadFileResponseDto:
         content = await file.read()
-        content_type = file.content_type
+        content_type = file.content_type if file.content_type != "text/vtt" else "text/vtt; charset=utf-8"
+        size = file.size
         extension = file.filename.split('.')[1]
         name = file.filename
         key = f"uploads/{uuid.uuid4()}.{extension}"
@@ -42,7 +43,7 @@ class S3Service:
             )
         except (BotoCoreError, NoCredentialsError) as e:
             raise BadRequestException(f"S3 upload failed: {str(e)}")
-        return UploadFileResponseDto(url=key, file_name=f"{name}", content_type=content_type)
+        return UploadFileResponseDto(url=key, filename=f"{name}", mime=content_type, size=size)
 
     async def upload_multi_files(self, files: List[UploadFile], local_cache: bool = True) -> List[Union[UploadFileResponseDto, Exception]]:
         if not files:

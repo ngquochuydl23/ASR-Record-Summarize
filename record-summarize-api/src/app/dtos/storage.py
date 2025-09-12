@@ -3,15 +3,17 @@ class UploadFileResponseDto:
     file_name:str
     content_type: str
 
-    def __init__(self, url: str, file_name: str, content_type: str = str) -> None:
+    def __init__(self, url: str, filename: str, mime: str, size: int) -> None:
         self.url = url
-        self.file_name = file_name
-        self.content_type = content_type
+        self.filename = filename
+        self.mime = mime
+        self.size = size
 
     def dict(self):
         return {
             "url": self.url,
-            "file_name": self.file_name,
-            "content_type": self.content_type
+            "filename": self.filename,
+            "mime": self.mime,
+            "size": self.size
         }
 

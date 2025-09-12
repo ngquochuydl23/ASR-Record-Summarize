@@ -1,0 +1,40 @@
+.promptLayout {
+  width: 500px;
+  min-height: 100px;
+  padding: 10px;
+  .composerView {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-items: flex-end;
+
+    .iconBtn {
+      aspect-ratio: 1;
+      height: fit-content;
+
+      &.sendBtn {
+        &:disabled {
+          color: gray;
+        }
+        color: #6441a5;
+      }
+    }
+  }
+
+  .helperText {
+    margin-top: 5px;
+    color: #696969;
+    font-size: 10px;
+  }
+
+  .loadingContainer {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .actionBtns {
+    
+  }
+}

@@ -13,8 +13,6 @@ from sqlalchemy import ForeignKey
 @dataclass(init=True, repr=True)
 class RagChunkModel(Base, BaseMixin):
     __tablename__ = RAG_CHUNKS_TABLE_NAME
-
-
     source_name: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)
 
     content: Mapped[str] = mapped_column(Text, nullable=False, default=None)

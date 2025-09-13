@@ -31,7 +31,7 @@ class RagDocumentModel(Base, BaseMixin):
     attachment = relationship("AttachmentModel", back_populates="document", uselist=False)
     attachment_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey(f"{ATTACHMENT_TABLE_NAME}.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
         default=None
     )
 

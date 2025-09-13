@@ -3,8 +3,6 @@ import os
 import asyncio
 from transformers import Wav2Vec2ForCTC, Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer, Wav2Vec2Processor
 from src.app.core.logger import logging
-from datetime import timedelta
-
 from src.app.utils.vtt_utils import generate_vtt
 
 
@@ -79,15 +77,8 @@ class VieASRAIModel:
             predicted_ids.append(chunk_predicted_ids)
             all_logits.append(logits)
 
-        if predicted_ids:
-            merged_predicted_ids = torch.cat(predicted_ids, dim=-1)
-        else:
-            merged_predicted_ids = torch.tensor([], dtype=torch.long)
-
-        if all_logits:
-            merged_logits = torch.cat(all_logits, dim=1)
-        else:
-            merged_logits = torch.empty((0, 0, 0))
+        merged_predicted_ids = torch.cat(predicted_ids, dim=-1) if predicted_ids else torch.tensor([], dtype=torch.long)
+        merged_logits = torch.cat(all_logits, dim=1) if all_logits else torch.empty((0, 0, 0))
         return " ".join(texts), merged_predicted_ids, merged_logits
 
     async def generate_vtt(self, speech_array, output_path: str, saved=False):
@@ -99,7 +90,7 @@ class VieASRAIModel:
 
         groups = self._group_words(words, max_duration=3.0, max_words=8)
         lines = generate_vtt(groups, output_path, saved)
-        return lines
+        return text, lines
 
     def _group_words(self, words, max_duration=2.5, max_words=7):
         """

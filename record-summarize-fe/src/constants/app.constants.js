@@ -1,6 +1,6 @@
 export const AppRoute = {
   RECORDS: "/records",
-  PLAY_RECORDS: '/records/:recordId/play',
+  PLAY_RECORDS: "/records/:recordId/play",
   CATEGORY: "/category",
   BILLBOARD: "/billboard",
   DASHBOARD: "/dashboard",
@@ -10,7 +10,6 @@ export const AppRoute = {
   STORE_SETTING: "/settings/store-setting",
   AUTH_LOGIN: "/auth/login",
 };
-
 
 export const HttpCommonMsg = {
   EXISTED: "Existed.",
@@ -42,3 +41,61 @@ export const RecordContentType = {
   Documentary: "Phim tài liệu",
   Entertainment: "Giải trí",
 };
+
+export const RecordContentTypes = [
+  {
+    id: "Meeting",
+    label: "Cuộc họp",
+  },
+  {
+    id: "Lecture-Class",
+    label: "Bài giảng / Lớp học",
+  },
+  {
+    id: "Tutorial-Training",
+    label: "Hướng dẫn / Đào tạo",
+  },
+  {
+    id: "Interview",
+    label: "Phỏng vấn",
+  },
+  {
+    id: "Talkshow",
+    label: "Talkshow",
+  },
+  {
+    id: "News",
+    label: "Tin tức",
+  },
+  {
+    id: "Documentary",
+    label: "Phim tài liệu",
+  },
+  {
+    id: "Entertainment",
+    label: "Giải trí",
+  },
+];
+
+export const VideoLanguages = [
+  {
+    id: "en",
+    label: "Tiếng Anh",
+  },
+  {
+    id: "vie",
+    label: "Tiếng Việt",
+  },
+];
+
+
+export const SourceTypes = [
+  {
+    id: "local",
+    label: "Từ máy cá nhân",
+  },
+  {
+    id: "youtube",
+    label: "Từ Youtube",
+  },
+];

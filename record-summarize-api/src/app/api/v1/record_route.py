@@ -10,6 +10,7 @@ from sqlalchemy.future import select
 from sqlalchemy import desc
 from sqlalchemy.orm import selectinload, noload
 from .llm_route import llm_service
+from .transcription_route import transcription_service
 from ...connection_manager import manager
 from ...constants.record_constants import RECORD_SUMMARIZE_STRUCTURES
 from ...core.db.database import async_get_db, local_session
@@ -19,16 +20,18 @@ from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecord
 from ...dtos.user import UserDto
 from ...models import RecordModel, UserModel, AttachmentModel, RecordPipelineItemModel, SummaryVersionModel
 from ...models.record_pipeline_items import PipelineItemType, PipelineItemStatus
-from ...models.records import PermissionLevel, RecordContentType
+from ...models.records import PermissionLevel, RecordContentType, RecordSourceType
 from ...services.ffmpeg_service import FFMpegService
 from ...services.rag_index_service import RagIndexService
 from ...services.s3_service import S3Service
 from ..dependencies import get_current_user
 from ...core.logger import logging
+from ...services.transcription_service import TranscriptionService
 from ...utils.extract_text_from_file import extract_text
 
 s3_service = S3Service()
 rag_index_service = RagIndexService()
+transcription_service = TranscriptionService()
 router = APIRouter(tags=["Record"])
 
 
@@ -49,6 +52,8 @@ async def create_records(
         permission=PermissionLevel.PRIVATE,
         creator_id=current_user["id"],
         emails=body.emails,
+        lang=body.lang,
+        source_type=body.source_type,
         record_content_type=body.record_content_type,
         attachments=[
             AttachmentModel(
@@ -179,7 +184,7 @@ async def delete_user(
     return {"message": "Record deleted."}
 
 
-@router.post("/records/{record_id}/publish")
+@router.post("/records/{record_id}/publish/last")
 async def publish_record(
         record_id: str,
         current_user: Annotated[UserDto, Depends(get_current_user)],
@@ -191,6 +196,7 @@ async def publish_record(
             selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
             selectinload(RecordModel.pipeline_items),
+            selectinload(RecordModel.summary_versions),
             noload(RecordModel.rag_documents),
             noload(RecordModel.current_version)
         )
@@ -208,6 +214,8 @@ async def publish_record(
     if record.published:
         raise AppException("Cannot execute with published record.")
 
+    last_version = record.summary_versions[0]
+    record.current_version_id = last_version.id
     record.published = True
     await db.commit()
     return {"message": "Published."}
@@ -354,10 +362,11 @@ async def _record_creating_task(record_id: uuid.UUID):
             if not record:
                 return
 
-            await _execute_step(record, record.pipeline_items[1], generate_ffmpeg, db)
-            await _execute_step(record, record.pipeline_items[2], store_vectordb, db)
+            transcribe_result = await _execute_step(record, record.pipeline_items[1], transcribe_stage, db)
+            await _execute_step(record, record.pipeline_items[2], store_vectordb_stage, db)
 
-            summary_result = await _execute_step(record, record.pipeline_items[3], llm_summarize, db)
+            summary_result = await _execute_step(record, record.pipeline_items[3], llm_summarize_stage, db)
+            record.subtitle_url = transcribe_result["subtitle_s3_key"]
             record.summary_versions.append(SummaryVersionModel(
                 id=uuid.uuid4(),
                 title=f"v{len(record.summary_versions) + 1}",
@@ -416,27 +425,49 @@ async def _execute_step(
         await db.commit()
         await db.refresh(pipeline_item)
         await manager.broadcast(str(record.id), pipeline_item.to_dict())
+        raise Exception(f"Record-{str(record.id)} - {pipeline_item.type} ERROR")
 
 
-async def generate_ffmpeg(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
-    # generate vtt
-    # generate transcribe
-    return await FFMpegService.extract_audio(record.url, f'wavs/record-{str(record.id)}.wav')
+async def transcribe_stage(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
+    if record.source_type == RecordSourceType.LOCAL:
+        extract_audio_result = await FFMpegService.extract_audio(record.url, f'wavs/record-{str(record.id)}.wav')
+        subtitle_file = f'vtts/record-{record.lang}-{str(record.id)}.vtt'
+        transcribe_result = await transcription_service.generate_subtitle(
+            wav_path=extract_audio_result['output'],
+            output_path=subtitle_file,
+            lang=record.lang
+        )
+        uploaded_result = await s3_service.upload_file_from_path(subtitle_file, folder='vtts')
+        return {
+            "subtitle_s3_key": uploaded_result.url,
+            "transcribe_result": transcribe_result,
+            "extract_audio_result": extract_audio_result
+        }
+    else:
+        # generate vtt with youtube - gemini
+        # save
+        # upload
+        raise NotImplementedError()
 
 
-async def store_vectordb(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
+async def store_vectordb_stage(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
     await rag_index_service.execute_rag_index(db, record)
     return None
 
 
-async def llm_summarize(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
+async def llm_summarize_stage(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
+    transcribe_output = record.pipeline_items[1].extra.get("transcribe_result", {}).get("output_path")
+    with open(transcribe_output, "r", encoding="utf-8") as f:
+        subtitle = f.read()
     context = "\n".join([extract_text(item.url) for item in record.attachments])
     prompt = f"""
        Bạn là một trợ lý thông minh. Tôi sẽ cung cấp cho bạn các đoạn thông tin (chunks) được trích xuất từ:
        1. Video bài giảng (transcript, phụ đề)
        2. Tài liệu PDF liên quan (slide, handout, sách tham khảo)
 
-       Nội dung dữ liệu: 
+       Nội dung transcript:
+       {subtitle}
+       Nội dung tệp đính kèm: 
        {context}
        
        {RECORD_SUMMARIZE_STRUCTURES[record.record_content_type]}

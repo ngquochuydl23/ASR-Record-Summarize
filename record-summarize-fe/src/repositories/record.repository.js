@@ -4,7 +4,7 @@ export const getRecords = () => http.get("records");
 
 export const getRecordById = (id) => http.get(`/records/${id}`);
 
-export const publishRecord = (id) => http.post(`/records/${id}/publish`);
+export const publishLastVRecord = (id) => http.post(`/records/${id}/publish/last`);
 
 export const deteleRecord = (id) => http.delete(`/records/${id}`);
 

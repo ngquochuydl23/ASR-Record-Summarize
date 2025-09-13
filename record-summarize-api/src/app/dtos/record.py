@@ -12,6 +12,7 @@ class RecordBaseDto(BaseModel):
     description: Optional[str]
     url: Optional[str] = None
     emails: List[str]
+    source_type: str
 
 
 class RecordCreateDto(BaseModel):
@@ -19,6 +20,8 @@ class RecordCreateDto(BaseModel):
     description: Optional[str]
     url: Optional[str] = None
     emails: List[str]
+    lang: str
+    source_type: str
     attachments: List[AttachmentCreateDto] = []
     record_content_type: Optional[str]
 
@@ -26,7 +29,7 @@ class RecordCreateDto(BaseModel):
 class RecordUpdateDto(BaseModel):
     title: Optional[str]
     content: Optional[str]
-    duration: Optional[float]
+    source_type: str
     permission: Optional[PermissionLevel]
 
 
@@ -43,6 +46,7 @@ class RecordDto(BaseModel):
     subtitle_url: Optional[str]
     lang: Optional[str]
     emails: List[str]
+    source_type: str
     attachments: List[AttachmentDto]
     pipeline_items: List[object]
     published: Optional[bool]

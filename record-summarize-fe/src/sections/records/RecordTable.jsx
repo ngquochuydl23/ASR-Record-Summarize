@@ -33,7 +33,7 @@ import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutli
 import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
-import { deteleRecord, publishRecord } from '@/repositories/record.repository';
+import { deteleRecord, publishLastVRecord } from '@/repositories/record.repository';
 import _ from 'lodash';
 import { useSnackbar } from 'notistack';
 
@@ -55,10 +55,10 @@ const ActionTableCell = ({ item, onRefresh, publishable }) => {
     setAnchorEl(null);
   };
 
-  const handlePublishRecord = (e) => {
+  const handlePublishLastRecord = (e) => {
     e.preventDefault();
     setPublishing(true);
-    publishRecord(item.id)
+    publishLastVRecord(item.id)
       .then(() => {
         onRefresh();
       })
@@ -114,7 +114,7 @@ const ActionTableCell = ({ item, onRefresh, publishable }) => {
           <div>
             {!publishing
               ? <Tooltip title={publishable ? "Xuất bản" : "Bạn không thể xuất bản vì chưa hoàn thành"}>
-                <IconButton onClick={handlePublishRecord} disabled={!publishable}>
+                <IconButton onClick={handlePublishLastRecord} disabled={!publishable}>
                   <PublishOutlinedIcon />
                 </IconButton>
               </Tooltip>
@@ -196,10 +196,12 @@ export const RecordTable = ({
       return false;
     }
 
+    const errorItems = _.filter(record.pipeline_items, x => x.status === "Failed");
     const count = _.filter(record.pipeline_items, x => x.status === "Success").length
     return {
       percentage: (count / record.pipeline_items.length) * 100,
-      isCompleted: count === record.pipeline_items.length
+      isCompleted: count === record.pipeline_items.length,
+      isFailed: !_.isEmpty(errorItems)
     };
   }
 
@@ -304,7 +306,8 @@ export const RecordTable = ({
               </TableHead>
               <TableBody>
                 {records.map((item, index) => {
-                  const { isCompleted, percentage } = getProgressRecord(item);
+                  const { isCompleted, percentage, isFailed } = getProgressRecord(item);
+
                   return (
                     <TableRow hover key={item.id}>
                       <TableCell width="20%">
@@ -326,7 +329,7 @@ export const RecordTable = ({
                       <TableCell>
                         <ProgressBar
                           barContainerClassName={styles.container}
-                          bgColor={isCompleted ? '#10b981' : '#EED202'}
+                          bgColor={isCompleted ? '#10b981' : (isFailed ? colors.errorColor : '#EED202')}
                           labelClassName={styles.label}
                           borderRadius='0px'
                           completed={percentage}

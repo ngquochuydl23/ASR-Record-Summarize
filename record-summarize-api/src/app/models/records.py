@@ -22,6 +22,11 @@ class RecordLang(str, enum.Enum):
     VIE = "vie"
 
 
+class RecordSourceType(str, enum.Enum):
+    LOCAL = "local"
+    YOUTUBE = "youtube"
+
+
 class RecordContentType(str, enum.Enum):
     MEETING = "Meeting"
     LECTURE_CLASS = "Lecture-Class"
@@ -92,6 +97,11 @@ class RecordModel(Base, BaseMixin):
         default=RecordLang.VIE
     )
 
+    source_type: Mapped[RecordSourceType] = mapped_column(
+        Enum(RecordSourceType),
+        nullable=True,
+        default=RecordSourceType.LOCAL
+    )
     # conversations: Mapped[list[object]] = relationship(
     #     "ConversationModel",
     #     back_populates="record",
@@ -130,4 +140,5 @@ class RecordModel(Base, BaseMixin):
         lazy="select",
         foreign_keys="SummaryVersionModel.record_id",
         default_factory=lambda: [],
+        order_by="SummaryVersionModel.created_at.desc()",
     )

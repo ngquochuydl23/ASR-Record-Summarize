@@ -1,7 +1,5 @@
-import * as React from 'react';
 import { alpha, styled } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
-import { fontSize } from '@mui/system';
 import { colors } from '@/theme/theme.global';
 
 export const BootstrapInput = styled(InputBase)(({ theme }) => ({
@@ -24,7 +22,6 @@ export const BootstrapInput = styled(InputBase)(({ theme }) => ({
       'background-color',
       'box-shadow',
     ]),
-    // Use the system font instead of the default Roboto font.
     fontFamily: ['Plus Jakarta Sans',].join(','),
     '&:focus': {
       boxShadow: `${alpha(colors.primaryColor, 0.25)} 0 0 0 0.1rem`,
@@ -32,7 +29,7 @@ export const BootstrapInput = styled(InputBase)(({ theme }) => ({
     },
     '&::placeholder': {
       color: '#696969',
-      opacity: 1, // otherwise firefox shows a lighter color
+      opacity: 1,
     },
   },
 }));

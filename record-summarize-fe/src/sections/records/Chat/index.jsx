@@ -2,10 +2,10 @@ import { IconButton, MenuItem, MenuList, Popover, Tooltip, Typography } from '@m
 import styles from './styles.module.scss';
 import CloseIcon from '@mui/icons-material/Close';
 import Composer from './Composer';
-import { GroupMsg, NotificationMsgItem } from './Message';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import { useState } from 'react';
+
 
 const ChatView = ({ onClose }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -37,8 +37,8 @@ const ChatView = ({ onClose }) => {
         </Tooltip>
       </div>
       <div className={styles.chatViewBody}>
-        <GroupMsg owned={false} />
-        <NotificationMsgItem />
+        {/* <GroupMsg owned={false} /> */}
+        {/* <NotificationMsgItem /> */}
       </div>
       <Composer onSendMsg={() => { }} />
       <Popover

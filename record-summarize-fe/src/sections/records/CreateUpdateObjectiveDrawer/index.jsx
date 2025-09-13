@@ -1,7 +1,7 @@
 import BaseDrawer, { BaseHeaderDrawer } from "@/components/BaseDrawer";
 import LoadingButton from "@/components/buttons/LoadingButton";
 import { BootstrapInput } from "@/components/fields/BootstrapField";
-import { Button, CircularProgress, FormControl, IconButton, InputLabel, Tooltip } from "@mui/material";
+import { Autocomplete, Button, Chip, CircularProgress, FormControl, IconButton, InputAdornment, InputLabel, TextField, Tooltip } from "@mui/material";
 import { Field, FieldArray, Form, Formik } from "formik";
 import { useSnackbar } from "notistack";
 import { useRef, useState } from "react";
@@ -22,42 +22,11 @@ import readS3Object from "@/utils/avatar/readS3Object";
 import ReactPlayer from 'react-player'
 import { createRecord } from "@/repositories/record.repository";
 import { useNavigate } from "react-router-dom";
-import { AppRoute } from "@/constants/app.constants";
-
-const recordContentTypes = [
-  {
-    id: 'Meeting',
-    label: "Cuộc họp",
-  },
-  {
-    id: 'Lecture-Class',
-    label: "Bài giảng / Lớp học",
-  },
-  {
-    id: 'Tutorial-Training',
-    label: "Hướng dẫn / Đào tạo",
-  },
-  {
-    id: 'Interview',
-    label: "Phỏng vấn",
-  },
-  {
-    id: 'Talkshow',
-    label: "Talkshow",
-  },
-  {
-    id: 'News',
-    label: "Tin tức",
-  },
-  {
-    id: 'Documentary',
-    label: "Phim tài liệu",
-  },
-  {
-    id: 'Entertainment',
-    label: "Giải trí",
-  }
-]
+import { AppRoute, RecordContentTypes, SourceTypes, VideoLanguages } from "@/constants/app.constants";
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { getYoutubeEmbedUrl } from "@/utils/youtube";
 
 const CreateObjectiveDrawer = ({ open, onClose }) => {
   const navigate = useNavigate();
@@ -65,6 +34,7 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [videoUploading, setVideoUploading] = useState(false);
+  const [youtubeChecking, setYoutubeChecking] = useState(false);
   const validationSchema = Yup.object({
     title: Yup
       .string()
@@ -74,11 +44,22 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
       .required("Thể loại là bắt buộc"),
     url: Yup
       .string()
-      .required("Video là bắt buộc")
+      .required("Video là bắt buộc"),
+    lang: Yup
+      .string()
+      .required("Ngôn ngữ là bắt buộc"),
+    youtubeLink: Yup.string()
+      .matches(/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[&?]\S*)?$/, "Vui lòng nhập đường dẫn Youtube hợp lệ")
+      .optional(),
   });
 
   const handleSubmit = async (values, { setFieldError, resetForm }) => {
-    createRecord(values)
+    const { youtubeLink, ...data } = values
+    const payload = {
+      ...data,
+      url: data.source_type === 'local' ? data.url : youtubeLink
+    }
+    createRecord(payload)
       .then((response) => {
         navigate(AppRoute.RECORDS);
         enqueueSnackbar('Tạo tóm tắt thành công', {
@@ -88,7 +69,7 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
             horizontal: 'right'
           }
         });
-        onClose();
+        onClose(response);
         resetForm();
       })
       .catch((error) => {
@@ -130,6 +111,27 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
   const openPrompt = Boolean(anchorEl);
   const id = openPrompt ? 'simple-popover' : undefined;
 
+  const handleCheckYoutube = (link) => {
+    if (_.isEmpty(link)) return Promise.resolve(false);
+    setYoutubeChecking(true);
+    return new Promise((resolve) => {
+      setTimeout(async () => {
+        try {
+          const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(link)}&format=json`);
+          if (res.ok) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        } catch (e) {
+          resolve(false);
+        } finally {
+          setYoutubeChecking(false);
+        }
+      }, 2500);
+    });
+  };
+
   return (
     <BaseDrawer paperProps={{ width: '50vw' }} open={open} onClose={onClose}>
       <Formik
@@ -138,8 +140,11 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
           description: '',
           record_content_type: null,
           url: '',
+          youtubeLink: '',
           attachments: [],
-          emails: []
+          emails: [],
+          lang: null,
+          source_type: 'youtube'
         }}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}>
@@ -164,14 +169,7 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
                   <div className="flex gap-2">
                     <FormControl variant="standard" fullWidth>
                       <InputLabel required shrink htmlFor="title">Tiêu đề</InputLabel>
-                      <Field
-                        as={BootstrapInput}
-                        name="title"
-                        id="title"
-                        size="small"
-                        sx={{ fontSize: "14px" }}
-                        fullWidth
-                      />
+                      <Field as={BootstrapInput} name="title" id="title" size="small" sx={{ fontSize: "14px" }} fullWidth />
                       {touched.title && errors.title ? (
                         <div className="text-errorColor text-[12px] mt-[2px]">{errors.title}</div>
                       ) : (<div div className="text-textSecondaryColor text-[12px] mt-[2px]">
@@ -179,18 +177,9 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
                         50-60 characters is the recommended length for search engines.
                       </div>)}
                     </FormControl>
-                    <Button
-                      onClick={handleClick}
-                      startIcon={<IcWizard />}
-                      variant="outlined"
-                      sx={{ width: '140px', marginTop: '24px' }}>
-                      Trợ lý AI
-                    </Button>
-                    <PromptView
-                      id={id}
-                      open={openPrompt}
-                      anchorEl={anchorEl}
-                      onClose={handleClose}
+                    <Button onClick={handleClick} startIcon={<IcWizard />}
+                      variant="outlined" sx={{ width: '140px', marginTop: '24px' }}>Trợ lý AI</Button>
+                    <PromptView id={id} open={openPrompt} anchorEl={anchorEl} onClose={handleClose}
                       onDeclineResult={() => {
                         setFieldValue('title', '');
                         setFieldValue('description', '');
@@ -207,22 +196,62 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
                         setFieldValue('record_content_type', response.record_content_type);
                       }} />
                   </div>
-                  <FormControl variant="standard" fullWidth >
-                    <InputLabel shrink htmlFor="parentId" size="small">Thể loại</InputLabel>
-                    <BootstrapAutocomplete
-                      id="record_content_type"
-                      name="record_content_type"
-                      placeholder="Chọn thể loại"
-                      value={recordContentTypes.find(x => x.id === values.record_content_type)}
-                      options={recordContentTypes || []}
-                      getOptionKey={(option) => option.id}
-                      getOptionLabel={(option) => option.label}
-                      onChange={(e, value, reason) => setFieldValue('record_content_type', value.id)}
-                    />
-                    {touched.wardOrVillage && errors.wardOrVillage && (
-                      <div className="text-errorColor text-[12px] mt-[2px]">{errors.wardOrVillage}</div>
-                    )}
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl variant="standard" fullWidth >
+                      <InputLabel shrink htmlFor="record_content_type" required size="small">Thể loại</InputLabel>
+                      <BootstrapAutocomplete
+                        id="record_content_type"
+                        name="record_content_type"
+                        placeholder="Chọn thể loại"
+                        value={RecordContentTypes.find(x => x.id === values.record_content_type)}
+                        options={RecordContentTypes || []}
+                        getOptionKey={(option) => option.id}
+                        getOptionLabel={(option) => option.label}
+                        onChange={(e, value, reason) => setFieldValue('record_content_type', value.id)}
+                      />
+                      {touched.record_content_type && errors.record_content_type && (
+                        <div className="text-errorColor text-[12px] mt-[2px]">{errors.record_content_type}</div>
+                      )}
+                    </FormControl>
+                    <FormControl variant="standard" fullWidth >
+                      <InputLabel shrink htmlFor="lang" size="small" required>Ngôn ngữ</InputLabel>
+                      <BootstrapAutocomplete
+                        id="lang"
+                        name="lang"
+                        placeholder="Chọn ngôn ngữ"
+                        value={VideoLanguages.find(x => x.id === values.lang)}
+                        options={VideoLanguages || []}
+                        getOptionKey={(option) => option.id}
+                        getOptionLabel={(option) => option.label}
+                        onChange={(e, value, reason) => setFieldValue('lang', value.id)}
+                      />
+                      {touched.lang && errors.lang && (
+                        <div className="text-errorColor text-[12px] mt-[2px]">{errors.lang}</div>
+                      )}
+                    </FormControl>
+                  </div>
+                  <div className="flex gap-2">
+                    <FormControl variant="standard" fullWidth >
+                      <InputLabel shrink htmlFor="lang" size="small" required>Nguồn video</InputLabel>
+                      <BootstrapAutocomplete
+                        id="source_type"
+                        name="source_type"
+                        placeholder="Chọn nguồn video"
+                        value={SourceTypes.find(x => x.id === values.source_type)}
+                        options={SourceTypes || []}
+                        getOptionKey={(option) => option.id}
+                        getOptionLabel={(option) => option.label}
+                        onChange={(e, value, reason) => {
+                          setFieldValue('url', '');
+                          setFieldValue('youtubeLink', '');
+                          setFieldValue('source_type', value.id);
+                        }}
+                      />
+                      {touched.source_type && errors.source_type && (
+                        <div className="text-errorColor text-[12px] mt-[2px]">{errors.source_type}</div>
+                      )}
+                    </FormControl>
+                  </div>
                   <FormControl variant="standard" fullWidth sx={{ mt: '10px' }}>
                     <InputLabel shrink htmlFor="description">Mô tả</InputLabel>
                     <Field
@@ -230,9 +259,15 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
                       name="description"
                       id="description"
                       size="small"
+                      placeholder="Nhập mô tả video"
                       multiline
-                      rows={10}
-                      sx={{ fontSize: "14px" }}
+                      rows={5}
+                      sx={{
+                        fontSize: "14px",
+                        '& .MuiInputBase-input': {
+                          borderRadius: '15px'
+                        }
+                      }}
                       fullWidth
                     />
                     {touched.description && errors.description && (
@@ -240,6 +275,30 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
                     )}
                   </FormControl>
                 </div>
+                <FormControl variant="standard" fullWidth sx={{ mt: '10px' }}>
+                  <InputLabel shrink htmlFor="lang" size="small">Chia sẻ đến</InputLabel>
+                  <Autocomplete
+                    id="emails"
+                    sx={{ mt: '24px' }}
+                    name="emails"
+                    placeholder="Nhập email"
+                    multiple
+                    freeSolo
+                    value={values.emails}
+                    options={[]}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => (
+                        <Chip label={option}  {...getTagProps({ index })}
+                          onDelete={() => setFieldValue('emails', values.emails.filter((_, i) => i !== index))} />
+                      ))
+                    }
+                    onChange={(e, value, reason) => setFieldValue('emails', value)}
+                    renderInput={params => <TextField {...params} variant="outlined" placeholder="Nhập emails" />}
+                  />
+                  {touched.emails && errors.emails && (
+                    <div>{errors.emails}</div>
+                  )}
+                </FormControl>
                 <input id="media.input" type="file" accept="video/*" style={{ display: 'none' }}
                   onChange={(e) => handleUploadVideo(e, setFieldValue, setFieldError)} />
                 <div className={styles.gridMedia} >
@@ -251,26 +310,59 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
                     </div>
                     {!values.url
                       ? <div className="flex flex-col gap-2 w-full">
-                        {/*
-                      
-                      
-                        For youtube field
-
-
-                       */}
-                        <div className={styles.mediaPlaceHolder} onClick={() => document.getElementById("media.input")?.click()}>
-                          {videoUploading ? <CircularProgress /> : <OndemandVideoIcon />}
-                          <div className={styles.title}>{videoUploading ? "Đang tải lên video" : "Tải lên video"}</div>
-                          <div className={styles.helperText}>Video có dung lượng tối đa là 20mb.</div>
-                        </div>
+                        {values.source_type === 'local'
+                          ? <div className={styles.mediaPlaceHolder} onClick={() => document.getElementById("media.input")?.click()}>
+                            {videoUploading ? <CircularProgress /> : <OndemandVideoIcon />}
+                            <div className={styles.title}>{videoUploading ? "Đang tải lên video" : "Tải lên video"}</div>
+                            <div className={styles.helperText}>Video có dung lượng tối đa là 20mb.</div>
+                          </div>
+                          : <div className={styles.youtubePasteLink}>
+                            <FormControl variant="standard" fullWidth sx={{ mt: '10px' }}>
+                              <InputLabel shrink htmlFor="youtubeLink">Đường dẫn Youtube</InputLabel>
+                              <Field
+                                startAdornment={<InputAdornment position="start"><YouTubeIcon sx={{ color: '#B2071D' }} /></InputAdornment>}
+                                endAdornment={
+                                  <InputAdornment position="end">
+                                    {youtubeChecking && <div className={styles.loadingContainer}><CircularProgress size='20px' /></div>}
+                                    {!youtubeChecking && values.youtubeLink && !errors.youtubeLink && <CheckCircleIcon sx={{ color: colors.successColorBg }} />}
+                                    {!youtubeChecking && errors.youtubeLink && <ErrorOutlineIcon sx={{ color: colors.errorColor }} />}
+                                  </InputAdornment>}
+                                as={BootstrapInput}
+                                onChange={(e) => {
+                                  setFieldValue('youtubeLink', e.target.value);
+                                  setYoutubeChecking(false);
+                                  if (!errors.youtubeLink) {
+                                    handleCheckYoutube(e, setFieldValue, setFieldError)
+                                      .then(() => setFieldValue("url", e.target.value))
+                                      .catch(() => setFieldError("youtubeLink", "Không tìm thấy video"))
+                                  };
+                                }}
+                                name="youtubeLink"
+                                id="youtubeLink"
+                                size="small"
+                                placeholder="Nhập đường dẫn Youtube"
+                                fullWidth
+                              />
+                              {touched.youtubeLink && errors.youtubeLink && (
+                                <div className="text-errorColor text-[12px] mt-[2px]">{errors.youtubeLink}</div>
+                              )}
+                            </FormControl>
+                            {!_.isEmpty(values.youtubeLink) && !youtubeChecking && _.isEmpty(errors.youtubeLink) &&
+                              <iframe
+                                className={styles.ytbPreview}
+                                title="Preview youtube"
+                                src={getYoutubeEmbedUrl(values.youtubeLink)}
+                                width="100%"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen ></iframe>
+                            }
+                          </div>
+                        }
                       </div>
                       : <div className={styles.videoPreview}>
-                        <ReactPlayer
-                          ref={playerRef}
-                          width={"100%"}
-                          height={"100%"}
-                          controls
-                          src={readS3Object(values?.url)} />
+                        <ReactPlayer ref={playerRef} width={"100%"} height={"100%"}
+                          controls src={readS3Object(values?.url)} />
                       </div>
                     }
                   </div>
@@ -345,12 +437,9 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
                                 Thêm tệp đính kèm
                               </Button>
                               <input
-                                id="media.attachments"
-                                type="file"
-                                multiple
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
-                                style={{ display: 'none' }}
-                                onChange={handleUploadFile}></input>
+                                id="media.attachments" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                                style={{ display: 'none' }} onChange={handleUploadFile}>
+                              </input>
                             </div>
                           )
                         }}

@@ -20,7 +20,7 @@ from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecord
 from ...dtos.user import UserDto
 from ...models import RecordModel, UserModel, AttachmentModel, RecordPipelineItemModel, SummaryVersionModel
 from ...models.record_pipeline_items import PipelineItemType, PipelineItemStatus
-from ...models.records import PermissionLevel, RecordContentType, RecordSourceType
+from ...models.records import PermissionLevel, RecordContentType, RecordSourceType, RecordChatbotPreparationState
 from ...services.ffmpeg_service import FFMpegService
 from ...services.rag_index_service import RagIndexService
 from ...services.s3_service import S3Service
@@ -54,6 +54,7 @@ async def create_records(
         emails=body.emails,
         lang=body.lang,
         source_type=body.source_type,
+        chatbot_preparation_state=RecordChatbotPreparationState.PREPARING,
         record_content_type=body.record_content_type,
         attachments=[
             AttachmentModel(
@@ -83,13 +84,13 @@ async def create_records(
             ),
             RecordPipelineItemModel(
                 id=uuid.uuid4(),
-                type=PipelineItemType.RAG_INDEX,
+                type=PipelineItemType.GENERATE_SUM,
                 status=PipelineItemStatus.PENDING,
                 extra={}
             ),
             RecordPipelineItemModel(
                 id=uuid.uuid4(),
-                type=PipelineItemType.GENERATE_SUM,
+                type=PipelineItemType.CHATBOT_PREPARATION,
                 status=PipelineItemStatus.PENDING,
                 extra={}
             )
@@ -208,7 +209,7 @@ async def publish_record(
     if not record:
         raise AppException("Record is null")
 
-    if not all(item.status == PipelineItemStatus.SUCCESS for item in record.pipeline_items):
+    if record.pipeline_items[2].status != PipelineItemStatus.SUCCESS:
         raise AppException("Cannot publish unsuccessful record.")
 
     if record.published:
@@ -363,9 +364,8 @@ async def _record_creating_task(record_id: uuid.UUID):
                 return
 
             transcribe_result = await _execute_step(record, record.pipeline_items[1], transcribe_stage, db)
-            await _execute_step(record, record.pipeline_items[2], store_vectordb_stage, db)
+            summary_result = await _execute_step(record, record.pipeline_items[2], llm_summarize_stage, db)
 
-            summary_result = await _execute_step(record, record.pipeline_items[3], llm_summarize_stage, db)
             record.subtitle_url = transcribe_result["subtitle_s3_key"]
             record.summary_versions.append(SummaryVersionModel(
                 id=uuid.uuid4(),
@@ -375,7 +375,7 @@ async def _record_creating_task(record_id: uuid.UUID):
             ))
             db.add(record)
             await db.commit()
-
+            await _execute_step(record, record.pipeline_items[3], store_vectordb_stage, db)
         except Exception as e:
             logging.error("Error", str(e))
             await db.rollback()
@@ -419,9 +419,10 @@ async def _execute_step(
         pipeline_item.status = PipelineItemStatus.FAILED
         pipeline_item.finished_at = datetime.utcnow()
         pipeline_item.error_message = str(e)
+        if pipeline_item.type == PipelineItemType.CHATBOT_PREPARATION:
+            record.chatbot_preparation_state = RecordChatbotPreparationState.FAILED
         db.add(record)
         db.add(pipeline_item)
-
         await db.commit()
         await db.refresh(pipeline_item)
         await manager.broadcast(str(record.id), pipeline_item.to_dict())

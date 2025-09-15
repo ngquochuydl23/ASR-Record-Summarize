@@ -23,7 +23,7 @@ import { Search } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '@/theme/theme.global';
 import TableLoading from '@/components/TableLoading';
-import { RecordContentType } from '@/constants/app.constants'
+import { PipelineItemTypeEnum, RecordContentType } from '@/constants/app.constants'
 import ProgressBar from '@ramonak/react-progress-bar';
 import styles from './record-table.module.scss';
 import { readUrl } from '@/utils/readUrl';
@@ -192,15 +192,13 @@ export const RecordTable = ({
   };
 
   const getProgressRecord = (record) => {
-    if (_.isEmpty(record.pipeline_items)) {
-      return false;
-    }
-
-    const errorItems = _.filter(record.pipeline_items, x => x.status === "Failed");
-    const count = _.filter(record.pipeline_items, x => x.status === "Success").length
+    const pipelines = record.pipeline_items.filter(x => x.type !== PipelineItemTypeEnum.CHATBOT_PREPARATION);
+    if (_.isEmpty(pipelines)) return false;
+    const errorItems = _.filter(pipelines, x => x.status === "Failed");
+    const count = _.filter(pipelines, x => x.status === "Success").length
     return {
-      percentage: (count / record.pipeline_items.length) * 100,
-      isCompleted: count === record.pipeline_items.length,
+      percentage: (count / pipelines.length) * 100,
+      isCompleted: count === pipelines.length,
       isFailed: !_.isEmpty(errorItems)
     };
   }

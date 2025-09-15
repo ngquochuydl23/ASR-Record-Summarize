@@ -88,7 +88,6 @@ export const VideoLanguages = [
   },
 ];
 
-
 export const SourceTypes = [
   {
     id: "local",
@@ -99,3 +98,10 @@ export const SourceTypes = [
     label: "Từ Youtube",
   },
 ];
+
+export const PipelineItemTypeEnum = {
+  CREATE_RECORD: 0,
+  TRANSCRIBE: 1,
+  GENERATE_SUM: 2,
+  CHATBOT_PREPARATION: 4,
+};

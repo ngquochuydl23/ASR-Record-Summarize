@@ -55,6 +55,7 @@ class RecordDto(BaseModel):
     current_version_id: Optional[uuid.UUID]
     current_version: Optional[object]
     duration: Optional[float]
+    chatbot_preparation_state: Optional[str]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 

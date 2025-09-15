@@ -37,7 +37,7 @@ const sideBarItems = [
   {
     path: "/orders",
     activeIcon: <ScheduleIcon sx={{ color: colors.primaryColor }} />,
-    inactiveIcon: <ScheduleIcon sx={{ color: '#6B7280' }}/>,
+    inactiveIcon: <ScheduleIcon sx={{ color: "#6B7280" }} />,
     title: "Lịch sử trò chuyện cùng AI",
     enableBadge: false,
   },
@@ -54,10 +54,6 @@ const Sidebar = () => {
   const location = useLocation();
   //const { store } = useSelector((state) => state.store);
   //const { user } = useSelector((state) => state.user);
-  const organization = {
-    name: "KX/IT",
-    avatar: "",
-  };
   const isSelected = (path) => new RegExp("^" + path).test(location.pathname);
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -75,29 +71,22 @@ const Sidebar = () => {
   return (
     <div className="sidebar">
       <div className="store-info">
-        <Box sx={{ border: "4px solid #d3d3d3", borderRadius: "200px" }}>
-          <Avatar
-            className="avatar"
-            onClick={handleClick}
-            src={readUrl(organization.avatar)}
-          >
-            {organization.name}
-          </Avatar>
-        </Box>
-        <div className="flex flex-col h-full justify-center">
-          <Typography
-            fontWeight="600"
-            sx={{ color: colors.textPrimaryColor }}
-            fontSize={pxToRem(16)}
-          >
-            {organization.name}
-          </Typography>
-          <Typography
-            fontWeight="400"
-            sx={{ color: colors.textSecondaryColor }}
-            fontSize={pxToRem(14)}
-          ></Typography>
-        </div>
+        <Link>
+          <div className="flex w-full p-2">
+            <img
+              src="/chatbot_icon.png"
+              className="chatbotIconHeader"
+              alt="chatbot"
+            />
+            <Typography
+              fontWeight="900"
+              fontSize="24px"
+              sx={{ color: colors.primaryColor }}
+            >
+              EasySUM
+            </Typography>
+          </div>
+        </Link>
       </div>
       <div className="sidebar-items">
         {sideBarItems.map((sideBarItem) => (

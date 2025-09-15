@@ -14,6 +14,8 @@ record-summarize-api/.env.*
 record-summarize-api/.env
 record-summarize-api/models
 record-summarize-api/vtts
+record-summarize-api/youtube_downloads
+
 
 .redis
 huggingface-cache

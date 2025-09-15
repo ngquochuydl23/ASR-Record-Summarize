@@ -33,10 +33,10 @@ PyJWT[crypto]
 asyncio
 aioredis
 pytest
-#ctc_segmentation
 google-genai
 openai
 PyPDF2
 python-docx
 langchain
 librosa
+yt-dlp

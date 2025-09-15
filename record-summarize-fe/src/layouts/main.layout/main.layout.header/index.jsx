@@ -7,8 +7,9 @@ import './style.scss';
 import { AppRoute } from "@/constants/app.constants";
 import { Link } from "react-router-dom";
 import MainLayoutSearchbox from "../main.layout.searchbox";
+import { colors } from "@/theme/theme.global";
 
-const MainLayoutHeader = ({ openNotificationList }) => {
+const MainLayoutHeader = ({ openNotificationList, showHeader = false }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const { user } = useSelector((state) => state.user);
   const open = Boolean(anchorEl);
@@ -28,8 +29,28 @@ const MainLayoutHeader = ({ openNotificationList }) => {
 
 
   return (
-    <div className="flex h-[60px] bg-white ml-[2px] items-center justify-between px-4 shadow-sm">
-      <MainLayoutSearchbox placeholder="Tìm kiếm ..." />
+    <div className="flex h-[60px] bg-white ml-[2px] items-center justify-between px-4 shadow-sm ">
+      <div className="flex h-full items-center gap-3">
+        {showHeader &&
+          <Link>
+            <div className="flex w-full py-2 gap-3 items-center">
+              <img
+                src="/chatbot_icon.png"
+                style={{ height: '40px', width: '40px' }}
+                alt="chatbot"
+              />
+              <Typography
+                fontWeight="900"
+                fontSize="20px"
+                sx={{ color: colors.primaryColor }}
+              >
+                EasySUM
+              </Typography>
+            </div>
+          </Link>
+        }
+        <MainLayoutSearchbox placeholder="Tìm kiếm ..." />
+      </div>
       <div className="flex gap-4 items-center">
         <IconButton onClick={openNotificationList}>
           <Badge badgeContent={4} color="info">

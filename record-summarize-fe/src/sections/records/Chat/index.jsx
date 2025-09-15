@@ -5,11 +5,15 @@ import Composer from './Composer';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import { useState } from 'react';
+import { AIAgentGenerating, AIAgentMessageItem, MessageItem } from './Message';
+import Scrollbars from 'react-custom-scrollbars-2';
+import ChatbotPreparing from './ChatbotPreparing';
 
 
 const ChatView = ({ onClose }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const [preparing, setPreparing] = useState(true);
   const id = open ? 'simple-popover' : undefined;
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -36,11 +40,22 @@ const ChatView = ({ onClose }) => {
           </IconButton>
         </Tooltip>
       </div>
+
       <div className={styles.chatViewBody}>
-        {/* <GroupMsg owned={false} /> */}
-        {/* <NotificationMsgItem /> */}
+        {preparing
+          ? < ChatbotPreparing />
+          : <Scrollbars>
+            <div className='flex flex-col'>
+              <AIAgentMessageItem />
+              <MessageItem />
+              <AIAgentGenerating />
+            </div>
+          </Scrollbars>
+        }
       </div>
-      <Composer onSendMsg={() => { }} />
+      {!preparing &&
+        <Composer onSendMsg={() => { }} />
+      }
       <Popover
         id={id}
         open={open}

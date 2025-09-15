@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Sidebar from "./Sidebar";
-import ProfileDialog from "@/sections/chat/ProfileDialog";
 import PersonalSettingDialog from "@/sections/settings/PersonalSettingDialog";
 import { useSnackbar } from "notistack";
 import NotificationDrawer from "@/components/notifications/NotificationDrawer";
@@ -67,17 +66,7 @@ const MainLayout = () => {
           </div>
         </div>
       </div>
-      <ProfileDialog
-        user={user}
-        owned={true}
-        hideBackdrop={false}
-        editProfileClick={() => {
-          setOpenProfileDialog(false);
-          setOpenSettingDialog({ chooseTabId: "my-profile", open: true });
-        }}
-        open={openProfileDialog}
-        onClose={() => setOpenProfileDialog(false)}
-      />
+    
       <PersonalSettingDialog
         chooseTabId={openSettingDialog.chooseTabId}
         open={openSettingDialog.open}

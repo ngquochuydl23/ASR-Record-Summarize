@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 //import Sidebar from "./Sidebar";
-import ProfileDialog from "@/sections/chat/ProfileDialog";
 import PersonalSettingDialog from "@/sections/settings/PersonalSettingDialog";
 import { useSnackbar } from "notistack";
 import NotificationDrawer from "@/components/notifications/NotificationDrawer";
@@ -11,6 +10,7 @@ import { getMe } from "@/repositories/user.repository";
 import LoadingScreen from "@/components/LoadingScreen";
 import { setUser } from "@/redux/slices/userSlice";
 import MainLayoutHeader from "../main.layout/main.layout.header";
+import { Sidebar } from "phosphor-react";
 
 const PlayVideoLayout = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -56,23 +56,11 @@ const PlayVideoLayout = () => {
   return (
     <>
       <div className="flex">
-        {/* <Sidebar /> */}
         <div className="flex flex-col w-full bg-[#fcfcfc] h-fit min-h-[100vh]">
-          <MainLayoutHeader openNotificationList={openNotificationList} />
+          <MainLayoutHeader showHeader openNotificationList={openNotificationList} />
           <Outlet />
         </div>
       </div>
-      <ProfileDialog
-        user={user}
-        owned={true}
-        hideBackdrop={false}
-        editProfileClick={() => {
-          setOpenProfileDialog(false);
-          setOpenSettingDialog({ chooseTabId: "my-profile", open: true });
-        }}
-        open={openProfileDialog}
-        onClose={() => setOpenProfileDialog(false)}
-      />
       <PersonalSettingDialog
         chooseTabId={openSettingDialog.chooseTabId}
         open={openSettingDialog.open}

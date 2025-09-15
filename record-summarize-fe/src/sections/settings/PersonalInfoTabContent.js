@@ -1,6 +1,5 @@
 import BirthdayPicker from "@/components/fields/BirthdayPicker";
 import { setUser } from "@/redux/slices/userSlice";
-import { updateProfile } from "@/services/profileApiService";
 import { LoadingButton } from "@mui/lab";
 import { Box, FormControl, InputLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
 import { useFormik } from "formik";
@@ -51,31 +50,31 @@ const PersonalInfoTabContent = () => {
         }),
         onSubmit: async values => {
             setLoading(true);
-            updateProfile(values)
-                .then(({ result }) => {
-                    const { user } = result;
-                    dispatch(setUser(user));
-                    enqueueSnackbar(`Cập nhật hồ sơ thành công`, {
-                        variant: 'success',
-                        anchorOrigin: {
-                            vertical: 'bottom',
-                            horizontal: 'right'
-                        },
-                        preventDuplicate: true
-                    });
-                })
-                .catch((err) => {
-                    console.log(err);
-                    enqueueSnackbar(`Cập nhật hồ sơ thất bại`, {
-                        variant: 'error',
-                        anchorOrigin: {
-                            vertical: 'bottom',
-                            horizontal: 'right'
-                        },
-                        preventDuplicate: true
-                    });
-                })
-                .finally(() => setLoading(false))
+            // updateProfile(values)
+            //     .then(({ result }) => {
+            //         const { user } = result;
+            //         dispatch(setUser(user));
+            //         enqueueSnackbar(`Cập nhật hồ sơ thành công`, {
+            //             variant: 'success',
+            //             anchorOrigin: {
+            //                 vertical: 'bottom',
+            //                 horizontal: 'right'
+            //             },
+            //             preventDuplicate: true
+            //         });
+            //     })
+            //     .catch((err) => {
+            //         console.log(err);
+            //         enqueueSnackbar(`Cập nhật hồ sơ thất bại`, {
+            //             variant: 'error',
+            //             anchorOrigin: {
+            //                 vertical: 'bottom',
+            //                 horizontal: 'right'
+            //             },
+            //             preventDuplicate: true
+            //         });
+            //     })
+            //     .finally(() => setLoading(false))
         },
     });
     console.log(formik.errors.gender)

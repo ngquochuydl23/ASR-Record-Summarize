@@ -71,7 +71,7 @@ const Sidebar = () => {
   return (
     <div className="sidebar">
       <div className="store-info">
-        <Link>
+        <Link to="/records">
           <div className="flex w-full p-2">
             <img
               src="/chatbot_icon.png"

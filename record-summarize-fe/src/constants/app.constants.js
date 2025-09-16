@@ -105,3 +105,8 @@ export const PipelineItemTypeEnum = {
   GENERATE_SUM: 2,
   CHATBOT_PREPARATION: 4,
 };
+
+export const SourceTypeEnum = {
+  LOCAL: "local",
+  YOUTUBE: "youtube"
+};

@@ -9,6 +9,8 @@ services:
       - ./huggingface-cache:/cache:rw
       - ./meeting-api/uploads:/uploads
       - ./meeting-api/wavs:/wavs
+      - ./meeting-api/vtts:/vtts
+      - ./meeting-api/youtube_downloads:/youtube_downloads
     ports:
       - "2025:2025"
     restart: always

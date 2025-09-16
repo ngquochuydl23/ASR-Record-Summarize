@@ -32,7 +32,7 @@ const MainLayoutHeader = ({ openNotificationList, showHeader = false }) => {
     <div className="flex h-[60px] bg-white ml-[2px] items-center justify-between px-4 shadow-sm ">
       <div className="flex h-full items-center gap-3">
         {showHeader &&
-          <Link>
+          <Link to="/records">
             <div className="flex w-full py-2 gap-3 items-center">
               <img
                 src="/chatbot_icon.png"

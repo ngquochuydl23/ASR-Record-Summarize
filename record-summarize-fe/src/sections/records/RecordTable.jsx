@@ -23,7 +23,7 @@ import { Search } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '@/theme/theme.global';
 import TableLoading from '@/components/TableLoading';
-import { PipelineItemTypeEnum, RecordContentType } from '@/constants/app.constants'
+import { PipelineItemTypeEnum, RecordContentType, SourceTypeEnum } from '@/constants/app.constants'
 import ProgressBar from '@ramonak/react-progress-bar';
 import styles from './record-table.module.scss';
 import { readUrl } from '@/utils/readUrl';
@@ -36,6 +36,8 @@ import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import { deteleRecord, publishLastVRecord } from '@/repositories/record.repository';
 import _ from 'lodash';
 import { useSnackbar } from 'notistack';
+import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 
 
 const ActionTableCell = ({ item, onRefresh, publishable }) => {
@@ -295,6 +297,7 @@ export const RecordTable = ({
                   <TableCell>Tiêu đề</TableCell>
                   <TableCell>Bộ sưu tập</TableCell>
                   <TableCell>Thể loại</TableCell>
+                  <TableCell>Nguồn</TableCell>
                   <TableCell>Tiến trình</TableCell>
                   <TableCell align='center'>Trạng thái</TableCell>
                   <TableCell>Người tạo</TableCell>
@@ -305,14 +308,13 @@ export const RecordTable = ({
               <TableBody>
                 {records.map((item, index) => {
                   const { isCompleted, percentage, isFailed } = getProgressRecord(item);
-
                   return (
                     <TableRow hover key={item.id}>
-                      <TableCell width="20%">
+                      <TableCell width="15%">
                         <Tooltip title={item.title}>
                           <Typography
                             sx={{
-                              maxWidth: '250px',
+                              maxWidth: '200px',
                               fontWeight: 600,
                               overflow: 'hidden',
                               whiteSpace: "nowrap",
@@ -324,6 +326,12 @@ export const RecordTable = ({
                       </TableCell>
                       <TableCell width="10%">{item.collection ? item.collection.title : `-`}</TableCell>
                       <TableCell width="10%">{item.record_content_type ? RecordContentType[item.record_content_type] : '-'}</TableCell>
+                      <TableCell>
+                        {item.source_type === SourceTypeEnum.LOCAL
+                          ? <Tooltip title="Tải lên"><CloudUploadOutlinedIcon /></Tooltip>
+                          : <Tooltip title="Từ youtube"><YouTubeIcon /></Tooltip>
+                        }
+                      </TableCell>
                       <TableCell>
                         <ProgressBar
                           barContainerClassName={styles.container}

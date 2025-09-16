@@ -27,11 +27,14 @@ from ...services.s3_service import S3Service
 from ..dependencies import get_current_user
 from ...core.logger import logging
 from ...services.transcription_service import TranscriptionService
+from ...services.youtube_service import YoutubeService
 from ...utils.extract_text_from_file import extract_text
 
 s3_service = S3Service()
 rag_index_service = RagIndexService()
 transcription_service = TranscriptionService()
+youtube_service = YoutubeService()
+
 router = APIRouter(tags=["Record"])
 
 
@@ -42,7 +45,7 @@ async def create_records(
         db: Annotated[AsyncSession, Depends(async_get_db)],
         background_tasks: BackgroundTasks
 ) -> dict:
-    duration = await FFMpegService.get_duration_video(body.url)
+    duration = await FFMpegService.get_duration_video(body.url) if body.source_type == RecordSourceType.LOCAL else 0
     record = RecordModel(
         id=uuid.uuid4(),
         title=body.title,
@@ -430,25 +433,26 @@ async def _execute_step(
 
 
 async def transcribe_stage(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
-    if record.source_type == RecordSourceType.LOCAL:
-        extract_audio_result = await FFMpegService.extract_audio(record.url, f'wavs/record-{str(record.id)}.wav')
-        subtitle_file = f'vtts/record-{record.lang}-{str(record.id)}.vtt'
-        transcribe_result = await transcription_service.generate_subtitle(
-            wav_path=extract_audio_result['output'],
-            output_path=subtitle_file,
-            lang=record.lang
-        )
-        uploaded_result = await s3_service.upload_file_from_path(subtitle_file, folder='vtts')
-        return {
-            "subtitle_s3_key": uploaded_result.url,
-            "transcribe_result": transcribe_result,
-            "extract_audio_result": extract_audio_result
-        }
-    else:
-        # generate vtt with youtube - gemini
-        # save
-        # upload
-        raise NotImplementedError()
+    url = record.url
+    if record.source_type == RecordSourceType.YOUTUBE:
+        logging.info(f"Youtube downloading {record.url}")
+        url = await youtube_service.download_youtube_via_link(record.url)
+        if url is None:
+            raise AppException("Download youtube video failed.")
+
+    extract_audio_result = await FFMpegService.extract_audio(url, f'wavs/record-{str(record.id)}.wav')
+    subtitle_file = f'vtts/record-{record.lang}-{str(record.id)}.vtt'
+    transcribe_result = await transcription_service.generate_subtitle(
+        wav_path=extract_audio_result['output'],
+        output_path=subtitle_file,
+        lang=record.lang
+    )
+    uploaded_result = await s3_service.upload_file_from_path(subtitle_file, folder='vtts')
+    return {
+        "subtitle_s3_key": uploaded_result.url,
+        "transcribe_result": transcribe_result,
+        "extract_audio_result": extract_audio_result
+    }
 
 
 async def store_vectordb_stage(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):

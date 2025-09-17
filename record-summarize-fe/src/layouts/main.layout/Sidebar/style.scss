@@ -5,6 +5,8 @@
   align-items: center;
   justify-content: space-between;
   width: 300px;
+  z-index: 10;
+  box-shadow: rgba(0, 0, 0, 0.04) 0px 3px 5px;
   border-right: 1px solid #E5E7EB;
 
   .store-info {

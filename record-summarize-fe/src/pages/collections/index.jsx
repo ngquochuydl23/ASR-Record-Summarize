@@ -2,14 +2,14 @@ import AdminHeader from "@/components/AdminHeader";
 import DashboardCard from "@/components/card/DashboardCard";
 import { useImportExcelDialog } from "@/contexts/ImportExcelDialogContext";
 import { getCategories } from "@/repositories/category.repository";
-import { CategoryTable } from "@/sections/category/CategoryTable";
-import CreateUpdateCategoryDrawer from "@/sections/category/CreateUpdateCategoryDrawer";
+import { CollectionTable } from "@/sections/collections/CollectionTable";
+import CreateUpdateCategoryDrawer from "@/sections/collections/CreateUpdateCategoryDrawer";
 import { Button } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useAsync, useAsyncFn, useAsyncRetry, useEffectOnce } from "react-use";
 
 const Page = () => {
-  const importExcelDialog = useImportExcelDialog();
+
   const [rowsPerPageChange, setRowsPerPageChange] = useState();
   const [open, setOpen] = useState(false);
 
@@ -19,7 +19,7 @@ const Page = () => {
   }, [open]);
 
   const handleImportExcel = async () => {
-    const file = await importExcelDialog({});
+    //const file = await importExcelDialog({});
   }
 
   const handleOpenDrawer = () => {
@@ -37,32 +37,37 @@ const Page = () => {
   return (
     <DashboardCard>
       <div className="flex flex-col">
-        <AdminHeader title="Danh mục">
-          <Button variant="outlined" onClick={handleImportExcel}>Nhập</Button>
-          <Button variant="outlined">Xuất</Button>
+        <AdminHeader title="Bộ sưu tập">
           <Button variant="outlined" onClick={handleOpenDrawer}>
-            Tạo danh mục
+            Tạo bộ sưu tập
           </Button>
         </AdminHeader>
         {!error && !loading && value && (
-          <CategoryTable
-            labels={["Tên", "Loại sản phẩm", "Trạng thái", "Số sản phẩm", "..."]}
-            totalCount={value.totalCount || 0}
-            onRowsPerPageChange={setRowsPerPageChange}
-            onReload={() => getAll()}
-            onDeselectAll={() => {
-              console.log();
-            }}
-            onDeselectOne={() => {
-              console.log();
-            }}
-            onPageChange={(page) => {
-              console.log(page);
-            }}
-            categories={value.categories}
-            isLoading={loading}
+          <CollectionTable
+            onRowsPerPageChange={() => { }}
+            onPageChange={() => { }}
+            onRefresh={() => {}}
+            totalCount={2}
+            collections={[
+              {
+                title: "Xử lý ảnh"
+              }
+            ]}
+            isLoading={false}
           />
         )}
+        <CollectionTable
+            onRowsPerPageChange={() => { }}
+            onPageChange={() => { }}
+            onRefresh={() => {}}
+            totalCount={2}
+            collections={[
+              {
+                title: "Xử lý ảnh"
+              }
+            ]}
+            isLoading={false}
+          />
         <CreateUpdateCategoryDrawer
           open={open}
           onCreate={getAll}

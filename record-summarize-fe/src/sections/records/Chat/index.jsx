@@ -8,12 +8,16 @@ import { useState } from 'react';
 import { AIAgentGenerating, AIAgentMessageItem, MessageItem } from './Message';
 import Scrollbars from 'react-custom-scrollbars-2';
 import ChatbotPreparing from './ChatbotPreparing';
+import { ChatbotPreparingStateEnum } from '@/constants/app.constants';
+import ChatbotFailed from './ChatbotFailed';
+import WelcomeView from './WelcomeView';
 
 
-const ChatView = ({ onClose }) => {
+const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING, onRetry }) => {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [msgObject, setMsgObject] = useState(null);
+  const [waiting, setWaiting] = useState(false);
   const open = Boolean(anchorEl);
-  const [preparing, setPreparing] = useState(true);
   const id = open ? 'simple-popover' : undefined;
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -22,6 +26,7 @@ const ChatView = ({ onClose }) => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
   return (
     <div className={styles.chatView}>
       <div className={styles.chatViewHeader}>
@@ -40,21 +45,25 @@ const ChatView = ({ onClose }) => {
           </IconButton>
         </Tooltip>
       </div>
-
       <div className={styles.chatViewBody}>
-        {preparing
-          ? < ChatbotPreparing />
-          : <Scrollbars>
-            <div className='flex flex-col'>
-              <AIAgentMessageItem />
-              <MessageItem />
-              <AIAgentGenerating />
+        {state === ChatbotPreparingStateEnum.PREPARING && <ChatbotPreparing />}
+        {state === ChatbotPreparingStateEnum.FAILED && <ChatbotFailed onRetry={onRetry} />}
+        {state === ChatbotPreparingStateEnum.DONE &&
+          <Scrollbars>
+            <div className='flex flex-col-reverse bg-white'>
+              {(waiting && msgObject) && <AIAgentGenerating />}
+              <AIAgentMessageItem content={`Trong CSS, khi bạn dùng inline-block thì thuộc tính gap không hoạt động (chỉ áp dụng cho flex và grid).`}/>
+              <MessageItem content={`Bạn muốn mình làm bản UI giống kiểu “prompt suggestions chip” như trong ảnh chatbot pizza (clickable, đẹp + hover) không?`}/>
+              <WelcomeView /> {/** Check neeus ko cos lich su */}
             </div>
           </Scrollbars>
         }
       </div>
-      {!preparing &&
-        <Composer onSendMsg={() => { }} />
+      {(state === ChatbotPreparingStateEnum.DONE) &&
+        <Composer onSendMsg={(msg) => {
+          setMsgObject(msg);
+          setWaiting(true);
+        }} />
       }
       <Popover
         id={id}

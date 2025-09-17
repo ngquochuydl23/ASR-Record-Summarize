@@ -31,7 +31,7 @@ export const AIAgentGenerating = () => {
       <img alt="chatbot icon" className={styles.chatbotIc} src='/chatbot_icon.png' />
       <div className='flex flex-col'>
         <div className={styles.aiAssistantTitle}>Trợ lý AI</div>
-        <div className="text-gray-500 flex items-center gap-2">
+        <div className="text-[#0842a0] flex items-center gap-2 font-[600] text-[13px]">
           <span><CircularProgress size={14} sx={{ color: '#666' }} /></span>
           Đang trả lời
           <span className="ml-1 flex">

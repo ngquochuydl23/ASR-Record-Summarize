@@ -29,7 +29,7 @@ const MainLayoutHeader = ({ openNotificationList, showHeader = false }) => {
 
 
   return (
-    <div className="flex h-[60px] bg-white ml-[2px] items-center justify-between px-4 shadow-sm ">
+    <div className="flex h-[60px] bg-white ml-[2px] items-center justify-between px-4 drop-shadow-sm z-10">
       <div className="flex h-full items-center gap-3">
         {showHeader &&
           <Link to="/records">

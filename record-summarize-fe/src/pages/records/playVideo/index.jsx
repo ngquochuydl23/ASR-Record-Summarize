@@ -16,14 +16,16 @@ import unescapeJs from 'unescape-js';
 import ReactMarkdown from "react-markdown";
 import { getSummaryVersionById } from '@/repositories/summary-version.repository';
 import Scrollbars from 'react-custom-scrollbars-2';
+import { ChatbotPreparingStateEnum } from '@/constants/app.constants';
+import LoadingScreen from '@/components/LoadingScreen';
 
 const PlayVideoPage = () => {
   const { recordId } = useParams();
 
   async function getBlobUrl(fileKey) {
     const res = await fetch(readS3Object(fileKey));
-    const blob = await res.blob(); // convert response to Blob
-    const url = URL.createObjectURL(blob); // create temporary URL
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
     return url;
   }
 
@@ -36,11 +38,15 @@ const PlayVideoPage = () => {
     return record;
   }, [recordId]);
 
+  const handleRetry = () => {
+
+  }
+
   if (loading) {
     return (
-      <div>
+      <LoadingScreen>
         alo
-      </div>
+      </LoadingScreen>
     )
   }
 
@@ -96,9 +102,12 @@ const PlayVideoPage = () => {
           </div>
         </Scrollbars>
       </div>
-      <div className='py-3 pr-3' style={{ height: 'calc(100vh - 60px)',}}>
+      <div className='py-3 pr-3' style={{ height: 'calc(100vh - 60px)', }}>
         <div className={styles.chatSection}>
-          <ChatView />
+          <ChatView
+            record={record}
+            state={record.chatbot_preparation_state}
+            onRetry={handleRetry} />
         </div>
       </div>
     </div>

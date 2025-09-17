@@ -28,14 +28,14 @@ const sideBarItems = [
     enableBadge: true,
   },
   {
-    path: "/category",
+    path: "/collections",
     activeIcon: <IcActiveCategory />,
     inactiveIcon: <IcCategory />,
-    title: "Danh mục",
+    title: "Bộ sưu tập",
     enableBadge: true,
   },
   {
-    path: "/orders",
+    path: "/history",
     activeIcon: <ScheduleIcon sx={{ color: colors.primaryColor }} />,
     inactiveIcon: <ScheduleIcon sx={{ color: "#6B7280" }} />,
     title: "Lịch sử trò chuyện cùng AI",
@@ -52,8 +52,6 @@ const sideBarItems = [
 
 const Sidebar = () => {
   const location = useLocation();
-  //const { store } = useSelector((state) => state.store);
-  //const { user } = useSelector((state) => state.user);
   const isSelected = (path) => new RegExp("^" + path).test(location.pathname);
 
   const [anchorEl, setAnchorEl] = useState(null);

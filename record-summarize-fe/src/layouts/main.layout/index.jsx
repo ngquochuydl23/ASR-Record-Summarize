@@ -6,13 +6,10 @@ import PersonalSettingDialog from "@/sections/settings/PersonalSettingDialog";
 import { useSnackbar } from "notistack";
 import NotificationDrawer from "@/components/notifications/NotificationDrawer";
 import { getMe } from "@/repositories/user.repository";
-import { getMyStore } from "@/repositories/store.repository";
-import { setStore } from "@/redux/slices/storeSlice";
-import { AppRoute } from "@/constants/app.constants";
 import MainLayoutHeader from "./main.layout.header";
 import LoadingScreen from "@/components/LoadingScreen";
 import { setUser } from "@/redux/slices/userSlice";
-import { useEffectOnce } from "react-use";
+import './styles.scss';
 
 const MainLayout = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -27,7 +24,7 @@ const MainLayout = () => {
     chooseTabId: null,
     open: false,
   });
-  
+
   const openNotificationList = () => {
     setOpenNotiDrawer(true);
   };
@@ -57,16 +54,16 @@ const MainLayout = () => {
 
   return (
     <>
-      <div className="flex">
+      <div className="flex h-[100vh]">
         <Sidebar />
         <div className="flex flex-col w-full bg-[#fcfcfc] h-fit min-h-[100vh]">
           <MainLayoutHeader openNotificationList={openNotificationList} />
-          <div className="p-4">
+          <div className="p-4 innerLayout">
             <Outlet />
           </div>
         </div>
       </div>
-    
+
       <PersonalSettingDialog
         chooseTabId={openSettingDialog.chooseTabId}
         open={openSettingDialog.open}

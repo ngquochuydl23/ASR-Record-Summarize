@@ -3,7 +3,7 @@ import { Navigate, useRoutes } from "react-router-dom";
 import AuthLayout from "../layouts/auth.layout";
 import { DEFAULT_PATH } from "../config";
 import LoadingScreen from "../components/LoadingScreen";
-import { AppRoute, OKRAppRoute } from "@/constants/app.constants";
+import { AppRoute } from "@/constants/app.constants";
 import MainLayout from "@/layouts/main.layout";
 import PlayVideoLayout from "@/layouts/playVideoLayout";
 
@@ -16,16 +16,16 @@ const Loadable = (Component) => (props) => {
 };
 
 const RecordPage = Loadable(lazy(() => import("../pages/records")));
-const PlayRecordPage = Loadable(
-  lazy(() => import("../pages/records/playVideo"))
-);
-
+const PlayRecordPage = Loadable(lazy(() => import("../pages/records/playVideo")));
 const SettingPage = Loadable(lazy(() => import("../pages/settings")));
-const PersonalInfoPage = Loadable(
-  lazy(() => import("../pages/settings/personal-info"))
-);
-const CategoryPage = Loadable(lazy(() => import("../pages/categories")));
+const PersonalInfoPage = Loadable(lazy(() => import("../pages/settings/personal-info")));
+const CollectionPage = Loadable(lazy(() => import("../pages/collections")));
 const DashboardPage = Loadable(lazy(() => import("../pages/dashboard")));
+const RegisterPage = Loadable(lazy(() => import("../pages/auth/RegisterPage")));
+const LoginPage = Loadable(lazy(() => import("../pages/auth/login")));
+const Page404 = Loadable(lazy(() => import("../pages/Page404")));
+const HistoryChatAIPage = Loadable(lazy(() => import("../pages/history")));
+
 
 export default function Router() {
   return useRoutes([
@@ -35,9 +35,6 @@ export default function Router() {
       children: [
         { element: <LoginPage />, path: "login" },
         { element: <RegisterPage />, path: "register" },
-        { element: <VerifyPage />, path: "verify" },
-        { element: <ResetPassword />, path: "reset-Password" },
-        { element: <NewPassword />, path: "new-Password" },
       ],
     },
     {
@@ -57,8 +54,8 @@ export default function Router() {
       children: [
         { element: <Navigate to={DEFAULT_PATH} replace />, index: true },
         { path: AppRoute.RECORDS, element: <RecordPage />, index: true },
-        { path: AppRoute.DASHBOARD, element: <DashboardPage /> },
-        { path: AppRoute.CATEGORY, element: <CategoryPage /> },
+        { path: AppRoute.HISTORY, element: <HistoryChatAIPage /> },
+        { path: AppRoute.COLLECTIONS, element: <CollectionPage /> },
         { path: "/settings", element: <SettingPage /> },
         { path: AppRoute.PERSONAL_INFO, element: <PersonalInfoPage /> },
         { path: "/404", element: <Page404 /> },
@@ -68,12 +65,3 @@ export default function Router() {
     { path: "*", element: <Navigate to="/404" replace /> },
   ]);
 }
-
-const VerifyPage = Loadable(lazy(() => import("../pages/auth/verify")));
-const RegisterPage = Loadable(lazy(() => import("../pages/auth/RegisterPage")));
-const LoginPage = Loadable(lazy(() => import("../pages/auth/login")));
-const ResetPassword = Loadable(
-  lazy(() => import("../pages/auth/resetPassword"))
-);
-const NewPassword = Loadable(lazy(() => import("../pages/auth/newPassword")));
-const Page404 = Loadable(lazy(() => import("../pages/Page404")));

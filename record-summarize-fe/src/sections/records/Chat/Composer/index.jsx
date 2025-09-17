@@ -2,15 +2,15 @@ import { IconButton, Tooltip } from '@mui/material';
 import styles from './styles.module.scss';
 import SendIcon from '@mui/icons-material/Send';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-
+import _ from 'lodash';
 import { useCallback, useRef, useState } from 'react';
 import classNames from 'classnames';
 import { BootstrapInput } from '@/components/fields/BootstrapField';
 
 
-const Composer = ({ onSendMsg }) => {
+const Composer = ({ onSendMsg, disabled = false }) => {
   const [borderRadius, setBorderRadius] = useState('30px');
-  const [msg, setMsg] = useState();
+  const [msg, setMsg] = useState(null);
 
   const inputRef = useRef(null);
 
@@ -44,6 +44,7 @@ const Composer = ({ onSendMsg }) => {
   const handleSendMsg = () => {
     if (!msg) return;
     onSendMsg(msg);
+    setMsg(null);
   };
 
   return (
@@ -54,34 +55,28 @@ const Composer = ({ onSendMsg }) => {
         </IconButton>
       </Tooltip>
       <BootstrapInput
-        ref={elementRef}
-        placeholder="Soạn tin nhắn"
-        multiline
-        maxRows={6}
+        ref={elementRef} placeholder="Soạn tin nhắn"
+        multiline maxRows={6} size="small"
+        value={msg?.content || ''}
         sx={{
           padding: 0,
           width: '100%',
           ['& .MuiInputBase-input']: {
-            padding: '5px 10px',
+            backgroundColor: 'whitesmoke',
+            padding: '15px 10px',
             borderRadius,
             fontSize: '14px',
           },
         }}
-        size="small"
         onChange={handleChangeText}
       />
       <input
-        multiple
-        ref={inputRef}
-        type="file"
-        accept=".pdf,.docx,.jpeg,.png,.webp"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
+        multiple ref={inputRef} type="file" accept=".pdf,.docx,.jpeg,.png,.webp"
+        style={{ display: 'none' }} onChange={handleFileChange} />
       <Tooltip title="Gửi tin nhắn">
         <IconButton
           className={classNames(styles.iconBtn, styles.sendBtn)}
-          disabled
+          disabled={disabled || !msg}
           onClick={handleSendMsg}
         >
           <SendIcon />

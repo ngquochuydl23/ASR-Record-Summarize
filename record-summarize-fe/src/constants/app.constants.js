@@ -1,8 +1,8 @@
 export const AppRoute = {
   RECORDS: "/records",
   PLAY_RECORDS: "/records/:recordId/play",
-  CATEGORY: "/category",
-  BILLBOARD: "/billboard",
+  COLLECTIONS: "/collections",
+  HISTORY: "/history",
   DASHBOARD: "/dashboard",
   INIT_STORE: "/init-store",
   ORDERS: "/orders",
@@ -108,5 +108,11 @@ export const PipelineItemTypeEnum = {
 
 export const SourceTypeEnum = {
   LOCAL: "local",
-  YOUTUBE: "youtube"
+  YOUTUBE: "youtube",
+};
+
+export const ChatbotPreparingStateEnum = {
+  PREPARING: "preparing",
+  DONE: "done",
+  FAILED: "failed",
 };

@@ -1,5 +1,5 @@
 .messageItem {
-  padding: 10px 15px;
+  padding: 7.5px 10px;
   display: flex;
   gap: 10px;
   width: 70%;
@@ -9,7 +9,7 @@
   margin-right: 15px;
   border: 1px solid #d3d3d3;
   align-self: flex-end;
-
+  font-size: 14px;
   &.isAiResponse {
     border: none;
     background-color: #f1f1fc;

@@ -16,7 +16,6 @@ import unescapeJs from 'unescape-js';
 import ReactMarkdown from "react-markdown";
 import { getSummaryVersionById } from '@/repositories/summary-version.repository';
 import Scrollbars from 'react-custom-scrollbars-2';
-import { ChatbotPreparingStateEnum } from '@/constants/app.constants';
 import LoadingScreen from '@/components/LoadingScreen';
 
 const PlayVideoPage = () => {
@@ -57,7 +56,7 @@ const PlayVideoPage = () => {
           <div className='flex flex-col pr-2'>
             <div className={styles.videoContainer}>
               <ReactPlayer width={"100%"} height={"100%"} controls src={readS3Object(record?.url)}>
-                <track kind="subtitles" src={record?.subtitle_url} srclang="vi" default></track>
+                <track kind="subtitles" src={record?.subtitle_url} srcLang="vi" default></track>
               </ReactPlayer>
             </div>
             <div className='flex flex-col mt-2'>
@@ -95,7 +94,8 @@ const PlayVideoPage = () => {
                     }}
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}>
-                    {unescapeJs(record?.summary_version?.summary_content)}</ReactMarkdown>
+                    {unescapeJs(record?.summary_version?.summary_content)}
+                  </ReactMarkdown>
                 </p>
               }
             </div>

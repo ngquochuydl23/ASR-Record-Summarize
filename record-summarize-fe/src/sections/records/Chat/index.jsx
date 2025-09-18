@@ -4,16 +4,17 @@ import CloseIcon from '@mui/icons-material/Close';
 import Composer from './Composer';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AIAgentGenerating, AIAgentMessageItem, MessageItem } from './Message';
 import Scrollbars from 'react-custom-scrollbars-2';
 import ChatbotPreparing from './ChatbotPreparing';
 import { ChatbotPreparingStateEnum } from '@/constants/app.constants';
 import ChatbotFailed from './ChatbotFailed';
 import WelcomeView from './WelcomeView';
-
+import { useSearchParams } from 'react-router-dom';
 
 const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING, onRetry }) => {
+  const [searchParams] = useSearchParams();
   const [anchorEl, setAnchorEl] = useState(null);
   const [msgObject, setMsgObject] = useState(null);
   const [waiting, setWaiting] = useState(false);
@@ -27,12 +28,20 @@ const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING
     setAnchorEl(null);
   };
 
+  const handleSubmitMsg = (payload) => {
+    setMsgObject(payload);
+    setWaiting(true);
+  }
+
+  useEffect(() => {
+    if (searchParams) {
+      console.log("Current query:", searchParams.get("roomId"));
+    }
+  }, [searchParams]);
+
   return (
     <div className={styles.chatView}>
       <div className={styles.chatViewHeader}>
-        <IconButton aria-label="close" onClick={onClose}>
-          <CloseIcon />
-        </IconButton>
         <Typography variant='body1' className={styles.chatViewHeaderTitle}>Trợ lý ảo AI</Typography>
         <Tooltip title="Tài liệu đính kèm">
           <IconButton>
@@ -50,20 +59,18 @@ const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING
         {state === ChatbotPreparingStateEnum.FAILED && <ChatbotFailed onRetry={onRetry} />}
         {state === ChatbotPreparingStateEnum.DONE &&
           <Scrollbars>
-            <div className='flex flex-col-reverse bg-white'>
+            <div className='flex flex-col bg-white py-3'>
+              {!searchParams.get("roomId") && <WelcomeView />}
+              <MessageItem content={`Bạn muốn mình làm bản UI giống kiểu “prompt suggestions chip” như trong ảnh chatbot pizza (clickable, đẹp + hover) không?`} />
+              <AIAgentMessageItem content={`Trong CSS, khi bạn dùng inline-block thì thuộc tính gap không hoạt động (chỉ áp dụng cho flex và grid).`} />
+              {msgObject && <MessageItem content={msgObject?.msgContent} />}
               {(waiting && msgObject) && <AIAgentGenerating />}
-              <AIAgentMessageItem content={`Trong CSS, khi bạn dùng inline-block thì thuộc tính gap không hoạt động (chỉ áp dụng cho flex và grid).`}/>
-              <MessageItem content={`Bạn muốn mình làm bản UI giống kiểu “prompt suggestions chip” như trong ảnh chatbot pizza (clickable, đẹp + hover) không?`}/>
-              <WelcomeView /> {/** Check neeus ko cos lich su */}
             </div>
           </Scrollbars>
         }
       </div>
       {(state === ChatbotPreparingStateEnum.DONE) &&
-        <Composer onSendMsg={(msg) => {
-          setMsgObject(msg);
-          setWaiting(true);
-        }} />
+        <Composer disabled={waiting} onSendMsg={handleSubmitMsg} />
       }
       <Popover
         id={id}

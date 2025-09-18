@@ -13,7 +13,7 @@ export const MessageItem = ({ content }) => {
 
 export const AIAgentMessageItem = ({ content }) => {
   return (
-    <div className='flex gap-3 p-2'>
+    <div className='flex gap-3 p-2 w-fit'>
       <img alt="chatbot icon" className={styles.chatbotIc} src='/chatbot_icon.png' />
       <div className='flex flex-col'>
         <div className={styles.aiAssistantTitle}>Trợ lý AI</div>
@@ -27,7 +27,7 @@ export const AIAgentMessageItem = ({ content }) => {
 
 export const AIAgentGenerating = () => {
   return (
-    <div className='flex gap-3 p-2'>
+    <div className='flex gap-3 p-2 w-fit'>
       <img alt="chatbot icon" className={styles.chatbotIc} src='/chatbot_icon.png' />
       <div className='flex flex-col'>
         <div className={styles.aiAssistantTitle}>Trợ lý AI</div>

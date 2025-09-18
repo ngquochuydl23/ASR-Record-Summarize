@@ -1,7 +1,7 @@
 const { SvgIcon } = require("@mui/material");
 
-const IcPdf = () => (
-	<SvgIcon sx={{ height: '24px', width: '24px' }}>
+const IcPdf = ({ sx }) => (
+	<SvgIcon sx={{ height: '24px', width: '24px', ...sx }}>
 		<svg version="1.1" id="_x35_"
 			viewBox="0 0 512 512" >
 			<g>

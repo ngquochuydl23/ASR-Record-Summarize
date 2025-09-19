@@ -1,6 +1,5 @@
 import { IconButton, MenuItem, MenuList, Popover, Tooltip, Typography } from '@mui/material';
 import styles from './styles.module.scss';
-import CloseIcon from '@mui/icons-material/Close';
 import Composer from './Composer';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
@@ -12,6 +11,8 @@ import { ChatbotPreparingStateEnum } from '@/constants/app.constants';
 import ChatbotFailed from './ChatbotFailed';
 import WelcomeView from './WelcomeView';
 import { useSearchParams } from 'react-router-dom';
+import HistoryIcon from '@mui/icons-material/History';
+
 
 const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING, onRetry }) => {
   const [searchParams] = useSearchParams();
@@ -43,9 +44,9 @@ const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING
     <div className={styles.chatView}>
       <div className={styles.chatViewHeader}>
         <Typography variant='body1' className={styles.chatViewHeaderTitle}>Trợ lý ảo AI</Typography>
-        <Tooltip title="Tài liệu đính kèm">
+        <Tooltip title="Lịch sử trò chuyện">
           <IconButton>
-            <FolderOpenIcon />
+            <HistoryIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Thêm">
@@ -73,10 +74,8 @@ const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING
         <Composer disabled={waiting} onSendMsg={handleSubmitMsg} />
       }
       <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
+        id={id} open={open}
+        anchorEl={anchorEl} onClose={handleClose}
         elevation={5}
         sx={{
           '& .MuiPaper-root': {
@@ -84,10 +83,7 @@ const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING
             borderRadius: '10px',
           },
         }}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
         <MenuList>
           <MenuItem className={styles.menuItem}>Cài đặt cuộc họp</MenuItem>

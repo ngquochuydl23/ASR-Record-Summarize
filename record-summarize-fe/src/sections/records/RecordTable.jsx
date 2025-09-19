@@ -23,7 +23,7 @@ import { Search } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '@/theme/theme.global';
 import TableLoading from '@/components/TableLoading';
-import { PipelineItemTypeEnum, RecordContentType, SourceTypeEnum } from '@/constants/app.constants'
+import { PipelineItemTypeEnum, PipelineStepTitle, RecordContentType, SourceTypeEnum } from '@/constants/app.constants'
 import ProgressBar from '@ramonak/react-progress-bar';
 import styles from './record-table.module.scss';
 import { readUrl } from '@/utils/readUrl';
@@ -307,6 +307,7 @@ export const RecordTable = ({
               </TableHead>
               <TableBody>
                 {records.map((item, index) => {
+                  const runningStep = item.pipeline_items.find(x => x.status === 'Running');
                   const { isCompleted, percentage, isFailed } = getProgressRecord(item);
                   return (
                     <TableRow hover key={item.id}>
@@ -333,14 +334,16 @@ export const RecordTable = ({
                         }
                       </TableCell>
                       <TableCell>
-                        <ProgressBar
-                          barContainerClassName={styles.container}
-                          bgColor={isCompleted ? '#10b981' : (isFailed ? colors.errorColor : '#EED202')}
-                          labelClassName={styles.label}
-                          borderRadius='0px'
-                          completed={Math.round(percentage)}
-                          customLabel={`${Math.round(percentage)}%`}
-                        />
+                        <Tooltip title={isCompleted ? "Hoàn thành" : PipelineStepTitle[runningStep?.type]}>
+                          <ProgressBar
+                            barContainerClassName={styles.container}
+                            bgColor={isCompleted ? '#10b981' : (isFailed ? colors.errorColor : '#EED202')}
+                            labelClassName={styles.label}
+                            borderRadius='0px'
+                            completed={Math.round(percentage)}
+                            customLabel={`${Math.round(percentage)}%`}
+                          />
+                        </Tooltip>
                       </TableCell>
                       <TableCell align='center' width="10%">{item.published ? `Đã xuất bản` : `Lưu nháp`}</TableCell>
                       <TableCell>

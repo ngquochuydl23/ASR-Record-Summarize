@@ -116,3 +116,10 @@ export const ChatbotPreparingStateEnum = {
   DONE: "done",
   FAILED: "failed",
 };
+
+export const PipelineStepTitle = [
+  "Đang tạo record",
+  "Đang xử lý video và sinh phụ đề",
+  "Đang tóm tắt video",
+  "Chatbot đang chuẩn bị",
+];

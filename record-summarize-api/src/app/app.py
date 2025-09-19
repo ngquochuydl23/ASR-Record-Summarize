@@ -7,6 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from middlewares.exception_handling_middleware import ExceptionHandlingMiddleware
 from src.app.connection_manager import manager
 from src.app.core.config import settings
+from src.app.utils.ffmpeg_util import check_ffmpeg
 from src.app.utils.gpu_utils import check_gpu
 from src.app.api import router
 from src.app.core.logger import logging
@@ -48,5 +49,6 @@ async def websocket_task_endpoint(websocket: WebSocket, record_id: str):
 
 
 if __name__ == "__main__":
+    check_ffmpeg()
     logging.info(json.dumps(check_gpu(), indent=4))
     uvicorn.run(app, host="0.0.0.0", port=2025)

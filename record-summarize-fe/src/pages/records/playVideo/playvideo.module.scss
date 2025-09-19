@@ -11,6 +11,7 @@
     gap: 10px;
     height: 100%;
     overflow-y: auto;
+
     .videoContainer {
       margin: 10px 0px;
       width: 100%;
@@ -36,6 +37,14 @@
       .markdown {
         margin-top: 20px;
         font-size: 14px;
+        a {
+          color: #065fd4;
+          font-weight: 600;
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+
         h2 {
           font-weight: 600;
           font-size: 16px;

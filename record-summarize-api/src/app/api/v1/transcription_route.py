@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, UploadFile, File
+from fastapi import APIRouter, UploadFile, File
 from fastcrud.exceptions.http_exceptions import BadRequestException
 from ...constants.http_msgs import NOT_WAV_FILE
 from ...dtos.transcription import TranscriptionDto
@@ -14,15 +14,5 @@ async def transcribe_local_file(audio_file: UploadFile = File(...)):
         return BadRequestException(NOT_WAV_FILE)
 
     audio_bytes = await audio_file.read()
-    text = await transcription_service.transcribe_only_with_bytes(audio_bytes)
-    return TranscriptionDto(text=text)
-
-
-@router.post("/transcription/transcribe/generate-vtt", status_code=200)
-async def transcribe_local_file(audio_file: UploadFile = File(...)):
-    if not audio_file.filename.endswith(".wav"):
-        return BadRequestException(NOT_WAV_FILE)
-
-    audio_bytes = await audio_file.read()
-    text = await transcription_service.transcribe_only_with_bytes(audio_bytes)
+    text, merged_predicted_ids, merged_logits = await transcription_service.transcribe_only_with_bytes(audio_bytes)
     return TranscriptionDto(text=text)

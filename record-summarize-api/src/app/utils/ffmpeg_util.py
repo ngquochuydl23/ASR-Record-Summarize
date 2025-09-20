@@ -9,9 +9,8 @@ def check_ffmpeg():
             text=True
         )
         if result.returncode == 0:
-            logging.info(f"FFmpeg is installed - " + result.stdout.split("\n")[0])
+            logging.info(f"FFmpeg is installed")
         else:
-            print("⚠️ FFmpeg not found")
             logging.warning("FFmpeg not found")
     except FileNotFoundError:
         logging.error("❌ FFmpeg is not installed on this system")

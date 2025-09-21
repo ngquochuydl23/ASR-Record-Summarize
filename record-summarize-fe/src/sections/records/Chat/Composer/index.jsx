@@ -16,7 +16,7 @@ const Composer = ({ onSendMsg, disabled = false }) => {
   const [borderRadius, setBorderRadius] = useState('30px');
   const inputRef = useRef(null);
   const validationSchema = Yup.object({
-    msgContent: Yup.string()
+    msg_content: Yup.string()
       .trim()
       .required("Message is required")
       .max(1000, "Message is too long (max 1000 chars)"),
@@ -45,15 +45,16 @@ const Composer = ({ onSendMsg, disabled = false }) => {
     resizeObserver.observe(node);
   }, []);
 
-  const handleSubmit = async (values, { resetForm }) => {
+  const handleSubmit = async (values, { resetForm, setFieldValue }) => {
     resetForm();
+    setFieldValue('msg_content', '');
     onSendMsg(values);
   };
 
   return (
     <Formik
       initialValues={{
-        msgContent: null,
+        msg_content: null,
         attachments: []
       }}
       validationSchema={validationSchema}
@@ -146,7 +147,7 @@ const Composer = ({ onSendMsg, disabled = false }) => {
               <BootstrapInput
                 ref={elementRef} placeholder="Soạn tin nhắn"
                 multiline maxRows={6} size="small"
-                value={values.msgContent}
+                value={values.msg_content}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -163,7 +164,7 @@ const Composer = ({ onSendMsg, disabled = false }) => {
                     fontSize: '14px',
                   },
                 }}
-                onChange={(e) => setFieldValue('msgContent', e.target.value)}
+                onChange={(e) => setFieldValue('msg_content', e.target.value)}
               />
               <Tooltip title="Gửi tin nhắn">
                 <IconButton

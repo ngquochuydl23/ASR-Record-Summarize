@@ -18,23 +18,29 @@ import { getSummaryVersionById } from '@/repositories/summary-version.repository
 import Scrollbars from 'react-custom-scrollbars-2';
 import { timeToSeconds } from '@/utils/process_markdown';
 import { useEffect, useRef } from 'react';
+import { getConversationsByRecordId } from '@/repositories/conversation.repository';
+
 
 const PlayVideoPage = () => {
   const { recordId } = useParams();
   const scrollbarRef = useRef(null);
+ 
   async function getBlobUrl(fileKey) {
     const res = await fetch(readS3Object(fileKey));
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     return url;
   }
-  const playerRef = useRef();
+
   const { loading, value: record } = useAsync(async () => {
     const record = await getRecordById(recordId);
     const summary_version = await getSummaryVersionById(record.current_version_id);
-    const vtt = await getBlobUrl(record.subtitle_url);
-    record.subtitle_url = vtt;
+    const converstations = await getConversationsByRecordId(recordId);
+    const subtitle = await getBlobUrl(record.subtitle_url);
+
+    record.subtitle_url = subtitle;
     record.summary_version = summary_version;
+    record.converstations = converstations;
     return record;
   }, [recordId]);
 
@@ -71,10 +77,10 @@ const PlayVideoPage = () => {
   return (
     <div className={styles.playVideoPage}>
       <div className={styles.mainSection}>
-        <Scrollbars ref={scrollbarRef}>
+        <Scrollbars ref={scrollbarRef} autoHide>
           <div className='flex flex-col pr-2' id='ScrollPanel'>
             <div className={styles.videoContainer}>
-              <ReactPlayer width={"100%"} height={"100%"} controls src={readS3Object(record?.url)} ref={playerRef}>
+              <ReactPlayer width={"100%"} height={"100%"} controls src={readS3Object(record?.url)}>
                 <track kind="subtitles" src={record?.subtitle_url} srcLang="vi" default></track>
               </ReactPlayer>
             </div>
@@ -96,7 +102,6 @@ const PlayVideoPage = () => {
                   <div><IcInfo /></div>
                 </Tooltip>
               </div>
-              <div></div>
               {record?.summary_version &&
                 <p className={styles.markdown}>
                   <ReactMarkdown
@@ -117,7 +122,6 @@ const PlayVideoPage = () => {
                     {unescapeJs(record?.summary_version?.summary_content)
                       .replace(/\[(\d{1,2}:\d{2}:\d{2})-(\d{1,2}:\d{2}:\d{2})\]/g, (_, t1, t2) => {
                         const start = timeToSeconds(t1);
-                        const end = timeToSeconds(t2);
                         return `<a href="#" class="timestamp" data-time="${start}">[${t1}-${t2}]</a>`;
                       })
                       .replace(/\[(\d{1,2}:\d{2}:\d{2})\]/g, (_, t) => {

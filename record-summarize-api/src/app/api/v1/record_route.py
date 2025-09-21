@@ -35,7 +35,7 @@ rag_index_service = RagIndexService()
 transcription_service = TranscriptionService()
 youtube_service = YoutubeService()
 
-router = APIRouter(tags=["Record"])
+router = APIRouter(tags=["Records"])
 
 
 @router.post("/records", status_code=201)
@@ -335,6 +335,31 @@ async def generate_form_helper(body: RequestGenerateFormRecordDto):
     match = re.search(r"\{.*\}", response, re.DOTALL)
     json_str = match.group(0) if match else response.strip()
     return json.loads(json_str)
+
+
+@router.post("/records/{record_id}/retry-chatbot")
+async def retry_chatbot(db: Annotated[AsyncSession, Depends(async_get_db)], record_id: str):
+    result = await db.execute(
+        select(RecordModel)
+        .options(
+            selectinload(RecordModel.attachments),
+            selectinload(RecordModel.creator),
+            selectinload(RecordModel.pipeline_items),
+            selectinload(RecordModel.rag_documents)
+        )
+        .where(RecordModel.id == record_id
+               # and UserModel.id == current_user.id
+               and not RecordModel.is_deleted)
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise AppException("Record is null")
+
+    await rag_index_service.execute_rag_index(db, record)
+    record.chatbot_preparation_state = RecordChatbotPreparationState.DONE
+    db.add(record)
+    await db.commit()
+    return { "message": "success" }
 
 
 @router.websocket("/records/ws/{record_id}")

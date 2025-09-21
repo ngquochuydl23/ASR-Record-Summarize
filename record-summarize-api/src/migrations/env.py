@@ -19,8 +19,9 @@ POSTGRES_ASYNC_PREFIX = os.getenv("POSTGRES_ASYNC_PREFIX")
 DB_USERNAME = os.getenv("DB_USERNAME")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
-DATABASE_URL = f"{POSTGRES_ASYNC_PREFIX}{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+DATABASE_URL = f"{POSTGRES_ASYNC_PREFIX}{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 config = context.config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
@@ -54,6 +55,8 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        output_buffer=open("migration.sql", "w"),
+        as_sql=True,
     )
 
     with context.begin_transaction():

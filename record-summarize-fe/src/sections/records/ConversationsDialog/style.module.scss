@@ -1,0 +1,42 @@
+.listConversations {
+  display: flex;
+  width: 100%;
+  padding: 10px 0px;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  min-height: 250px;
+
+  .conversationItem {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    padding: 15px 10px;
+    font-size: 15px;
+    border-bottom: 1px solid #d3d3d3;
+
+    &:hover {
+      background-color: whitesmoke;
+    }
+
+    .datetime {
+      font-size: 14px;
+    }
+  }
+}
+.emptyView {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100px;
+  width: 100%;
+  justify-content: center;
+}
+.loadingView {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  margin-top: 30px;
+  width: 100%;
+  padding: 30px;
+}

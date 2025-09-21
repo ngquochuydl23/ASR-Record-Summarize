@@ -2,8 +2,7 @@ import { IconButton, MenuItem, MenuList, Popover, Tooltip, Typography } from '@m
 import styles from './styles.module.scss';
 import Composer from './Composer';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AIAgentGenerating, AIAgentMessageItem, MessageItem } from './Message';
 import Scrollbars from 'react-custom-scrollbars-2';
 import ChatbotPreparing from './ChatbotPreparing';
@@ -12,15 +11,23 @@ import ChatbotFailed from './ChatbotFailed';
 import WelcomeView from './WelcomeView';
 import { useSearchParams } from 'react-router-dom';
 import HistoryIcon from '@mui/icons-material/History';
+import ConversationsDialog from '../ConversationsDialog';
+import { createConversation } from '@/repositories/conversation.repository';
+import _ from 'lodash';
+import { getAllMessages, sendMsg } from '@/repositories/message.repository';
 
 
-const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING, onRetry }) => {
-  const [searchParams] = useSearchParams();
+const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry }) => {
+  const scrollRef = useRef();
+  const [messages, setMessages] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [anchorEl, setAnchorEl] = useState(null);
-  const [msgObject, setMsgObject] = useState(null);
   const [waiting, setWaiting] = useState(false);
+  const [openHistory, setOpenHistory] = useState(false);
+  const [steamingData, setSteamingData] = useState('');
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
+
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -29,14 +36,72 @@ const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING
     setAnchorEl(null);
   };
 
-  const handleSubmitMsg = (payload) => {
-    setMsgObject(payload);
+  const handleSubmitMsg = (message) => {
+    const msgPayload = {
+      msg_content: message.msg_content,
+    }
     setWaiting(true);
+    setMessages(pre => [...pre, { ...msgPayload, sender: "USER" }]);
+    if (searchParams && searchParams.get("conversationId")) {
+      sendMsg(searchParams.get("conversationId"), msgPayload)
+        .then((msg) => scrollRef.current?.scrollToBottom())
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => { })
+    } else {
+      createConversation({ record_id: record.id, message: msgPayload })
+        .then((conversation) => {
+          console.log(conversation);
+          scrollRef.current?.scrollToBottom();
+          setSearchParams({ conversationId: conversation.id })
+        })
+        .catch((error) => { })
+        .finally(() => {
+
+        })
+    }
+  }
+
+  const handleConnected = () => {
+    console.log("[ChatView] Connected to WebSocket");
+  }
+
+  const handleDisconnected = () => {
+    console.log("[ChatView] Disconnected from WebSocket");
+  }
+
+  const getMessagesFromConversation = (conversationId) => {
+    getAllMessages(conversationId)
+      .then((msgs) => setMessages(msgs))
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
+  const handleReceiveData = (data) => {
+    scrollRef.current?.scrollToBottom();
+    if (data.type === 'chunk') {
+      setSteamingData(prev => (prev ?? "") + data.content);
+    }
+    else if (data.type === 'done') {
+      setWaiting(false);
+      setSteamingData('');
+      setMessages(prev => [...prev, { msg_content: data.content, sender: "AI" }]);
+    }
   }
 
   useEffect(() => {
-    if (searchParams) {
-      console.log("Current query:", searchParams.get("roomId"));
+    if (searchParams && searchParams.get("conversationId")) {
+      const conversationId = searchParams.get("conversationId");
+      getMessagesFromConversation(conversationId);
+      const ws = new WebSocket(`${process.env.REACT_APP_WS_ENDPOINT}/conversations/ws/${conversationId}`);
+      ws.onopen = handleConnected;
+      ws.onclose = handleDisconnected;
+      ws.onmessage = (event) => handleReceiveData(JSON.parse(event.data));
+      return () => {
+        ws.close();
+      };
     }
   }, [searchParams]);
 
@@ -45,34 +110,31 @@ const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING
       <div className={styles.chatViewHeader}>
         <Typography variant='body1' className={styles.chatViewHeaderTitle}>Trợ lý ảo AI</Typography>
         <Tooltip title="Lịch sử trò chuyện">
-          <IconButton>
-            <HistoryIcon />
-          </IconButton>
+          <IconButton onClick={() => setOpenHistory(true)}><HistoryIcon /></IconButton>
         </Tooltip>
         <Tooltip title="Thêm">
-          <IconButton onClick={handleClick}>
-            <MoreVertIcon />
-          </IconButton>
+          <IconButton onClick={handleClick}><MoreVertIcon /></IconButton>
         </Tooltip>
       </div>
       <div className={styles.chatViewBody}>
         {state === ChatbotPreparingStateEnum.PREPARING && <ChatbotPreparing />}
         {state === ChatbotPreparingStateEnum.FAILED && <ChatbotFailed onRetry={onRetry} />}
         {state === ChatbotPreparingStateEnum.DONE &&
-          <Scrollbars>
+          <Scrollbars ref={scrollRef} autoHide>
             <div className='flex flex-col bg-white py-3'>
-              {!searchParams.get("roomId") && <WelcomeView />}
-              <MessageItem content={`Bạn muốn mình làm bản UI giống kiểu “prompt suggestions chip” như trong ảnh chatbot pizza (clickable, đẹp + hover) không?`} />
-              <AIAgentMessageItem content={`Trong CSS, khi bạn dùng inline-block thì thuộc tính gap không hoạt động (chỉ áp dụng cho flex và grid).`} />
-              {msgObject && <MessageItem content={msgObject?.msgContent} />}
-              {(waiting && msgObject) && <AIAgentGenerating />}
+              {!searchParams.get("conversationId") && _.isEmpty(messages) && <WelcomeView />}
+              {_.map(messages, (messageItem) => (
+                messageItem.sender === 'AI'
+                  ? <AIAgentMessageItem content={messageItem.msg_content} />
+                  : <MessageItem content={messageItem.msg_content} />
+              ))}
+              {(waiting && _.isEmpty(steamingData)) && <AIAgentGenerating />}
+              {(!_.isEmpty(steamingData) && waiting) && <AIAgentMessageItem content={steamingData} />}
             </div>
           </Scrollbars>
         }
       </div>
-      {(state === ChatbotPreparingStateEnum.DONE) &&
-        <Composer disabled={waiting} onSendMsg={handleSubmitMsg} />
-      }
+      {(state === ChatbotPreparingStateEnum.DONE) && <Composer disabled={waiting} onSendMsg={handleSubmitMsg} />}
       <Popover
         id={id} open={open}
         anchorEl={anchorEl} onClose={handleClose}
@@ -90,6 +152,12 @@ const ChatView = ({ onClose, record, state = ChatbotPreparingStateEnum.PREPARING
           <MenuItem className={styles.menuItem}>Mời người khác</MenuItem>
         </MenuList>
       </Popover>
+      <ConversationsDialog
+        recordId={record.id}
+        open={openHistory}
+        onClose={() => setOpenHistory(false)}
+        onConversationClick={(id) => setSearchParams({ conversationId: id })}
+        onCreateConversation={() => setSearchParams({})} />
     </div>
   );
 };

@@ -19,6 +19,33 @@ class RagIndexService:
         self.llm_service = LLMService()
 
     async def execute_rag_index(self, db: Annotated[AsyncSession, Depends(async_get_db)], record: RecordModel):
+        pipeline_item_extras = record.pipeline_items[1].extra
+        subtitle_path =  pipeline_item_extras['transcribe_result']['output_path']
+
+        with open(subtitle_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        embeddings = []
+        chunks = chunk_text(content, chunk_size=500)
+        for chunk in chunks:
+            embedding = await asyncio.to_thread(self.llm_service.embedding_text, chunk)
+            embeddings.append(embedding)
+
+        record.rag_documents.append(RagDocumentModel(
+            id=uuid.uuid4(),
+            source_type=RAGSourceTypeEnum.TRANSCRIPT,
+            record_id=record.id,
+            chunks=[
+                RagChunkModel(
+                    id=uuid.uuid4(),
+                    content=chunk,
+                    embedding=embedding,
+                    additional_data={},
+                    chunk_index=idx
+                )
+                for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings))
+            ]
+        ))
+
         for attachment in record.attachments:
             if attachment.is_rag:
                 continue

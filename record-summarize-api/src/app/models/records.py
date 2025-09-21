@@ -43,6 +43,7 @@ class RecordChatbotPreparationState(str, enum.Enum):
     DONE = 'done'
     FAILED = 'failed'
 
+
 @dataclass(init=True, repr=True)
 class RecordModel(Base, BaseMixin):
     __tablename__ = RECORD_TABLE_NAME
@@ -114,13 +115,7 @@ class RecordModel(Base, BaseMixin):
         default=RecordChatbotPreparationState.PREPARING
     )
 
-    # conversations: Mapped[list[object]] = relationship(
-    #     "ConversationModel",
-    #     back_populates="record",
-    #     cascade="all, delete-orphan",
-    #     default_factory=lambda: [],
-    #     lazy="select"
-    # )
+    conversations: Mapped[list[object]] = relationship("ConversationModel", default_factory=lambda: [])
 
     rag_documents: Mapped[list[object]] = relationship(
         "RagDocumentModel",

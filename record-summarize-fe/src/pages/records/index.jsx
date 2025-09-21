@@ -1,6 +1,6 @@
 import AdminHeader from "@/components/AdminHeader";
 import DashboardCard from "@/components/card/DashboardCard";
-import { getProducts } from "@/repositories/ProductRepository";
+import { getProducts } from "@/repositories/conversation.repository";
 import { getRecords } from "@/repositories/record.repository";
 import CreateUpdateObjectiveDrawer from "@/sections/records/CreateUpdateObjectiveDrawer";
 import { RecordTable } from "@/sections/records/RecordTable";

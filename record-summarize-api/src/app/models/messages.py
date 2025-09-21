@@ -17,7 +17,10 @@ class SenderEnum(str, enum.Enum):
 class MessageModel(Base, BaseMixin):
     __tablename__ = MESSAGE_TABLE_NAME
 
-    content: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    msg_content: Mapped[str] = mapped_column(Text, nullable=False, default="")
     sender: Mapped[SenderEnum] = mapped_column(Enum(SenderEnum), default=None, nullable=True)
     conversation = relationship("ConversationModel", back_populates="messages")
     conversation_id: Mapped[uuid.UUID] = mapped_column(ForeignKey(f"{CONVERSATION_TABLE_NAME}.id"), default=None)
+
+    owner = relationship("UserModel", back_populates="messages")
+    owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey(f"{USER_TABLE_NAME}.id"), default=None, nullable=True)

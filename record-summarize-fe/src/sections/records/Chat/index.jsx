@@ -39,16 +39,15 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
   const handleSubmitMsg = (message) => {
     const msgPayload = {
       msg_content: message.msg_content,
+      attachments: []
     }
     setWaiting(true);
     setMessages(pre => [...pre, { ...msgPayload, sender: "USER" }]);
     if (searchParams && searchParams.get("conversationId")) {
       sendMsg(searchParams.get("conversationId"), msgPayload)
         .then((msg) => scrollRef.current?.scrollToBottom())
-        .catch((error) => {
-          console.log(error);
-        })
-        .finally(() => { })
+        .catch((error) => { console.log(error); })
+        .finally(() => { });
     } else {
       createConversation({ record_id: record.id, message: msgPayload })
         .then((conversation) => {
@@ -56,10 +55,8 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
           scrollRef.current?.scrollToBottom();
           setSearchParams({ conversationId: conversation.id })
         })
-        .catch((error) => { })
-        .finally(() => {
-
-        })
+        .catch((error) => { console.log(error); })
+        .finally(() => { });
     }
   }
 
@@ -102,6 +99,10 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
       return () => {
         ws.close();
       };
+    } else {
+      // setWaiting(false);
+      // setSteamingData('');
+      // setMessages([]);
     }
   }, [searchParams]);
 

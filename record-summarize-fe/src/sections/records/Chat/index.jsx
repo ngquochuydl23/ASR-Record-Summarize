@@ -15,7 +15,7 @@ import ConversationsDialog from '../ConversationsDialog';
 import { createConversation } from '@/repositories/conversation.repository';
 import _ from 'lodash';
 import { getAllMessages, sendMsg } from '@/repositories/message.repository';
-
+import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 
 const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry }) => {
   const scrollRef = useRef();
@@ -37,6 +37,7 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
   };
 
   const handleSubmitMsg = (message) => {
+    scrollRef.current?.scrollToBottom();
     const msgPayload = {
       msg_content: message.msg_content,
       attachments: []
@@ -77,7 +78,6 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
   }
 
   const handleReceiveData = (data) => {
-    scrollRef.current?.scrollToBottom();
     if (data.type === 'chunk') {
       setSteamingData(prev => (prev ?? "") + data.content);
     }
@@ -86,6 +86,7 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
       setSteamingData('');
       setMessages(prev => [...prev, { msg_content: data.content, sender: "AI" }]);
     }
+    setTimeout(() => { scrollRef.current?.scrollToBottom() }, 500);
   }
 
   useEffect(() => {
@@ -100,16 +101,23 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
         ws.close();
       };
     } else {
-      // setWaiting(false);
-      // setSteamingData('');
-      // setMessages([]);
+      setWaiting(false);
+      setSteamingData('');
+      setMessages([]);
     }
   }, [searchParams]);
+
+  const handleAgreeAnswer = () => {
+    handleSubmitMsg({ msg_content: 'Tôi đồng ý', attachments: [] });
+  }
 
   return (
     <div className={styles.chatView}>
       <div className={styles.chatViewHeader}>
         <Typography variant='body1' className={styles.chatViewHeaderTitle}>Trợ lý ảo AI</Typography>
+        <Tooltip title="Tạo mới">
+          <IconButton onClick={() => setSearchParams({})}><DriveFileRenameOutlineIcon /></IconButton>
+        </Tooltip>
         <Tooltip title="Lịch sử trò chuyện">
           <IconButton onClick={() => setOpenHistory(true)}><HistoryIcon /></IconButton>
         </Tooltip>
@@ -123,11 +131,19 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
         {state === ChatbotPreparingStateEnum.DONE &&
           <Scrollbars ref={scrollRef} autoHide>
             <div className='flex flex-col bg-white py-3'>
-              {!searchParams.get("conversationId") && _.isEmpty(messages) && <WelcomeView />}
+              {!searchParams.get("conversationId") && _.isEmpty(messages) &&
+                <WelcomeView
+                  recordId={record.id}
+                  onSuggestClick={(suggestion) => handleSubmitMsg({ msg_content: suggestion, attachments: [] })} />
+              }
               {_.map(messages, (messageItem) => (
                 messageItem.sender === 'AI'
-                  ? <AIAgentMessageItem content={messageItem.msg_content} />
-                  : <MessageItem content={messageItem.msg_content} />
+                  ? <AIAgentMessageItem
+                    key={messageItem}
+                    id={messageItem.id}
+                    content={messageItem.msg_content}
+                    onAgree={handleAgreeAnswer} />
+                  : <MessageItem key={messageItem} content={messageItem.msg_content} />
               ))}
               {(waiting && _.isEmpty(steamingData)) && <AIAgentGenerating />}
               {(!_.isEmpty(steamingData) && waiting) && <AIAgentMessageItem content={steamingData} />}

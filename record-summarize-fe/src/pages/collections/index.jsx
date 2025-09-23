@@ -1,6 +1,5 @@
 import AdminHeader from "@/components/AdminHeader";
 import DashboardCard from "@/components/card/DashboardCard";
-import { useImportExcelDialog } from "@/contexts/ImportExcelDialogContext";
 import { getCategories } from "@/repositories/category.repository";
 import { CollectionTable } from "@/sections/collections/CollectionTable";
 import CreateUpdateCategoryDrawer from "@/sections/collections/CreateUpdateCategoryDrawer";

@@ -8,7 +8,7 @@ const suggestions = [
   "Video này nói về những điểm chính nào?"
 ]
 
-const WelcomeView = () => {
+const WelcomeView = ({ recordId, onSuggestClick }) => {
   const { user } = useSelector((state) => state.user);
   return (
     <div className={styles.welcomeView}>
@@ -17,7 +17,11 @@ const WelcomeView = () => {
       </div>
       <div className={styles.description}>Với EasySum, bạn có thể đặt câu hỏi, trao đổi và nhận phản hồi tự nhiên như đang trò chuyện.</div>
       <div className='inline-block gap-2 mt-3'>
-        {_.map(suggestions, (item) => <Chip label={item} variant='outlined' className='mx-[3px] my-[4px]'/>)}
+        {_.map(suggestions, (item) =>
+          <Chip clickable label={item}
+            variant='outlined' className='mx-[3px] my-[4px]'
+            onClick={() => { onSuggestClick(item) }}
+          />)}
       </div>
     </div>
   )

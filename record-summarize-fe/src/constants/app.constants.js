@@ -123,3 +123,6 @@ export const PipelineStepTitle = [
   "Đang tóm tắt video",
   "Chatbot đang chuẩn bị",
 ];
+
+
+export const NotFoundKnowledge = "Thông tin này không có trong bản ghi. Bạn có muốn tôi tìm trong tri thức bên ngoài không?\n"

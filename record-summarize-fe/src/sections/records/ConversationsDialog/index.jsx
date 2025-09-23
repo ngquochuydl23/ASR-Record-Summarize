@@ -82,7 +82,7 @@ const ConversationsDialog = ({
             />
             <Button type="button" onClick={handleCreateNew} variant="outlined"
               startIcon={<DriveFileRenameOutlineIcon />}
-              sx={{ width: '150px' }}>
+              sx={{ width: '130px' }}>
               Tạo mới
             </Button>
           </div>

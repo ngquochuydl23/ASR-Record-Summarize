@@ -18,6 +18,7 @@ from ...models.messages import MessageModel, SenderEnum
 from ...services.llm_service import LLMService
 from ...core.db.database import async_get_db, local_session
 from datetime import datetime
+from google.genai import types
 import uuid
 
 from ...services.rag_index_service import RagIndexService
@@ -198,8 +199,11 @@ async def _ask_llm(
             {message.msg_content}
             """
             full_answer = ""
-            for chunk in llm_service.gemini_client.models.generate_content_stream(model='gemini-2.0-flash',
-                                                                                  contents=prompt):
+            for chunk in llm_service.gemini_client.models.generate_content_stream(
+                    model='gemini-2.0-flash',
+                    contents=prompt,
+                    grounding_tool=types.Tool(google_search=types.GoogleSearch())
+            ):
                 await manager.broadcast(str(conversation.id), {"type": "chunk", "content": chunk.text})
                 full_answer += chunk.text
             await manager.broadcast(str(conversation.id), {"type": "done", "content": full_answer})

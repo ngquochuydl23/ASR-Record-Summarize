@@ -1,6 +1,7 @@
 FROM node:lts AS development
 
 COPY package.json /app/package.json
+RUN yarn add env-cmd
 RUN yarn install
 
 WORKDIR /app

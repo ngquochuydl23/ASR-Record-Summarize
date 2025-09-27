@@ -50,10 +50,10 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
         .catch((error) => { console.log(error); })
         .finally(() => { });
     } else {
-      createConversation({ record_id: record.id, message: msgPayload })
+      createConversation({ record_id: record?.id, message: msgPayload })
         .then((conversation) => {
           scrollRef.current?.scrollToBottom();
-          setSearchParams({ conversationId: conversation.id })
+          setSearchParams({ conversationId: conversation?.id })
         })
         .catch((error) => { console.log(error); })
         .finally(() => { });
@@ -132,14 +132,14 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
             <div className='flex flex-col bg-white py-3'>
               {!searchParams.get("conversationId") && _.isEmpty(messages) &&
                 <WelcomeView
-                  recordId={record.id}
+                  recordId={record?.id}
                   onSuggestClick={(suggestion) => handleSubmitMsg({ msg_content: suggestion, attachments: [] })} />
               }
               {_.map(messages, (messageItem) => (
                 messageItem.sender === 'AI'
                   ? <AIAgentMessageItem
                     key={messageItem}
-                    id={messageItem.id}
+                    id={messageItem?.id}
                     content={messageItem.msg_content}
                     onAgree={handleAgreeAnswer} />
                   : <MessageItem key={messageItem} content={messageItem.msg_content} />
@@ -169,7 +169,7 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
         </MenuList>
       </Popover>
       <ConversationsDialog
-        recordId={record.id}
+        recordId={record?.id}
         open={openHistory}
         onClose={() => setOpenHistory(false)}
         onConversationClick={(id) => setSearchParams({ conversationId: id })}

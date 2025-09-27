@@ -35,9 +35,9 @@ const PlayVideoPage = () => {
 
   const { loading, value: record } = useAsync(async () => {
     const record = await getRecordById(recordId);
-    const summary_version = await getSummaryVersionById(record.current_version_id);
+    const summary_version = await getSummaryVersionById(record?.current_version_id);
     const converstations = await getConversationsByRecordId(recordId);
-    const subtitle = await getBlobUrl(record.subtitle_url);
+    const subtitle = await getBlobUrl(record?.subtitle_url);
 
     record.subtitle_url = subtitle;
     record.summary_version = summary_version;
@@ -141,7 +141,7 @@ const PlayVideoPage = () => {
         <div className={styles.chatSection}>
           <ChatView
             record={record}
-            state={record.chatbot_preparation_state}
+            state={record?.chatbot_preparation_state}
             onRetry={handleRetry} />
         </div>
       </div>

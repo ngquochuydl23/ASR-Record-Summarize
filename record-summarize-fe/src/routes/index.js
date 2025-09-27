@@ -14,7 +14,7 @@ const Loadable = (Component) => (props) => {
 };
 
 const RecordPage = Loadable(lazy(() => import("../pages/records")));
-const PlayRecordPage = Loadable(lazy(() => import("../pages/records/PlayVideo")));
+const PlayRecordPage = Loadable(lazy(() => import("../pages/records/playVideo")));
 const SettingPage = Loadable(lazy(() => import("../pages/settings")));
 const PersonalInfoPage = Loadable(lazy(() => import("../pages/settings/personal-info")));
 const CollectionPage = Loadable(lazy(() => import("../pages/collections")));

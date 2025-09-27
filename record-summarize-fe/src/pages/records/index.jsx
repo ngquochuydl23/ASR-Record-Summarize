@@ -1,12 +1,11 @@
 import AdminHeader from "@/components/AdminHeader";
 import DashboardCard from "@/components/card/DashboardCard";
-import { getProducts } from "@/repositories/conversation.repository";
 import { getRecords } from "@/repositories/record.repository";
-import CreateUpdateObjectiveDrawer from "@/sections/records/CreateUpdateObjectiveDrawer";
+import CreateRecordDrawer from "@/sections/records/CreateRecordDrawer";
 import { RecordTable } from "@/sections/records/RecordTable";
 import { Button } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useAsync, useAsyncFn } from "react-use";
+import { useAsyncFn } from "react-use";
 import AddIcon from '@mui/icons-material/Add';
 
 const Page = () => {
@@ -42,7 +41,7 @@ const Page = () => {
           isLoading={false}
         />
       </div>
-      <CreateUpdateObjectiveDrawer open={openDrawer} onClose={handleDrawerClose} />
+      <CreateRecordDrawer open={openDrawer} onClose={handleDrawerClose} />
     </DashboardCard>
   );
 };

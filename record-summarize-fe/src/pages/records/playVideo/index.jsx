@@ -19,12 +19,13 @@ import Scrollbars from 'react-custom-scrollbars-2';
 import { timeToSeconds } from '@/utils/process_markdown';
 import { useEffect, useRef } from 'react';
 import { getConversationsByRecordId } from '@/repositories/conversation.repository';
+import LoadingScreen from '@/components/LoadingScreen';
 
 
 const PlayVideoPage = () => {
   const { recordId } = useParams();
   const scrollbarRef = useRef(null);
- 
+
   async function getBlobUrl(fileKey) {
     const res = await fetch(readS3Object(fileKey));
     const blob = await res.blob();
@@ -34,9 +35,9 @@ const PlayVideoPage = () => {
 
   const { loading, value: record } = useAsync(async () => {
     const record = await getRecordById(recordId);
-    const summary_version = await getSummaryVersionById(record.current_version_id);
+    const summary_version = await getSummaryVersionById(record?.current_version_id);
     const converstations = await getConversationsByRecordId(recordId);
-    const subtitle = await getBlobUrl(record.subtitle_url);
+    const subtitle = await getBlobUrl(record?.subtitle_url);
 
     record.subtitle_url = subtitle;
     record.summary_version = summary_version;
@@ -71,7 +72,7 @@ const PlayVideoPage = () => {
   }
 
   if (loading) {
-    return null
+    return <LoadingScreen />;
   }
 
   return (
@@ -140,7 +141,7 @@ const PlayVideoPage = () => {
         <div className={styles.chatSection}>
           <ChatView
             record={record}
-            state={record.chatbot_preparation_state}
+            state={record?.chatbot_preparation_state}
             onRetry={handleRetry} />
         </div>
       </div>

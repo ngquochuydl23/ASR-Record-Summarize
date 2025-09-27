@@ -9,7 +9,10 @@ import { getMe } from "@/repositories/user.repository";
 import MainLayoutHeader from "./main.layout.header";
 import LoadingScreen from "@/components/LoadingScreen";
 import { setUser } from "@/redux/slices/userSlice";
+import StagingLabelView from "@/components/StagingLabelView";
 import './styles.scss';
+import classNames from "classnames";
+
 
 const MainLayout = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -18,7 +21,6 @@ const MainLayout = () => {
 
   const [loading, setLoading] = useState(true);
   const { user } = useSelector((state) => state.user);
-  const [openProfileDialog, setOpenProfileDialog] = useState(false);
   const [openNofiDrawer, setOpenNotiDrawer] = useState(false);
   const [openSettingDialog, setOpenSettingDialog] = useState({
     chooseTabId: null,
@@ -44,21 +46,17 @@ const MainLayout = () => {
       });
   }, [])
 
-  if (loading || !user) {
-    return <LoadingScreen />;
-  }
-
-  if (!user) {
-    return <Navigate to="/auth/login" replace />;
-  }
+  if (loading || !user) return <LoadingScreen />;
+  if (!user) return <Navigate to="/" replace />;
 
   return (
     <>
-      <div className="flex h-[100vh]">
+      {process.env.REACT_APP_ENVIRONMENT === 'Staging' && <StagingLabelView />}
+      <div className="flex h-full">
         <Sidebar />
-        <div className="flex flex-col w-full bg-[#fcfcfc] h-fit min-h-[100vh]">
+        <div className="flex flex-col w-full bg-[#fcfcfc] parentLayout">
           <MainLayoutHeader openNotificationList={openNotificationList} />
-          <div className="p-4 innerLayout">
+          <div className={classNames("p-4 innerLayout", { "isShowStagingLabel": process.env.REACT_APP_ENVIRONMENT === 'Staging' })} >
             <Outlet />
           </div>
         </div>

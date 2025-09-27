@@ -1,38 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-//import Sidebar from "./Sidebar";
-import PersonalSettingDialog from "@/sections/settings/PersonalSettingDialog";
 import { useSnackbar } from "notistack";
 import NotificationDrawer from "@/components/notifications/NotificationDrawer";
 import { getMe } from "@/repositories/user.repository";
-//import MainLayoutHeader from "./main.layout.header";
-import LoadingScreen from "@/components/LoadingScreen";
 import { setUser } from "@/redux/slices/userSlice";
 import MainLayoutHeader from "../main.layout/main.layout.header";
-import { Sidebar } from "phosphor-react";
+import StagingLabelView from "@/components/StagingLabelView";
+import classNames from "classnames";
+import { useLoading } from "@/contexts/LoadingContextProvider";
 
 const PlayVideoLayout = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { showLoading, hideLoading, isLoading } = useLoading();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  const [loading, setLoading] = useState(true);
   const { user } = useSelector((state) => state.user);
-  const [openProfileDialog, setOpenProfileDialog] = useState(false);
   const [openNofiDrawer, setOpenNotiDrawer] = useState(false);
-  const [openSettingDialog, setOpenSettingDialog] = useState({
-    chooseTabId: null,
-    open: false,
-  });
 
   const openNotificationList = () => {
     setOpenNotiDrawer(true);
   };
 
-
   useEffect(() => {
-    setLoading(true);
+    showLoading();
     getMe()
       .then((response) => {
         dispatch(setUser(response));
@@ -40,32 +31,25 @@ const PlayVideoLayout = () => {
       .catch((err) => {
         console.log(err);
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .finally(() => { });
   }, [])
 
-  if (loading || !user) {
-    return <LoadingScreen />;
-  }
 
-  if (!user) {
+  if (!isLoading && !user) {
     return <Navigate to="/auth/login" replace />;
   }
 
   return (
     <>
+      {process.env.REACT_APP_ENVIRONMENT === 'Staging' && <StagingLabelView />}
       <div className="flex">
-        <div className="flex flex-col w-full bg-[#fcfcfc] h-fit min-h-[100vh]">
+        <div className="flex flex-col w-full bg-[#fcfcfc] h-full">
           <MainLayoutHeader showHeader openNotificationList={openNotificationList} />
-          <Outlet />
+          <div className={classNames("innerLayout", { "isShowStagingLabel": process.env.REACT_APP_ENVIRONMENT === 'Staging' })}>
+            <Outlet />
+          </div>
         </div>
       </div>
-      <PersonalSettingDialog
-        chooseTabId={openSettingDialog.chooseTabId}
-        open={openSettingDialog.open}
-        onClose={() => setOpenSettingDialog({ chooseTabId: null, open: false })}
-      />
       <NotificationDrawer
         open={openNofiDrawer}
         onClose={() => setOpenNotiDrawer(false)}

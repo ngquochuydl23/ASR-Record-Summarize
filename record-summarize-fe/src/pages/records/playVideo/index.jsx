@@ -19,12 +19,14 @@ import Scrollbars from 'react-custom-scrollbars-2';
 import { timeToSeconds } from '@/utils/process_markdown';
 import { useEffect, useRef } from 'react';
 import { getConversationsByRecordId } from '@/repositories/conversation.repository';
-import LoadingScreen from '@/components/LoadingScreen';
+import { useLoading } from '@/contexts/LoadingContextProvider';
+import classNames from 'classnames';
 
 
 const PlayVideoPage = () => {
   const { recordId } = useParams();
   const scrollbarRef = useRef(null);
+  const { showLoading, hideLoading, isLoading } = useLoading();
 
   async function getBlobUrl(fileKey) {
     const res = await fetch(readS3Object(fileKey));
@@ -33,19 +35,26 @@ const PlayVideoPage = () => {
     return url;
   }
 
-  const { loading, value: record } = useAsync(async () => {
-    const record = await getRecordById(recordId);
-    const summary_version = await getSummaryVersionById(record?.current_version_id);
-    const converstations = await getConversationsByRecordId(recordId);
-    const subtitle = await getBlobUrl(record?.subtitle_url);
+  const { value: record, loading } = useAsync(async () => {
+    try {
+      const record = await getRecordById(recordId);
+      const summary_version = await getSummaryVersionById(record?.current_version_id);
+      const converstations = await getConversationsByRecordId(recordId);
+      const subtitle = await getBlobUrl(record?.subtitle_url);
 
-    record.subtitle_url = subtitle;
-    record.summary_version = summary_version;
-    record.converstations = converstations;
-    return record;
+      record.subtitle_url = subtitle;
+      record.summary_version = summary_version;
+      record.converstations = converstations;
+      return record;
+    } catch (e) {
+
+    } finally {
+      hideLoading();
+    }
   }, [recordId]);
 
   useEffect(() => {
+    showLoading();
     const handler = (e) => {
       const target = e.target;
       if (target.matches("a.timestamp")) {
@@ -71,12 +80,10 @@ const PlayVideoPage = () => {
 
   }
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  if (loading) return null;
 
   return (
-    <div className={styles.playVideoPage}>
+    <div className={classNames(styles.playVideoPage, { [styles.isShowStagingLabel]: process.env.REACT_APP_ENVIRONMENT === "Staging" })}>
       <div className={styles.mainSection}>
         <Scrollbars ref={scrollbarRef} autoHide>
           <div className='flex flex-col pr-2' id='ScrollPanel'>
@@ -137,7 +144,7 @@ const PlayVideoPage = () => {
           </div>
         </Scrollbars>
       </div >
-      <div className='py-3 pr-3' style={{ height: 'calc(100vh - 60px)', }}>
+      <div className='py-3 pr-3' >
         <div className={styles.chatSection}>
           <ChatView
             record={record}

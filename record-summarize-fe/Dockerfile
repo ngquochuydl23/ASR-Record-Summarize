@@ -1,6 +1,6 @@
 FROM node:lts AS development
 
-COPY package.json /app/yarn.lock
+COPY package.json /app/package.json
 RUN yarn install
 
 WORKDIR /app

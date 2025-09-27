@@ -52,7 +52,6 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
     } else {
       createConversation({ record_id: record.id, message: msgPayload })
         .then((conversation) => {
-          console.log(conversation);
           scrollRef.current?.scrollToBottom();
           setSearchParams({ conversationId: conversation.id })
         })

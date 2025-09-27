@@ -19,12 +19,13 @@ import Scrollbars from 'react-custom-scrollbars-2';
 import { timeToSeconds } from '@/utils/process_markdown';
 import { useEffect, useRef } from 'react';
 import { getConversationsByRecordId } from '@/repositories/conversation.repository';
+import LoadingScreen from '@/components/LoadingScreen';
 
 
 const PlayVideoPage = () => {
   const { recordId } = useParams();
   const scrollbarRef = useRef(null);
- 
+
   async function getBlobUrl(fileKey) {
     const res = await fetch(readS3Object(fileKey));
     const blob = await res.blob();
@@ -71,7 +72,7 @@ const PlayVideoPage = () => {
   }
 
   if (loading) {
-    return null
+    return <LoadingScreen />;
   }
 
   return (

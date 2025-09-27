@@ -28,7 +28,7 @@ import YouTubeIcon from '@mui/icons-material/YouTube';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { getYoutubeEmbedUrl } from "@/utils/youtube";
 
-const CreateObjectiveDrawer = ({ open, onClose }) => {
+const CreateRecordDrawer = ({ open, onClose }) => {
   const navigate = useNavigate();
   const playerRef = useRef();
   const { enqueueSnackbar } = useSnackbar();
@@ -456,4 +456,4 @@ const CreateObjectiveDrawer = ({ open, onClose }) => {
   )
 }
 
-export default CreateObjectiveDrawer;
+export default CreateRecordDrawer;

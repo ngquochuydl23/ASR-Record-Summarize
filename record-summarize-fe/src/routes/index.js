@@ -8,14 +8,14 @@ import PlayVideoLayout from "@/layouts/playVideoLayout";
 
 const Loadable = (Component) => (props) => {
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <Suspense fallback={<div></div>}>
       <Component {...props} />
     </Suspense>
   );
 };
 
 const RecordPage = Loadable(lazy(() => import("../pages/records")));
-const PlayRecordPage = Loadable(lazy(() => import("../pages/records/playVideo")));
+const PlayRecordPage = Loadable(lazy(() => import("../pages/records/PlayVideo")));
 const SettingPage = Loadable(lazy(() => import("../pages/settings")));
 const PersonalInfoPage = Loadable(lazy(() => import("../pages/settings/personal-info")));
 const CollectionPage = Loadable(lazy(() => import("../pages/collections")));

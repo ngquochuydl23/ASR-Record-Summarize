@@ -201,8 +201,7 @@ async def _ask_llm(
             full_answer = ""
             for chunk in llm_service.gemini_client.models.generate_content_stream(
                     model='gemini-2.0-flash',
-                    contents=prompt,
-                    grounding_tool=types.Tool(google_search=types.GoogleSearch())
+                    contents=prompt
             ):
                 await manager.broadcast(str(conversation.id), {"type": "chunk", "content": chunk.text})
                 full_answer += chunk.text

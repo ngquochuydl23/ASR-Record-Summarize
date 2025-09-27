@@ -30,7 +30,7 @@ services:
     environment:
       NODE_ENV: production
     ports:
-      - 2024:3000
+      - 2024:80
     restart: always
     depends_on:
       - record-summarize-api

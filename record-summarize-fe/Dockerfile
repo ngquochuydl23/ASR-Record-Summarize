@@ -1,13 +1,12 @@
 FROM node:lts AS development
-
-COPY package.json /app/package.json
-RUN yarn add env-cmd
-RUN yarn install
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm install
 
 WORKDIR /app
 COPY . /app
 
-RUN yarn build
+RUN npm run build
 
 
 FROM development AS build

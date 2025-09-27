@@ -1,7 +1,6 @@
 import { Suspense, lazy } from "react";
 import { Navigate, useRoutes } from "react-router-dom";
 import AuthLayout from "../layouts/auth.layout";
-import LoadingScreen from "../components/LoadingScreen";
 import { AppRoute } from "@/constants/app.constants";
 import MainLayout from "@/layouts/main.layout";
 import PlayVideoLayout from "@/layouts/playVideoLayout";

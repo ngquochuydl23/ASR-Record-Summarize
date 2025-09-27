@@ -1,12 +1,12 @@
 FROM node:lts AS development
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm install
+RUN yarn install
 
 WORKDIR /app
 COPY . /app
 
-RUN npm run build
+RUN yarn build
 
 
 FROM development AS build

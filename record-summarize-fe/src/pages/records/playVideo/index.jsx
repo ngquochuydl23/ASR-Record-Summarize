@@ -5,8 +5,7 @@ import ReactPlayer from 'react-player'
 import { Avatar, Tooltip, Typography } from '@mui/material';
 import IcInfo from '@/assets/icons/IcInfo';
 import { useParams } from 'react-router-dom';
-import { useAsync } from "react-use";
-import { getRecordById } from '@/repositories/record.repository';
+import { getRecordById, retryChatbot } from '@/repositories/record.repository';
 import { readUrl } from '@/utils/readUrl';
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -17,17 +16,18 @@ import ReactMarkdown from "react-markdown";
 import { getSummaryVersionById } from '@/repositories/summary-version.repository';
 import Scrollbars from 'react-custom-scrollbars-2';
 import { timeToSeconds } from '@/utils/process_markdown';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getConversationsByRecordId } from '@/repositories/conversation.repository';
 import { useLoading } from '@/contexts/LoadingContextProvider';
 import classNames from 'classnames';
+import { ChatbotPreparingStateEnum } from '@/constants/app.constants';
 
 
 const PlayVideoPage = () => {
   const { recordId } = useParams();
   const scrollbarRef = useRef(null);
   const { showLoading, hideLoading, isLoading } = useLoading();
-
+  const [record, setRecord] = useState(null);
   async function getBlobUrl(fileKey) {
     const res = await fetch(readS3Object(fileKey));
     const blob = await res.blob();
@@ -35,26 +35,30 @@ const PlayVideoPage = () => {
     return url;
   }
 
-  const { value: record, loading } = useAsync(async () => {
+  const getRecordDetail = async () => {
     try {
-      const record = await getRecordById(recordId);
-      const summary_version = await getSummaryVersionById(record?.current_version_id);
+      if (!isLoading) showLoading();
+      const _record = await getRecordById(recordId);
+      const summary_version = await getSummaryVersionById(_record?.current_version_id);
       const converstations = await getConversationsByRecordId(recordId);
-      const subtitle = await getBlobUrl(record?.subtitle_url);
+      const subtitle = await getBlobUrl(_record?.subtitle_url);
 
-      record.subtitle_url = subtitle;
-      record.summary_version = summary_version;
-      record.converstations = converstations;
-      return record;
-    } catch (e) {
-
-    } finally {
+      _record.subtitle_url = subtitle;
+      _record.summary_version = summary_version;
+      _record.converstations = converstations;
+      setRecord(_record);
       hideLoading();
+    } catch (e) {
+      console.log(e);
+    } finally {
     }
-  }, [recordId]);
+  }
 
   useEffect(() => {
-    showLoading();
+    getRecordDetail();
+  }, [recordId])
+
+  useEffect(() => {
     const handler = (e) => {
       const target = e.target;
       if (target.matches("a.timestamp")) {
@@ -65,7 +69,9 @@ const PlayVideoPage = () => {
     };
 
     document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
+    return () => {
+      document.removeEventListener("click", handler);
+    }
   }, []);
 
   const seekTo = (startTime) => {
@@ -77,10 +83,16 @@ const PlayVideoPage = () => {
   }
 
   const handleRetry = () => {
-
+    setRecord(pre => ({ ...pre, chatbot_preparation_state: ChatbotPreparingStateEnum.PREPARING }));
+    retryChatbot(recordId)
+      .catch((error) => {
+        setRecord(pre => ({ ...pre, chatbot_preparation_state: ChatbotPreparingStateEnum.FAILED }));
+        console.log(error);
+      })
+      .finally(() => { });
   }
 
-  if (loading) return null;
+  if (isLoading || !record) return null;
 
   return (
     <div className={classNames(styles.playVideoPage, { [styles.isShowStagingLabel]: process.env.REACT_APP_ENVIRONMENT === "Staging" })}>

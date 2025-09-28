@@ -9,6 +9,7 @@ import MainLayoutHeader from "../main.layout/main.layout.header";
 import StagingLabelView from "@/components/StagingLabelView";
 import classNames from "classnames";
 import { useLoading } from "@/contexts/LoadingContextProvider";
+import Scrollbars from "react-custom-scrollbars-2";
 
 const PlayVideoLayout = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -30,14 +31,15 @@ const PlayVideoLayout = () => {
       })
       .catch((err) => {
         console.log(err);
-      })
-      .finally(() => { });
+        enqueueSnackbar('Có lỗi xảy ra', {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'right'
+          }
+        });
+      });
   }, [])
-
-
-  if (!isLoading && !user) {
-    return <Navigate to="/auth/login" replace />;
-  }
 
   return (
     <>

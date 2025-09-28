@@ -12,7 +12,7 @@ import { setUser } from "@/redux/slices/userSlice";
 import StagingLabelView from "@/components/StagingLabelView";
 import './styles.scss';
 import classNames from "classnames";
-
+import Scrollbars from "react-custom-scrollbars-2";
 
 const MainLayout = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -56,9 +56,11 @@ const MainLayout = () => {
         <Sidebar />
         <div className="flex flex-col w-full bg-[#fcfcfc] parentLayout">
           <MainLayoutHeader openNotificationList={openNotificationList} />
-          <div className={classNames("p-4 innerLayout", { "isShowStagingLabel": process.env.REACT_APP_ENVIRONMENT === 'Staging' })} >
-            <Outlet />
-          </div>
+          <Scrollbars>
+            <div className={classNames("p-4 innerLayout", { "isShowStagingLabel": process.env.REACT_APP_ENVIRONMENT === 'Staging' })} >
+              <Outlet />
+            </div>
+          </Scrollbars>
         </div>
       </div>
 

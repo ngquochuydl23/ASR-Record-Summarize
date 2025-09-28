@@ -8,3 +8,10 @@ class RecordPipelineItemDto(BaseModel):
     status: str
     error_message: Optional[str]
     extra: dict
+
+class MinimalRecordPipelineItemDto(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    type: str
+    status: str
+    error_message: Optional[str]

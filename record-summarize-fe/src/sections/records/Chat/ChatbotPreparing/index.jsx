@@ -1,7 +1,7 @@
-import { CircularProgress } from '@mui/material';
 import { AIAgentGenerating, AIAgentMessageItem, MessageItem } from '../Message';
 import styles from './styles.module.scss';
-
+import Lottie from 'react-lottie';
+import animationData from '../../../../assets/lotties/Loading.json';
 
 const ChatbotPreparing = () => {
   return (
@@ -17,9 +17,18 @@ const ChatbotPreparing = () => {
         <AIAgentGenerating />
       </div>
       <div className={styles.preparingView}>
-        <img alt='chatbot' src='/chatbot_icon.png' className={styles.chatBot} />
+        <Lottie
+          height={150}
+          width={150}
+          options={{
+            loop: true,
+            autoplay: true,
+            animationData: animationData,
+            rendererSettings: {
+              preserveAspectRatio: "xMidYMid slice"
+            }
+          }} />
         <div className={styles.title}>
-          <span><CircularProgress size={20} /></span>
           Chatbot đang được khởi tạo
         </div>
       </div>

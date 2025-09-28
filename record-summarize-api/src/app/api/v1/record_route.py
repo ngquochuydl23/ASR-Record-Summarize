@@ -3,12 +3,12 @@ import asyncio
 import re
 import json
 from datetime import datetime
-from typing import Annotated, cast, List, Callable, Awaitable
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks
+from typing import Annotated, cast, Optional, Callable, Awaitable
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import desc
-from sqlalchemy.orm import selectinload, noload
+from sqlalchemy import desc, func,  or_
+from sqlalchemy.orm import selectinload, noload, load_only
 from .llm_route import llm_service
 from .transcription_route import transcription_service
 from ...connection_manager import manager
@@ -16,7 +16,8 @@ from ...constants.record_constants import RECORD_SUMMARIZE_STRUCTURES
 from ...core.db.database import async_get_db, local_session
 from ...core.exceptions.app_exception import AppException
 from ...dtos.llm import RequestRAGSearch
-from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecordDto
+from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecordDto, PaginatedRecordsDto, \
+    MinimalRecordDto
 from ...dtos.user import UserDto
 from ...models import RecordModel, UserModel, AttachmentModel, RecordPipelineItemModel, SummaryVersionModel
 from ...models.record_pipeline_items import PipelineItemType, PipelineItemStatus
@@ -129,24 +130,76 @@ async def get_record_by_id(
     return cast(RecordDto, record)
 
 
-@router.get("/records", response_model=List[RecordDto])
+@router.get("/records", response_model=PaginatedRecordsDto)
 async def get_records(
         current_user: Annotated[UserDto, Depends(get_current_user)],
-        db: Annotated[AsyncSession, Depends(async_get_db)]
-) -> RecordDto:
-    result = await db.execute(
+        db: Annotated[AsyncSession, Depends(async_get_db)],
+        s: Optional[str] = None,
+        unpublished: Optional[bool] = None,
+        page: int = Query(1, ge=1),
+        limit: int = Query(10, gt=0, le=100),
+) -> PaginatedRecordsDto:
+    offset = (page - 1) * limit
+    query = (
         select(RecordModel)
         .options(
-            selectinload(RecordModel.creator),
+            load_only(
+                RecordModel.id,
+                RecordModel.title,
+                RecordModel.record_content_type,
+                RecordModel.lang,
+                RecordModel.emails,
+                RecordModel.source_type,
+                RecordModel.permission,
+                RecordModel.published,
+                RecordModel.current_step,
+                RecordModel.chatbot_preparation_state,
+                RecordModel.created_at,
+                RecordModel.updated_at,
+                RecordModel.is_deleted
+            ),
             noload(RecordModel.attachments),
             noload(RecordModel.rag_documents),
             noload(RecordModel.current_version),
+            selectinload(RecordModel.creator),
             selectinload(RecordModel.pipeline_items)
+            .load_only(
+                RecordPipelineItemModel.id,
+                RecordPipelineItemModel.type,
+                RecordPipelineItemModel.status,
+                RecordPipelineItemModel.error_message,
+            )
         )
-        .where(RecordModel.is_deleted == False)
         .order_by(desc(RecordModel.created_at))
+        .where(RecordModel.is_deleted == False)
+        .where(or_(
+            RecordModel.creator_id == current_user['id'],
+            RecordModel.emails.any(current_user['email']),
+        ))
     )
-    return cast(RecordDto, result.scalars().all())
+
+    if s:
+        search = f"%{s.lower()}%"
+        query = query.where(
+            or_(
+                func.lower(RecordModel.title).like(search),
+                func.lower(RecordModel.description).like(search),
+                func.lower(func.array_to_string(RecordModel.emails, ' ')).like(search)
+            )
+        )
+    if unpublished:
+        query = query.where(RecordModel.published != unpublished)
+
+    result = await db.execute(query.offset(offset).limit(limit))
+    count_stmt = select(func.count()).select_from(RecordModel).where(RecordModel.is_deleted == False)
+    total = (await db.execute(count_stmt)).scalar_one()
+    records = result.unique().scalars().all()
+    return PaginatedRecordsDto(
+        total=total,
+        page=page,
+        limit=limit,
+        items=[MinimalRecordDto.model_validate(r) for r in records]
+    )
 
 
 # @router.put("/records/{record_id}", response_model=RecordDto)
@@ -359,7 +412,7 @@ async def retry_chatbot(db: Annotated[AsyncSession, Depends(async_get_db)], reco
     record.chatbot_preparation_state = RecordChatbotPreparationState.DONE
     db.add(record)
     await db.commit()
-    return { "message": "success" }
+    return {"message": "success"}
 
 
 @router.websocket("/records/ws/{record_id}")

@@ -1,7 +1,5 @@
 .innerLayout {
   max-height: calc(100vh - 60px);
-  overflow-y: auto;
-
   &.isShowStagingLabel {
     max-height: calc(100vh - 60px - 35px);
   }

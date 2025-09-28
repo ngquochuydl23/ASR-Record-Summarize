@@ -11,22 +11,21 @@ from ..dependencies import get_current_user
 
 router = APIRouter(tags=["Users"])
 
-
-# @router.get("/users/{userId}", response_model=UserDto)
-# async def read_user(
-#         request: Request,
-#         userId: str,
-#         db: Annotated[AsyncSession, Depends(async_get_db)]
-# ) -> UserDto:
-#     db_user = await user_service.get(db=db, id=uuid.UUID(userId), is_deleted=False, schema_to_select=UserDto)
-#     if db_user is None:
-#         raise NotFoundException("User not found")
-#     return cast(UserDto, db_user)
-
-
 @router.get("/users/me", response_model=UserDto)
 async def read_users_me(request: Request, current_user: Annotated[dict, Depends(get_current_user)]) -> dict:
     return current_user
+
+
+@router.get("/users/{userId}", response_model=UserDto)
+async def read_user(
+        request: Request,
+        userId: str,
+        db: Annotated[AsyncSession, Depends(async_get_db)]
+) -> UserDto:
+    db_user = await user_service.get(db=db, id=uuid.UUID(userId), is_deleted=False, schema_to_select=UserDto)
+    if db_user is None:
+        raise NotFoundException("User not found")
+    return cast(UserDto, db_user)
 
 
 @router.delete("/users/{userId}")

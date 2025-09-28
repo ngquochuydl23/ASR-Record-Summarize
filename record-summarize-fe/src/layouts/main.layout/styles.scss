@@ -9,7 +9,7 @@
 
 .parentLayout {
   max-height: 100vh;
-  overflow-y: auto;
+  overflow-y: hidden;
 
   &.stagingLabel {
     max-height: calc(100vh - 35px);

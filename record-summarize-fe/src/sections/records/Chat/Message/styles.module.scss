@@ -19,9 +19,39 @@
     margin-top: 0px;
     background-color: #f1f1fc;
     width: 90%;
+    white-space: inherit;
     align-self: flex-start;
+
+    &.error {
+      border: 1px solid #ff3333;
+      background-color: #f5e4e5;
+    }
   }
 }
+
+.errorMsg {
+  padding: 7.5px 10px;
+  display: flex;
+  gap: 10px;
+  width: fit-content;
+  height: fit-content;
+  background-color: white;
+  border-radius: 10px;
+  margin-top: 20px;
+  margin-right: 15px;
+  border: 1px solid #d3d3d3;
+  align-self: flex-end;
+  white-space: pre-line;
+  font-size: 14px;
+  box-shadow: rgba(33, 35, 38, 0.1) 0px 10px 10px -10px;
+  border: none;
+  margin-top: 0px;
+  background-color: #f1f1fc;
+  align-self: flex-start;
+  border: 1px solid #ff3333;
+  background-color: #f5e4e5;
+}
+
 .chatbotIc {
   width: 40px;
   height: 40px;
@@ -66,29 +96,27 @@
   font-size: 14px;
 
   ol {
-    list-style: decimal; /* trả lại số */
-    margin: 0 0;
-    padding-left: 1rem; /* thụt vào để số nhìn rõ */
+    list-style: decimal; /* số cho ol */
+    margin: 1em 0 1em 1.5em; /* gọn, margin dưới 1em, thụt 1.5em */
+    padding: 0;
   }
 
   ul {
-    list-style: disc; /* giữ chấm tròn cho ul */
-    margin: 0;
-    display: block;
-    padding-left: 0.5rem;
-    -webkit-margin-before: 1em;
-    -webkit-margin-after: 1em;
-    -webkit-margin-start: 0px;
-    -webkit-margin-end: 0px;
-    -webkit-padding-start: 40px;
+    list-style: circle; /* chấm tròn cho ul */
+    margin: 1em 0 1em 1.5em; /* margin dưới 1em, thụt 1.5em */
+    padding: 0;
   }
   li {
-    margin: 0; /* xoá mọi margin thừa */
+    margin: 0; /* xoá margin thừa */
     padding: 0; /* xoá padding mặc định */
-    line-height: 1.4; /* kiểm soát chiều cao dòng */
   }
   li + li {
-    margin-top: 0px;
+    margin-top: 1em;
+    margin-bottom: 1em; /* cách nhau 1 chút giữa các li */
+  }
+
+  li + p {
+    margin-top: 0em;
   }
   a {
     color: #065fd4;
@@ -102,12 +130,14 @@
     font-weight: 600;
     font-size: 16px;
     line-height: 32px;
+    margin: 1em 0 0.5em 0;
   }
 
   h3 {
     font-weight: 600;
     font-size: 15px;
-    line-height: 32px;
+    line-height: 28px;
+    margin: 0.75em 0 0.5em 0;
   }
 
   pre {

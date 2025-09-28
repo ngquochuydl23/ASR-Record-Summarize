@@ -3,6 +3,8 @@ from datetime import datetime
 from pydantic import BaseModel
 import uuid
 
+from sympy import false
+
 from src.app.dtos.message_dto import CreateMessageDto
 
 

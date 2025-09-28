@@ -3,7 +3,7 @@ import styles from './styles.module.scss';
 import Composer from './Composer';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useEffect, useRef, useState } from 'react';
-import { AIAgentGenerating, AIAgentMessageItem, MessageItem } from './Message';
+import { AIAgentGenerating, AIAgentMessageItem, ErrorAIAgentMessageItem, MessageItem } from './Message';
 import Scrollbars from 'react-custom-scrollbars-2';
 import ChatbotPreparing from './ChatbotPreparing';
 import { ChatbotPreparingStateEnum } from '@/constants/app.constants';
@@ -16,7 +16,7 @@ import { createConversation } from '@/repositories/conversation.repository';
 import _ from 'lodash';
 import { getAllMessages, sendMsg } from '@/repositories/message.repository';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-
+import { v4 as uuidv4 } from 'uuid';
 const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry }) => {
   const scrollRef = useRef();
   const [messages, setMessages] = useState([]);
@@ -39,9 +39,13 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
   const handleSubmitMsg = (message) => {
     scrollRef.current?.scrollToBottom();
     const msgPayload = {
+      id: uuidv4(),
       msg_content: message.msg_content,
-      attachments: []
+      web_search: message?.web_search || false,
+      reply_from_id: message?.reply_from_id || null,
+      attachments: [],
     }
+    console.log(msgPayload);
     setWaiting(true);
     setMessages(pre => [...pre, { ...msgPayload, sender: "USER" }]);
     if (searchParams && searchParams.get("conversationId")) {
@@ -83,7 +87,20 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
     else if (data.type === 'done') {
       setWaiting(false);
       setSteamingData('');
-      setMessages(prev => [...prev, { msg_content: data.content, sender: "AI" }]);
+      setMessages(prev => [...prev, {
+        msg_content: data.content,
+        sender: "AI",
+        agent_msg_status: data.agent_msg_status,
+      }]);
+    } else if (data.type === 'error') {
+      console.log(data);
+      setWaiting(false);
+      setSteamingData('');
+      setMessages(prev => [...prev, {
+        msg_content: data.content,
+        sender: "AI",
+        agent_msg_status: data.agent_msg_status,
+      }]);
     }
     setTimeout(() => { scrollRef.current?.scrollToBottom() }, 500);
   }
@@ -106,8 +123,16 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
     }
   }, [searchParams]);
 
-  const handleAgreeAnswer = () => {
-    handleSubmitMsg({ msg_content: 'Tôi đồng ý', attachments: [] });
+  const handleAgreeAnswer = (parentId) => {
+    const lastUserMsg = _.findLast(messages, (msg) => msg.sender === 'USER');
+    if (lastUserMsg) {
+      handleSubmitMsg({
+        msg_content: 'Tôi đồng ý',
+        attachments: [],
+        web_search: true,
+        reply_from_id: lastUserMsg.id
+      });
+    }
   }
 
   return (
@@ -135,15 +160,26 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
                   recordId={record?.id}
                   onSuggestClick={(suggestion) => handleSubmitMsg({ msg_content: suggestion, attachments: [] })} />
               }
-              {_.map(messages, (messageItem) => (
-                messageItem.sender === 'AI'
-                  ? <AIAgentMessageItem
-                    key={messageItem}
-                    id={messageItem?.id}
-                    content={messageItem.msg_content}
-                    onAgree={handleAgreeAnswer} />
-                  : <MessageItem key={messageItem} content={messageItem.msg_content} />
-              ))}
+              {_.map(messages, (messageItem) => {
+                if (messageItem.sender === 'AI' && messageItem.agent_msg_status === 'Success') {
+                  return (
+                    <AIAgentMessageItem
+                      key={messageItem}
+                      id={messageItem?.id}
+                      content={messageItem.msg_content}
+                      onAgree={handleAgreeAnswer}
+                    />
+                  )
+                }
+                if (messageItem.sender === 'AI' && messageItem.agent_msg_status === 'Failed') {
+                  return (<ErrorAIAgentMessageItem id={messageItem?.id} />)
+                }
+                if (messageItem.sender === 'USER') {
+                  return (
+                    <MessageItem key={messageItem} content={messageItem.msg_content} />
+                  )
+                }
+              })}
               {(waiting && _.isEmpty(steamingData)) && <AIAgentGenerating />}
               {(!_.isEmpty(steamingData) && waiting) && <AIAgentMessageItem content={steamingData} />}
             </div>

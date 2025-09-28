@@ -1,9 +1,10 @@
 from .llm_route import llm_service
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks
 from typing import Annotated, cast, List
-from sqlalchemy import select, and_
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from sqlalchemy import select, and_, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import noload, selectinload
+from sqlalchemy.orm import noload, selectinload, joinedload
 from .record_route import rag_index_service
 from ...core.exceptions.app_exception import AppException
 from ...core.logger import logging
@@ -14,15 +15,16 @@ from ...models import RecordModel, UserModel
 from ...models.conversations import ConversationModel
 from ..dependencies import get_current_user
 from ...conversation_cmanager import manager
-from ...models.messages import MessageModel, SenderEnum
+from ...models.messages import MessageModel, SenderEnum, AgentMsgStatus
 from ...services.llm_service import LLMService
 from ...core.db.database import async_get_db, local_session
+from ...services.rag_index_service import RagIndexService
 from datetime import datetime
 from google.genai import types
 import uuid
+import os
 
-from ...services.rag_index_service import RagIndexService
-
+TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "templates", 'prompts')
 router = APIRouter(tags=["Conversations"])
 llm_service = LLMService()
 rag_index_service = RagIndexService()
@@ -44,6 +46,7 @@ async def get_conversations_by_record_id(
                 ConversationModel.owner_id == current_user["id"]
             )
         )
+        .order_by(desc(ConversationModel.created_at))
     )
     return cast(ConversationDto, result.scalars().all())
 
@@ -71,7 +74,8 @@ async def create_conversation(
                 id=uuid.uuid4(),
                 sender=SenderEnum.USER,
                 msg_content=body.message.msg_content,
-                owner_id=current_user["id"]
+                owner_id=current_user["id"],
+                created_at=datetime.now()
             )
         ]
     )
@@ -81,9 +85,9 @@ async def create_conversation(
 
     background_tasks.add_task(
         _ask_llm,
-        conversation,
-        record,
-        conversation.messages[0]
+        conversation.id,
+        record.id,
+        conversation.messages[0].id
     )
     return conversation.to_dict()
 
@@ -106,16 +110,32 @@ async def send_msg(
         raise AppException(f"Record {body.record_id} not found")
 
     message = MessageModel(
-        id=uuid.uuid4(),
+        id=body.id,
         sender=SenderEnum.USER,
         msg_content=body.msg_content,
         conversation_id=conversation.id,
-        owner_id=current_user["id"]
+        owner_id=current_user["id"],
+        agent_msg_status=None,
+        reply_from_id=None,
+        web_search=False,
+        created_at=datetime.now()
     )
-    background_tasks.add_task(_ask_llm, conversation, record, message)
+
+    if body.reply_from_id and body.web_search:
+        stmt = select(MessageModel).where(MessageModel.id == body.reply_from_id)
+        result = await db.execute(stmt)
+        reply_msg = result.scalar_one_or_none()
+        if not reply_msg:
+            raise AppException("Reply message not found")
+
+        message.reply_from_id = reply_msg.id
+        message.web_search = body.web_search
+
     db.add(message)
     await db.commit()
     await db.refresh(message)
+
+    background_tasks.add_task(_ask_llm, conversation.id, record.id, message.id)
     return message.to_dict()
 
 
@@ -133,10 +153,12 @@ async def get_messages(
 
     result = await db.execute(
         select(MessageModel)
+        .options(noload(MessageModel.reply_from))
         .where(and_(
             MessageModel.is_deleted == False,
             MessageModel.conversation_id == conversation.id
         ))
+        .order_by(asc(MessageModel.created_at))
     )
     return cast(MessageDto, result.scalars().all())
 
@@ -152,71 +174,90 @@ async def websocket_task_endpoint(websocket: WebSocket, conversation_id: str):
         manager.disconnect(conversation_id, websocket)
 
 
-async def _ask_llm(
-        conversation: ConversationModel,
-        record: RecordModel,
-        message: MessageModel
-):
+async def _ask_llm(conversation_id: uuid.UUID, record_id: uuid.UUID, message_id: uuid.UUID):
     async with local_session() as db:
-        try:
-            chunks = await rag_index_service.search_similar_chunks(
-                db,
-                message.msg_content,
-                record.id,
-                top_k=5,
-                threshold=0.1
+        message = await _get_msg_by_id(db, message_id)
+        chunks = await rag_index_service.search_similar_chunks(db, message.msg_content,
+                                                               record_id, top_k=5, threshold=0.1)
+        context = "\n\n".join([f"{chunk['content']}" for i, chunk in enumerate(chunks)])
+        if message.web_search and message.reply_from_id:
+            reply_from_msg = await _get_msg_by_id(db, message.reply_from_id)
+            prompt = _get_prompt_template("chatbot_answer_allow_search.text").render(
+                context=context,
+                question=message.msg_content,
+                previous_question=reply_from_msg.msg_content
             )
-            context = "\n\n".join([f"{chunk['content']}" for i, chunk in enumerate(chunks)])
-            prompt = f"""
-            Bạn là một trợ lý ảo trong ứng dụng ASR Record.
-            Ứng dụng này chuyên ghi âm, nhận dạng giọng nói (ASR), tạo transcript, tóm tắt và trích xuất ý chính từ các buổi họp.
-
-            Nguyên tắc:
-            - Chỉ sử dụng transcript và dữ liệu của ứng dụng (tiêu đề cuộc họp, người tham gia, thời gian, nội dung đã lưu).
-            - Nếu thông tin không có trong transcript, hãy trả lời chính xác: "Thông tin này không có trong bản ghi."
-              Sau đó hỏi người dùng: "Bạn có muốn tôi tìm trong tri thức bên ngoài không?"
-            - Câu trả lời cần rõ ràng, ngắn gọn, dễ hiểu.
-            - Khi phù hợp, trích dẫn ngắn một đoạn transcript để minh họa.
-            - Với câu hỏi phức tạp:
-              1. Trả lời trực tiếp trước.
-              2. Sau đó liệt kê bằng gạch đầu dòng những bằng chứng (câu hoặc đoạn) từ transcript.
-            - Nếu transcript có mâu thuẫn, hãy nêu rõ các khả năng kèm nguồn trích dẫn.
-
-            Khả năng đặc biệt:
-            - Tóm tắt toàn bộ hoặc một phần nội dung họp.
-            - Trích xuất danh sách nhiệm vụ, quyết định, vấn đề thảo luận, ý kiến từng người.
-            - Xác định người tham gia và những gì họ đã nói.
-            - Trả lời các câu hỏi như: "Ai nói gì?", "Khi nào thảo luận vấn đề này?", "Kết luận của buổi họp là gì?"
-
-            Không được:
-            - Tự thêm nội dung không có trong transcript.
-            - Sử dụng kiến thức ngoài phạm vi ứng dụng nếu người dùng chưa đồng ý.
-
-            --- Dữ liệu cuộc họp ---
-            {context}
-
-            --- Câu hỏi ---
-            {message.msg_content}
-            """
-            full_answer = ""
+        else:
+            prompt = _get_prompt_template("chatbot_answer_non_search.text").render(
+                context=context,
+                question=message.msg_content
+            )
+        full_answer = ""
+        grounding_tool = types.Tool(google_search=types.GoogleSearch())
+        config = types.GenerateContentConfig(tools=[grounding_tool])
+        try:
             for chunk in llm_service.gemini_client.models.generate_content_stream(
                     model='gemini-2.0-flash',
-                    contents=prompt
+                    contents=prompt,
+                    config=config if message.web_search else None
             ):
-                await manager.broadcast(str(conversation.id), {"type": "chunk", "content": chunk.text})
+                await manager.broadcast(str(conversation_id), {
+                    "type": "chunk",
+                    "content": chunk.text,
+                    "agent_msg_status": AgentMsgStatus.SUCCESS
+                })
                 full_answer += chunk.text
-            await manager.broadcast(str(conversation.id), {"type": "done", "content": full_answer})
+            await manager.broadcast(str(conversation_id), {
+                "type": "done",
+                "content": full_answer,
+                "agent_msg_status": AgentMsgStatus.SUCCESS
+            })
 
             ai_msg = MessageModel(
                 id=uuid.uuid4(),
-                conversation_id=conversation.id,
+                conversation_id=conversation_id,
                 sender=SenderEnum.AI,
                 msg_content=full_answer,
-                owner_id=None
+                owner_id=None,
+                agent_msg_status=AgentMsgStatus.SUCCESS,
+                reply_from_id=None,
+                web_search=False,
+                created_at=datetime.now()
             )
             db.add(ai_msg)
             await db.commit()
+            await db.refresh(ai_msg)
         except Exception as e:
             logging.error("Error", str(e))
-            await db.rollback()
-            raise
+            ai_msg = MessageModel(
+                id=uuid.uuid4(),
+                conversation_id=conversation_id,
+                sender=SenderEnum.AI,
+                msg_content=str(e),
+                owner_id=None,
+                agent_msg_status=AgentMsgStatus.FAILED,
+                reply_from_id=None,
+                web_search=False,
+                created_at=datetime.now()
+            )
+            await manager.broadcast(str(conversation_id), {
+                "type": "error",
+                "content": str(e),
+                "agent_msg_status": AgentMsgStatus.FAILED
+            })
+            db.add(ai_msg)
+            await db.commit()
+            await db.refresh(ai_msg)
+
+
+def _get_prompt_template(path: str):
+    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR), autoescape=select_autoescape())
+    return env.get_template(path)
+
+async def _get_msg_by_id(db, id: uuid) -> MessageModel:
+    result = await db.execute(
+        select(MessageModel)
+        .options(selectinload(MessageModel.reply_from))
+        .where(MessageModel.id == id)
+    )
+    return result.scalar_one_or_none()

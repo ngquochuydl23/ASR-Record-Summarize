@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import { Button, Icon, IconButton, Tooltip } from '@mui/material';
 import styles from './styles.module.scss';
 import classNames from 'classnames';
 import { CircularProgress } from '@mui/material';
@@ -11,7 +11,7 @@ import rehypeRaw from "rehype-raw";
 import unescapeJs from 'unescape-js';
 import { NotFoundKnowledge } from '@/constants/app.constants';
 import IcAgreeAnswer from '@/assets/icons/IcAgreeAnswer';
-import { colors } from '@/theme/theme.global';
+import ReplayIcon from '@mui/icons-material/Replay';
 
 export const MessageItem = ({ content }) => {
   return (
@@ -28,7 +28,7 @@ export const AIAgentMessageItem = ({ id, content, onAgree, onDecline }) => {
       <div className='flex flex-col'>
         <div className={styles.aiAssistantTitle}>Trợ lý AI</div>
         <div className={classNames(styles.messageItem, styles.isAiResponse)}>
-          <p className={styles.markdown}>
+          <div className={styles.markdown}>
             <ReactMarkdown
               components={{
                 code({ node, inline, className, children, ...props }) {
@@ -42,8 +42,10 @@ export const AIAgentMessageItem = ({ id, content, onAgree, onDecline }) => {
                   ) : (<code className="bg-gray-100 px-1 py-0.5 rounded" {...props}>{children}</code>);
                 },
               }}
+              urlTransform
               remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}>
+              rehypePlugins={[rehypeRaw]}
+            >
               {unescapeJs(content)
                 .replace(/\[(\d{1,2}:\d{2}:\d{2})-(\d{1,2}:\d{2}:\d{2})\]/g, (_, t1, t2) => {
                   const start = timeToSeconds(t1);
@@ -55,7 +57,7 @@ export const AIAgentMessageItem = ({ id, content, onAgree, onDecline }) => {
                 })
               }
             </ReactMarkdown>
-          </p>
+          </div >
         </div>
         {content === NotFoundKnowledge &&
           <div className='flex gap-2 w-[80%] justify-end mt-2'>
@@ -69,6 +71,25 @@ export const AIAgentMessageItem = ({ id, content, onAgree, onDecline }) => {
         }
         <div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+export const ErrorAIAgentMessageItem = ({ id }) => {
+  return (
+    <div className='flex gap-3 p-2 w-fit' key={id}>
+      <img alt="chatbot icon" className={styles.chatbotIc} src='/chatbot_icon.png' />
+      <div className='flex w-[80%]'>
+        <div className='flex flex-col w-fit'>
+          <div className={classNames(styles.aiAssistantTitle, "w-fit")}>Trợ lý AI</div>
+          <div className={classNames(styles.errorMsg)}>
+            {`Đã có lỗi xảy ra. Máy chủ AI hiện đang bận, vui lòng thử lại sau vài phút.`}
+          </div>
+        </div>
+        <IconButton sx={{ width: '40px', height: '40px', marginTop: '30px' }}>
+          <Tooltip title="Thử lại"><ReplayIcon /></Tooltip>
+        </IconButton>
       </div>
     </div>
   )

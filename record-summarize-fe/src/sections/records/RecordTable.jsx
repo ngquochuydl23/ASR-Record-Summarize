@@ -22,7 +22,6 @@ import { useCallback, useState } from 'react';
 import { Search } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '@/theme/theme.global';
-import TableLoading from '@/components/TableLoading';
 import { PipelineItemTypeEnum, PipelineStepTitle, RecordContentType, SourceTypeEnum } from '@/constants/app.constants'
 import ProgressBar from '@ramonak/react-progress-bar';
 import styles from './record-table.module.scss';
@@ -69,6 +68,7 @@ const ActionTableCell = ({ item, onRefresh, publishable }) => {
   }
 
   const handleEditRecord = (e) => {
+    navigate(`/records/${item?.id}/setting`)
     handleClose();
     e.preventDefault();
   }

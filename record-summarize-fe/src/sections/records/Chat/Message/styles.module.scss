@@ -96,23 +96,23 @@
   font-size: 14px;
 
   ol {
-    list-style: decimal; /* số cho ol */
-    margin: 1em 0 1em 1.5em; /* gọn, margin dưới 1em, thụt 1.5em */
+    list-style: decimal;
+    margin: 1em 0 1em 1.5em;
     padding: 0;
   }
 
   ul {
-    list-style: circle; /* chấm tròn cho ul */
-    margin: 1em 0 1em 1.5em; /* margin dưới 1em, thụt 1.5em */
+    list-style: circle;
+    margin: 1em 0 1em 1.5em;
     padding: 0;
   }
   li {
-    margin: 0; /* xoá margin thừa */
-    padding: 0; /* xoá padding mặc định */
+    margin: 0;
+    padding: 0;
   }
   li + li {
     margin-top: 1em;
-    margin-bottom: 1em; /* cách nhau 1 chút giữa các li */
+    margin-bottom: 1em;
   }
 
   li + p {

@@ -31,7 +31,6 @@ const MainLayout = () => {
     setOpenNotiDrawer(true);
   };
 
-
   useEffect(() => {
     setLoading(true);
     getMe()
@@ -54,7 +53,7 @@ const MainLayout = () => {
       {process.env.REACT_APP_ENVIRONMENT === 'Staging' && <StagingLabelView />}
       <div className="flex h-full">
         <Sidebar />
-        <div className="flex flex-col w-full bg-[#fcfcfc] parentLayout">
+        <div className="flex flex-col w-full parentLayout">
           <MainLayoutHeader openNotificationList={openNotificationList} />
           <Scrollbars>
             <div className={classNames("p-4 innerLayout", { "isShowStagingLabel": process.env.REACT_APP_ENVIRONMENT === 'Staging' })} >

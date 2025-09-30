@@ -13,6 +13,7 @@ const Loadable = (Component) => (props) => {
   );
 };
 
+const RecordSettingPage = Loadable(lazy(() => import("../pages/records/settings")))
 const RecordPage = Loadable(lazy(() => import("../pages/records")));
 const PlayRecordPage = Loadable(lazy(() => import("../pages/records/playVideo")));
 const SettingPage = Loadable(lazy(() => import("../pages/settings")));
@@ -51,6 +52,7 @@ export default function Router() {
         { path: AppRoute.RECORDS, element: <RecordPage />, index: true },
         { path: AppRoute.HISTORY, element: <HistoryChatAIPage /> },
         { path: AppRoute.COLLECTIONS, element: <CollectionPage /> },
+        { path: '/records/:recordId/setting', element: <RecordSettingPage /> },
         { path: "/settings", element: <SettingPage /> },
         { path: AppRoute.PERSONAL_INFO, element: <PersonalInfoPage /> },
         { path: "/404", element: <Page404 /> },

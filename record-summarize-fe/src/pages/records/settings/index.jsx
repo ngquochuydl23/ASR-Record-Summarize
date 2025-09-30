@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLoading } from '@/contexts/LoadingContextProvider';
 import { useNavigate, useParams } from 'react-router-dom';
 import { updateRecordById, getRecordById } from '@/repositories/record.repository';
-import { getSummaryVersionById } from '@/repositories/summary-version.repository';
+import { getLastestVersionByRecord, getSummaryVersionById } from '@/repositories/summary-version.repository';
 import { PipelineSteps, StatusMapStrings } from './page.config';
 import { useFormik } from 'formik';
 import { BootstrapInput } from '@/components/fields/BootstrapField';
@@ -36,18 +36,21 @@ import IcMsWord from '@/assets/icons/IcMsWord';
 import IcExcel from '@/assets/icons/IcExcel';
 import IcPdf from '@/assets/icons/IcPdf';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { usePreviewSVDialog } from '@/contexts/PreviewSummaryVContext';
 
 
 const RecordSettingPage = () => {
+  const playerRef = useRef();
+  const navigate = useNavigate();
+  const { openPreviewDialog } = usePreviewSVDialog();
   const { recordId } = useParams();
   const [record, setRecord] = useState(null);
   const { isLoading, showLoading, hideLoading } = useLoading();
   const [updating, setUpdating] = useState(false);
-  const navigate = useNavigate();
-  const playerRef = useRef();
   const { enqueueSnackbar } = useSnackbar();
   const [videoUploading, setVideoUploading] = useState(false);
   const [youtubeChecking, setYoutubeChecking] = useState(false);
+  const [lastVersion, setLastVersion] = useState(null);
   const validationSchema = Yup.object({
     title: Yup
       .string()
@@ -103,6 +106,7 @@ const RecordSettingPage = () => {
       setUpdating(true);
       updateRecordById(id, payload)
         .then((response) => {
+          setRecord(response);
           setUpdating(false);
           enqueueSnackbar('Cập nhật tóm tắt thành công', {
             variant: 'success',
@@ -187,6 +191,7 @@ const RecordSettingPage = () => {
     try {
       if (!isLoading) showLoading();
       const _record = await getRecordById(recordId);
+      const _lastestVersion = await getLastestVersionByRecord(recordId);
       const summary_version = await getSummaryVersionById(_record?.current_version_id);
       _record.summary_version = summary_version;
       _record.current_step = 4;
@@ -241,6 +246,7 @@ const RecordSettingPage = () => {
           "extra": {}
         }
       ]
+      setLastVersion(_lastestVersion);
       setValues({
         id: _record?.id,
         title: _record?.title,
@@ -336,7 +342,7 @@ const RecordSettingPage = () => {
                     <h5 className={styles.sectionTitle}>Thông tin video</h5>
                     <FormControl variant="standard" fullWidth>
                       <InputLabel required shrink htmlFor="title">Tiêu đề</InputLabel>
-                      <BootstrapInput {...getFieldProps("title")} name="title" id="title" size="small" sx={{ fontSize: "14px" }} fullWidth />
+                      <BootstrapInput {...getFieldProps("title")} size="small" sx={{ fontSize: "14px" }} fullWidth />
                       {touched.title && errors.title ? (
                         <div className="text-errorColor text-[12px] mt-[2px]">{errors.title}</div>
                       ) : (<div div className="text-textSecondaryColor text-[12px] mt-[2px]">
@@ -349,8 +355,6 @@ const RecordSettingPage = () => {
                         <InputLabel shrink htmlFor="record_content_type" required size="small">Thể loại</InputLabel>
                         <BootstrapAutocomplete
                           {...getFieldProps("record_content_type")}
-                          id="record_content_type"
-                          name="record_content_type"
                           placeholder="Chọn thể loại"
                           value={RecordContentTypes.find(x => x?.id === values.record_content_type) || null}
                           options={RecordContentTypes || []}
@@ -471,7 +475,8 @@ const RecordSettingPage = () => {
                                   {youtubeChecking && <div className={styles.loadingContainer}><CircularProgress size='20px' /></div>}
                                   {!youtubeChecking && values.youtubeLink && !errors.youtubeLink && <CheckCircleIcon sx={{ color: colors.successColorBg }} />}
                                   {!youtubeChecking && errors.youtubeLink && <ErrorOutlineIcon sx={{ color: colors.errorColor }} />}
-                                </InputAdornment>}
+                                </InputAdornment>
+                              }
                               onChange={(e) => {
                                 setFieldValue('youtubeLink', e.target.value || null);
                                 setYoutubeChecking(false);
@@ -642,15 +647,17 @@ const RecordSettingPage = () => {
                         <div className={styles.previewLastSummaryButton}>
                           <div className='flex flex-col w-full overflow-hidden'>
                             <div className={styles.recordTitle}>{_.capitalize(record?.title)}</div>
-                            <div className={styles.version}>Phiên bản {record?.summary_version?.title}<span> (Mới nhất)</span></div>
+                            <div className={styles.version}>Phiên bản {lastVersion?.title}<span> (Mới nhất)</span></div>
                           </div>
                           <div className='flex gap-1'>
-                            <IconButton className={styles.iconBtn}>
+                            <IconButton className={styles.iconBtn} onClick={() => { openPreviewDialog(lastVersion?.id) }}>
                               <Tooltip title="Xem trước"><SlideshowOutlinedIcon /></Tooltip>
                             </IconButton>
-                            <IconButton className={styles.iconBtn}>
-                              <Tooltip title="Xuất bản"><PublishOutlinedIcon /></Tooltip>
-                            </IconButton>
+                            <Tooltip title="Xuất bản">
+                              <IconButton className={styles.iconBtn} disabled={record?.summary_version?.id === lastVersion?.id}>
+                                <PublishOutlinedIcon />
+                              </IconButton>
+                            </Tooltip>
                           </div>
                         </div>
                       }

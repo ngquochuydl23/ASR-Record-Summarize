@@ -7,7 +7,7 @@ from typing import Annotated, cast, Optional, Callable, Awaitable
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import desc, func,  or_
+from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import selectinload, noload, load_only
 from .llm_route import llm_service
 from .transcription_route import transcription_service
@@ -17,11 +17,12 @@ from ...core.db.database import async_get_db, local_session
 from ...core.exceptions.app_exception import AppException
 from ...dtos.llm import RequestRAGSearch
 from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecordDto, PaginatedRecordsDto, \
-    MinimalRecordDto
+    MinimalRecordDto, RecordUpdateDto
 from ...dtos.user import UserDto
 from ...models import RecordModel, UserModel, AttachmentModel, RecordPipelineItemModel, SummaryVersionModel
 from ...models.record_pipeline_items import PipelineItemType, PipelineItemStatus
-from ...models.records import PermissionLevel, RecordContentType, RecordSourceType, RecordChatbotPreparationState
+from ...models.records import PermissionLevel, RecordContentType, RecordSourceType, RecordChatbotPreparationState, \
+    RecordLang
 from ...services.ffmpeg_service import FFMpegService
 from ...services.rag_index_service import RagIndexService
 from ...services.s3_service import S3Service
@@ -202,15 +203,39 @@ async def get_records(
     )
 
 
-# @router.put("/records/{record_id}", response_model=RecordDto)
-# async def update_meeting(
-#     request: Request,
-#     record_id: str,
-#     body: Rec,
-#     db: Annotated[AsyncSession, Depends(async_get_db)]
-# ) -> MeetingDto:
-#     meeting = dict({})
-#     return cast(MeetingDto, meeting)
+@router.put("/records/{record_id}", response_model=RecordDto)
+async def update_record(
+        record_id: str,
+        body: RecordUpdateDto,
+        db: Annotated[AsyncSession, Depends(async_get_db)]
+) -> RecordDto:
+    stmt = (select(RecordModel)
+            .options(
+                selectinload(RecordModel.creator),
+                selectinload(RecordModel.pipeline_items),
+                noload(RecordModel.attachments),
+                noload(RecordModel.rag_documents),
+                noload(RecordModel.current_version),
+            )
+            .where(RecordModel.id == record_id))
+    result = await db.execute(stmt)
+    record = result.scalar_one_or_none()
+
+    if not record:
+        raise AppException(f"Record with id {record_id} not found")
+
+    record.title = body.title
+    record.description = body.description
+    record.record_content_type = RecordContentType(body.record_content_type)
+    record.url = body.url
+    record.emails = body.emails
+    record.lang = RecordLang(body.lang)
+    record.source_type = RecordSourceType(body.source_type)
+
+    await db.commit()
+    await db.refresh(record)
+
+    return cast(RecordDto, record)
 
 
 @router.delete("/records/{record_id}")

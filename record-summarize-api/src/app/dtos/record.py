@@ -28,11 +28,14 @@ class RecordCreateDto(BaseModel):
 
 
 class RecordUpdateDto(BaseModel):
-    title: Optional[str]
-    content: Optional[str]
+    title: str
+    description: str
+    record_content_type: str
+    url: str
+    #attachments:
+    emails: List[str]
+    lang: str
     source_type: str
-    permission: Optional[PermissionLevel]
-
 
 class RecordUpdateInternal(RecordUpdateDto):
     updated_at: datetime

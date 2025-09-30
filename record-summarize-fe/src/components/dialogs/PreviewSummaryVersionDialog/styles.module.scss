@@ -1,0 +1,59 @@
+.dialogContent {
+  max-height: 70vh;
+  height: 100%;
+  .markdown {
+    margin-top: 20px;
+    font-size: 14px;
+    a {
+      color: #065fd4;
+      font-weight: 600;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    h2 {
+      font-weight: 600;
+      font-size: 16px;
+      line-height: 32px;
+    }
+
+    h3 {
+      font-weight: 600;
+      font-size: 15px;
+      line-height: 32px;
+    }
+
+    pre {
+      font-family: var(
+        --default-mono-font-family,
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        "Liberation Mono",
+        "Courier New",
+        monospace
+      );
+    }
+
+    strong {
+      font-size: 13px;
+    }
+
+    code {
+      font-family: var(
+        --default-mono-font-family,
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        "Liberation Mono",
+        "Courier New",
+        monospace
+      );
+    }
+  }
+}

@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 from typing import Annotated, cast
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import noload
+from sqlalchemy.orm import noload, selectinload
 from ...core.db.database import async_get_db
+from ...core.exceptions.app_exception import AppException
 from ...dtos.summary_record import SummaryRecordDto
 from ...models import SummaryVersionModel, RecordModel
 from sqlalchemy import and_
@@ -20,11 +21,27 @@ async def get_summary_versions(record_id: str, db: Annotated[AsyncSession, Depen
     return cast(SummaryRecordDto, result.scalars().all())
 
 
-@router.get("/summary-versions/{version_id}", status_code=200)
+@router.get("/summary-versions/by-record/{record_id}/lastest", status_code=200, response_model=SummaryRecordDto)
+async def get_lastest_version(record_id: str, db: Annotated[AsyncSession, Depends(async_get_db)]):
+    stmt = (
+        select(SummaryVersionModel)
+        .options(selectinload(SummaryVersionModel.record))
+        .where(and_(SummaryVersionModel.is_deleted == False, SummaryVersionModel.record_id == record_id))
+        .order_by(desc(SummaryVersionModel.created_at))
+        .limit(1)
+    )
+    result = await db.execute(stmt)
+    summary = result.scalar_one_or_none()
+    if not summary:
+        raise AppException(f"No summary version found for record {record_id}")
+    return cast(SummaryRecordDto, summary)
+
+
+@router.get("/summary-versions/{version_id}", status_code=200, response_model=SummaryRecordDto)
 async def get_version_by_id(version_id: str, db: Annotated[AsyncSession, Depends(async_get_db)]):
     result = await db.execute(
         select(SummaryVersionModel)
-        .options(noload(SummaryVersionModel.record))
+        .options(selectinload(SummaryVersionModel.record))
         .where(
             and_(
                 SummaryVersionModel.is_deleted.is_(False),
@@ -32,6 +49,6 @@ async def get_version_by_id(version_id: str, db: Annotated[AsyncSession, Depends
             )
         )
     )
-    record = result.scalar_one_or_none()
-    return cast(SummaryRecordDto, record)
+    summary = result.scalar_one_or_none()
+    return cast(SummaryRecordDto, summary)
 

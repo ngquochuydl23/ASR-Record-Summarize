@@ -5,6 +5,7 @@ import { SnackbarProvider } from "notistack";
 import { ConfirmDialogProvider } from "./contexts/ConfirmDialogContext";
 import { LoadingContextProvider } from "./contexts/LoadingContextProvider";
 import "./index.css";
+import { PreviewSummaryVersionProvider } from "./contexts/PreviewSummaryVContext";
 
 export default function App() {
   return (
@@ -12,7 +13,9 @@ export default function App() {
       <ThemeProvider>
         <SnackbarProvider>
           <ConfirmDialogProvider>
-            <Router />
+            <PreviewSummaryVersionProvider>
+              <Router />
+            </PreviewSummaryVersionProvider>
           </ConfirmDialogProvider>
         </SnackbarProvider>
       </ThemeProvider>

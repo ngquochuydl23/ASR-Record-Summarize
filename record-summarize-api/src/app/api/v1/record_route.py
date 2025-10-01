@@ -30,6 +30,7 @@ from ..dependencies import get_current_user
 from ...core.logger import logging
 from ...services.transcription_service import TranscriptionService
 from ...services.youtube_service import YoutubeService
+from ...utils.apply_paginate import apply_paginate
 from ...utils.extract_text_from_file import extract_text
 
 s3_service = S3Service()
@@ -140,7 +141,7 @@ async def get_records(
         page: int = Query(1, ge=1),
         limit: int = Query(10, gt=0, le=100),
 ) -> PaginatedRecordsDto:
-    offset = (page - 1) * limit
+    offset, limit = apply_paginate(page, limit)
     query = (
         select(RecordModel)
         .options(
@@ -297,6 +298,7 @@ async def publish_record(
         raise AppException("Cannot execute with published record.")
 
     last_version = record.summary_versions[0]
+    record.summary_versions[0].published = True
     record.current_version_id = last_version.id
     record.published = True
     await db.commit()

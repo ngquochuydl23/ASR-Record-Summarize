@@ -42,13 +42,43 @@ async def get_version_by_id(version_id: str, db: Annotated[AsyncSession, Depends
     result = await db.execute(
         select(SummaryVersionModel)
         .options(selectinload(SummaryVersionModel.record))
-        .where(
-            and_(
-                SummaryVersionModel.is_deleted.is_(False),
-                SummaryVersionModel.id == version_id
-            )
-        )
+        .where(and_(SummaryVersionModel.is_deleted.is_(False), SummaryVersionModel.id == version_id))
     )
     summary = result.scalar_one_or_none()
+    if not summary:
+        raise AppException(f"No summary version found with id {version_id}")
+    return cast(SummaryRecordDto, summary)
+
+
+@router.post("/summary-versions/{version_id}/publish", status_code=201, response_model=SummaryRecordDto)
+async def publish_summary_version(version_id: str, db: Annotated[AsyncSession, Depends(async_get_db)]):
+    result = await db.execute(
+        select(SummaryVersionModel)
+        .options(selectinload(SummaryVersionModel.record))
+        .where(and_(SummaryVersionModel.is_deleted.is_(False), SummaryVersionModel.id == version_id))
+    )
+    summary = result.scalar_one_or_none()
+    if not summary:
+        raise AppException(f"No summary version found with id {version_id}")
+
+    record_result = await db.execute(
+        select(RecordModel)
+        .options(
+            noload(RecordModel.attachments),
+            noload(RecordModel.creator),
+            noload(RecordModel.pipeline_items),
+            noload(RecordModel.summary_versions),
+            noload(RecordModel.rag_documents),
+            noload(RecordModel.current_version)
+        )
+        .where(and_(RecordModel.is_deleted.is_(False), RecordModel.id == summary.record_id))
+    )
+    record = record_result.scalar_one_or_none()
+    record.current_version_id = summary.id
+    record_result.published = True
+    summary.published = True
+
+    await db.commit()
+    await db.refresh(record)
     return cast(SummaryRecordDto, summary)
 

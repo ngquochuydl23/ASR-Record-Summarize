@@ -1,14 +1,14 @@
 from .llm_route import llm_service
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks
-from typing import Annotated, cast, List
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks, Query
+from typing import Annotated, cast, List, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from sqlalchemy import select, and_, desc, asc
+from sqlalchemy import select, and_, desc, asc, func, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import noload, selectinload, joinedload
 from .record_route import rag_index_service
 from ...core.exceptions.app_exception import AppException
 from ...core.logger import logging
-from ...dtos.conversation_dto import ConversationDto, CreateConversationDto
+from ...dtos.conversation_dto import ConversationDto, CreateConversationDto, PaginatedConversationsDto
 from ...dtos.message_dto import CreateMessageDto, MessageDto
 from ...dtos.user import UserDto
 from ...models import RecordModel, UserModel
@@ -21,6 +21,7 @@ from ...core.db.database import async_get_db, local_session
 from ...services.rag_index_service import RagIndexService
 from datetime import datetime
 from google.genai import types
+from ...utils.apply_paginate import apply_paginate
 import uuid
 import os
 
@@ -30,26 +31,62 @@ llm_service = LLMService()
 rag_index_service = RagIndexService()
 
 
-@router.get("/conversations/by-record/{record_id}", status_code=200, response_model=List[ConversationDto])
+@router.get("/conversations/by-record/{record_id}", status_code=200, response_model=PaginatedConversationsDto)
 async def get_conversations_by_record_id(
         record_id: str,
         db: Annotated[AsyncSession, Depends(async_get_db)],
-        current_user: Annotated[UserDto, Depends(get_current_user)]):
-    result = await db.execute(
+        current_user: Annotated[UserDto, Depends(get_current_user)],
+        s: Optional[str] = None,
+        page: int = Query(1, ge=1),
+        limit: int = Query(10, gt=0, le=100),
+):
+    offset, limit = apply_paginate(page, limit)
+    conditions = [
+        ConversationModel.is_deleted == False,
+        ConversationModel.record_id == record_id,
+        ConversationModel.owner_id == current_user["id"]
+    ]
+    if s:
+        search = f"%{s.lower()}%"
+        conditions.append(func.lower(ConversationModel.title).like(search))
+    query = (
         select(ConversationModel)
         .options(noload(ConversationModel.record))
         .options(noload(ConversationModel.messages))
-        .where(
-            and_(
-                ConversationModel.is_deleted == False,
-                ConversationModel.record_id == record_id,
-                ConversationModel.owner_id == current_user["id"]
-            )
-        )
+        .where(and_(*conditions))
         .order_by(desc(ConversationModel.created_at))
     )
-    return cast(ConversationDto, result.scalars().all())
 
+    result = await db.execute(query.offset(offset).limit(limit))
+    conversations = result.unique().scalars().all()
+    count_stmt = select(func.count()).select_from(ConversationModel).where(and_(*conditions))
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    return PaginatedConversationsDto(
+        total=total,
+        page=page,
+        limit=limit,
+        items=[ConversationDto.model_validate(c) for c in conversations]
+    )
+
+
+@router.delete("/conversations", status_code=200)
+async def delete_items(
+        current_user: Annotated[UserDto, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(async_get_db)],
+        ids: List[uuid.UUID] = Query(..., description="IDs to delete"),
+):
+    if not ids:
+        raise AppException("No ids provided")
+
+    stmt = (
+        update(ConversationModel)
+        .where(ConversationModel.id.in_(ids))
+        .values(is_deleted=True)
+    )
+    result = await db.execute(stmt)
+    await db.commit()
+    return {"deleted": result.rowcount}
 
 @router.post("/conversations", status_code=201)
 async def create_conversation(
@@ -67,7 +104,7 @@ async def create_conversation(
         id=uuid.uuid4(),
         record_id=record.id,
         owner_id=current_user["id"],
-        start_time=datetime.utcnow(),
+        start_time=datetime.now(),
         title=generated_title,
         messages=[
             MessageModel(

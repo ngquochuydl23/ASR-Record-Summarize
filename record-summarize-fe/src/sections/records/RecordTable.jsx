@@ -360,7 +360,9 @@ export const RecordTable = ({
       </div>
       <TablePagination
         component="div"
-        count={Number(totalCount / limit)}
+        labelDisplayedRows={({ from, to, count, page }) => `${from} - ${to} trên ${count !== -1 ? count : `hơn ${to}`}`}
+        labelRowsPerPage="Số bản ghi/trang"
+        count={totalCount}
         page={page - 1}
         onPageChange={handleChangePage}
         rowsPerPage={limit}

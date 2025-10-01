@@ -23,8 +23,6 @@ import { Search } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '@/theme/theme.global';
 import TableLoading from '@/components/TableLoading';
-import { PipelineItemTypeEnum, RecordContentType, SourceTypeEnum } from '@/constants/app.constants'
-import ProgressBar from '@ramonak/react-progress-bar';
 import styles from './collection-table.module.scss';
 import { readUrl } from '@/utils/readUrl';
 import moment from 'moment';

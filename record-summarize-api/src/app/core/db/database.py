@@ -36,8 +36,8 @@ class Base(DeclarativeBase, MappedAsDataclass):
 class BaseMixin(object):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
-    created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow())
-    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow())
+    created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.now())
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.now())
 
 
 DATABASE_URI = settings.POSTGRES_URI

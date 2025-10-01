@@ -55,7 +55,7 @@ const PreviewSummaryVersionDialog = ({ recordId, open, onClose }) => {
         {summaryVersion &&
           <>
             <DialogTitle sx={{ padding: "10px 5px", gap: '20px' }}>
-              <IconButton onClick={onClose}><CloseIcon sx={{ color: '#6B7280' }} /></IconButton>
+              <IconButton onClick={handleClose}><CloseIcon sx={{ color: '#6B7280' }} /></IconButton>
               <span className='ml-2'>{summaryVersion?.record?.title}</span>
             </DialogTitle>
             <DialogContent className={styles.dialogContent}>

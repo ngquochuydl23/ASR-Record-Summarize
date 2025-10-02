@@ -1,3 +1,9 @@
+
+.stepIcon {
+  width: 35px;
+  height: 35px;
+}
+
 .recordSettingPage {
   display: flex;
   flex-direction: column;
@@ -22,6 +28,11 @@
       grid-template-columns: 1fr 320px;
     }
   }
+}
+
+.finishedAtTime {
+  margin-top: 2.5px;
+  color: gray;
 }
 
 .sectionTitle {

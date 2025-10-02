@@ -13,7 +13,6 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs as codeStyle } from "react-syntax-highlighter/dist/esm/styles/prism";
 import unescapeJs from 'unescape-js';
 import ReactMarkdown from "react-markdown";
-import { getSummaryVersionById } from '@/repositories/summary-version.repository';
 import Scrollbars from 'react-custom-scrollbars-2';
 import { timeToSeconds } from '@/utils/process_markdown';
 import { useEffect, useRef, useState } from 'react';
@@ -39,12 +38,9 @@ const PlayVideoPage = () => {
     try {
       if (!isLoading) showLoading();
       const _record = await getRecordById(recordId);
-      const summary_version = await getSummaryVersionById(_record?.current_version_id);
       const converstations = await getConversationsByRecordId(recordId);
       const subtitle = await getBlobUrl(_record?.subtitle_url);
-
       _record.subtitle_url = subtitle;
-      _record.summary_version = summary_version;
       _record.converstations = converstations;
       setRecord(_record);
       hideLoading();
@@ -122,7 +118,7 @@ const PlayVideoPage = () => {
                   <div><IcInfo /></div>
                 </Tooltip>
               </div>
-              {record?.summary_version &&
+              {record?.current_version &&
                 <p className={styles.markdown}>
                   <ReactMarkdown
                     components={{
@@ -139,7 +135,7 @@ const PlayVideoPage = () => {
                     }}
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}>
-                    {unescapeJs(record?.summary_version?.summary_content)
+                    {unescapeJs(record?.current_version?.summary_content)
                       .replace(/\[(\d{1,2}:\d{2}:\d{2})-(\d{1,2}:\d{2}:\d{2})\]/g, (_, t1, t2) => {
                         const start = timeToSeconds(t1);
                         return `<a href="#" class="timestamp" data-time="${start}">[${t1}-${t2}]</a>`;

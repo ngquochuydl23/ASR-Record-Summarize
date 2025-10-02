@@ -5,6 +5,7 @@ from typing import Optional, List
 from datetime import datetime
 from src.app.dtos.attachment import AttachmentCreateDto, AttachmentDto
 from src.app.dtos.record_pipeline_item import MinimalRecordPipelineItemDto
+from src.app.dtos.summary_record import SummaryRecordDto
 from src.app.models.records import PermissionLevel
 
 
@@ -58,7 +59,7 @@ class RecordDto(BaseModel):
     current_step: Optional[int]
     creator: Optional[object]
     current_version_id: Optional[uuid.UUID]
-    current_version: Optional[object]
+    current_version: Optional[SummaryRecordDto]
     duration: Optional[float]
     chatbot_preparation_state: Optional[str]
     created_at: Optional[datetime]

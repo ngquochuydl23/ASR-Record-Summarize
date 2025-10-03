@@ -30,7 +30,7 @@ http.interceptors.response.use(
     if (_.has(error, "response.data")) {
       if (_.get(error, "response.status") === 401) {
         Cookies.remove("access_token");
-        window.location.href = "/auth/login";
+        window.location.href = "/home";
         return Promise.reject(error);
       }
       const responseErr = _.get(error, "response.data");

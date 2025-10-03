@@ -1,6 +1,5 @@
 import { Suspense, lazy } from "react";
 import { Navigate, useRoutes } from "react-router-dom";
-import AuthLayout from "../layouts/auth.layout";
 import { AppRoute } from "@/constants/app.constants";
 import MainLayout from "@/layouts/main.layout";
 import PlayVideoLayout from "@/layouts/playVideoLayout";
@@ -13,26 +12,22 @@ const Loadable = (Component) => (props) => {
   );
 };
 
-const RecordSettingPage = Loadable(lazy(() => import("../pages/records/settings")))
+const RecordSettingPage = Loadable(lazy(() => import("../pages/records/settings")));
 const RecordPage = Loadable(lazy(() => import("../pages/records")));
 const PlayRecordPage = Loadable(lazy(() => import("../pages/records/playVideo")));
 const SettingPage = Loadable(lazy(() => import("../pages/settings")));
 const PersonalInfoPage = Loadable(lazy(() => import("../pages/settings/personal-info")));
 const CollectionPage = Loadable(lazy(() => import("../pages/collections")));
-const LoginPage = Loadable(lazy(() => import("../pages/auth/login")));
+const LandingPage = Loadable(lazy(() => import("../pages/landingPage")));
 const Page404 = Loadable(lazy(() => import("../pages/Page404")));
 const HistoryChatAIPage = Loadable(lazy(() => import("../pages/history")));
-
 
 export default function Router() {
   return useRoutes([
     {
-      path: "/auth",
-      element: <AuthLayout />,
-      children: [
-        { element: <LoginPage />, path: "login" }
-      ],
-    }, 
+      path: "/home",
+      element: <LandingPage />,
+    },
     {
       path: "/records/:recordId/play",
       element: <PlayVideoLayout />,
@@ -52,7 +47,7 @@ export default function Router() {
         { path: AppRoute.RECORDS, element: <RecordPage />, index: true },
         { path: AppRoute.HISTORY, element: <HistoryChatAIPage /> },
         { path: AppRoute.COLLECTIONS, element: <CollectionPage /> },
-        { path: '/records/:recordId/setting', element: <RecordSettingPage /> },
+        { path: "/records/:recordId/setting", element: <RecordSettingPage /> },
         { path: "/settings", element: <SettingPage /> },
         { path: AppRoute.PERSONAL_INFO, element: <PersonalInfoPage /> },
         { path: "/404", element: <Page404 /> },

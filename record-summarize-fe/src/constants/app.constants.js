@@ -8,7 +8,6 @@ export const AppRoute = {
   ORDERS: "/orders",
   PERSONAL_INFO: "/settings/personal-info",
   STORE_SETTING: "/settings/store-setting",
-  AUTH_LOGIN: "/auth/login",
 };
 
 export const HttpCommonMsg = {

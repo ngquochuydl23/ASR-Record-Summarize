@@ -30,7 +30,7 @@ class VieASRAIModel:
         if not os.path.isfile(checkpoint_path):
             logging.warning(f"No checkpoint found at {checkpoint_path}.")
             return
-        checkpoint = torch.load(checkpoint_path, map_location="cuda:0")
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
         self.model.load_state_dict(checkpoint['model'])
         self.model.to(self.device)
         return self.model, checkpoint

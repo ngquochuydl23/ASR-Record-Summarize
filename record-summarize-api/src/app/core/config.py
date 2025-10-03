@@ -86,7 +86,7 @@ class GoogleSSOSettings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = config("GOOGLE_CLIENT_SECRET", default=None)
     GOOGLE_REDIRECT_URI: str = config("GOOGLE_REDIRECT_URI", default=None)
     GOOGLE_APP_ID: str = config("GOOGLE_APP_ID", default="asr-meeting-app")
-    FRONTEND_URL: str=config("FRONTEND_URL", default="http://localhost:3000")
+    FRONTEND_URL: str=config("FRONTEND_URL", default=None)
 
 
 class GeminiSettings(BaseSettings):

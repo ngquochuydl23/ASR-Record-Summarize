@@ -1,14 +1,13 @@
 export const AppRoute = {
   RECORDS: "/records",
   PLAY_RECORDS: "/records/:recordId/play",
-  CATEGORY: "/category",
-  BILLBOARD: "/billboard",
+  COLLECTIONS: "/collections",
+  HISTORY: "/history",
   DASHBOARD: "/dashboard",
   INIT_STORE: "/init-store",
   ORDERS: "/orders",
   PERSONAL_INFO: "/settings/personal-info",
   STORE_SETTING: "/settings/store-setting",
-  AUTH_LOGIN: "/auth/login",
 };
 
 export const HttpCommonMsg = {
@@ -88,7 +87,6 @@ export const VideoLanguages = [
   },
 ];
 
-
 export const SourceTypes = [
   {
     id: "local",
@@ -99,3 +97,31 @@ export const SourceTypes = [
     label: "Từ Youtube",
   },
 ];
+
+export const PipelineItemTypeEnum = {
+  CREATE_RECORD: 0,
+  TRANSCRIBE: 1,
+  GENERATE_SUM: 2,
+  CHATBOT_PREPARATION: 4,
+};
+
+export const SourceTypeEnum = {
+  LOCAL: "local",
+  YOUTUBE: "youtube",
+};
+
+export const ChatbotPreparingStateEnum = {
+  PREPARING: "preparing",
+  DONE: "done",
+  FAILED: "failed",
+};
+
+export const PipelineStepTitle = [
+  "Đang tạo record",
+  "Đang xử lý video và sinh phụ đề",
+  "Đang tóm tắt video",
+  "Chatbot đang chuẩn bị",
+];
+
+
+export const NotFoundKnowledge = "Thông tin này không có trong bản ghi. Bạn có muốn tôi tìm trong tri thức bên ngoài không?\n"

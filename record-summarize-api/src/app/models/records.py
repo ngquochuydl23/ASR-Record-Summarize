@@ -38,6 +38,12 @@ class RecordContentType(str, enum.Enum):
     ENTERTAINMENT = "Entertainment"
 
 
+class RecordChatbotPreparationState(str, enum.Enum):
+    PREPARING = 'preparing'
+    DONE = 'done'
+    FAILED = 'failed'
+
+
 @dataclass(init=True, repr=True)
 class RecordModel(Base, BaseMixin):
     __tablename__ = RECORD_TABLE_NAME
@@ -102,13 +108,14 @@ class RecordModel(Base, BaseMixin):
         nullable=True,
         default=RecordSourceType.LOCAL
     )
-    # conversations: Mapped[list[object]] = relationship(
-    #     "ConversationModel",
-    #     back_populates="record",
-    #     cascade="all, delete-orphan",
-    #     default_factory=lambda: [],
-    #     lazy="select"
-    # )
+
+    chatbot_preparation_state: Mapped[RecordChatbotPreparationState] = mapped_column(
+        Enum(RecordChatbotPreparationState),
+        nullable=True,
+        default=RecordChatbotPreparationState.PREPARING
+    )
+
+    conversations: Mapped[list[object]] = relationship("ConversationModel", default_factory=lambda: [])
 
     rag_documents: Mapped[list[object]] = relationship(
         "RagDocumentModel",

@@ -5,6 +5,7 @@ from ..core.db.database import Base, BaseMixin
 from typing import Optional
 from dataclasses import dataclass
 
+
 @dataclass(init=True, repr=True)
 class UserModel(Base, BaseMixin):
     __tablename__ = USER_TABLE_NAME
@@ -31,7 +32,9 @@ class UserModel(Base, BaseMixin):
     avatar: Mapped[Optional[str]] = mapped_column(
         String(255),
         nullable=True,
-        default=None)
+        default=None
+    )
 
-    records = relationship("RecordModel", back_populates="creator", default_factory=lambda: [],)
-
+    records = relationship("RecordModel", back_populates="creator", default_factory=lambda: [])
+    conversations = relationship("ConversationModel", default_factory=lambda: [])
+    messages = relationship("MessageModel", default_factory=lambda: [])

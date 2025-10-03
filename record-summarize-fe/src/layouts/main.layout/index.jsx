@@ -2,18 +2,17 @@ import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Sidebar from "./Sidebar";
-import ProfileDialog from "@/sections/chat/ProfileDialog";
 import PersonalSettingDialog from "@/sections/settings/PersonalSettingDialog";
 import { useSnackbar } from "notistack";
 import NotificationDrawer from "@/components/notifications/NotificationDrawer";
 import { getMe } from "@/repositories/user.repository";
-import { getMyStore } from "@/repositories/store.repository";
-import { setStore } from "@/redux/slices/storeSlice";
-import { AppRoute } from "@/constants/app.constants";
 import MainLayoutHeader from "./main.layout.header";
 import LoadingScreen from "@/components/LoadingScreen";
 import { setUser } from "@/redux/slices/userSlice";
-import { useEffectOnce } from "react-use";
+import StagingLabelView from "@/components/StagingLabelView";
+import './styles.scss';
+import classNames from "classnames";
+import Scrollbars from "react-custom-scrollbars-2";
 
 const MainLayout = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -22,17 +21,15 @@ const MainLayout = () => {
 
   const [loading, setLoading] = useState(true);
   const { user } = useSelector((state) => state.user);
-  const [openProfileDialog, setOpenProfileDialog] = useState(false);
   const [openNofiDrawer, setOpenNotiDrawer] = useState(false);
   const [openSettingDialog, setOpenSettingDialog] = useState({
     chooseTabId: null,
     open: false,
   });
-  
+
   const openNotificationList = () => {
     setOpenNotiDrawer(true);
   };
-
 
   useEffect(() => {
     setLoading(true);
@@ -48,36 +45,24 @@ const MainLayout = () => {
       });
   }, [])
 
-  if (loading || !user) {
-    return <LoadingScreen />;
-  }
-
-  if (!user) {
-    return <Navigate to="/auth/login" replace />;
-  }
+  if (loading || !user) return <LoadingScreen />;
+  if (!user) return <Navigate to="/home" replace />;
 
   return (
     <>
-      <div className="flex">
+      {process.env.REACT_APP_ENVIRONMENT === 'Staging' && <StagingLabelView />}
+      <div className="flex h-full">
         <Sidebar />
-        <div className="flex flex-col w-full bg-[#fcfcfc] h-fit min-h-[100vh]">
+        <div className="flex flex-col w-full parentLayout">
           <MainLayoutHeader openNotificationList={openNotificationList} />
-          <div className="p-4">
-            <Outlet />
-          </div>
+          <Scrollbars>
+            <div className={classNames("p-4 innerLayout", { "isShowStagingLabel": process.env.REACT_APP_ENVIRONMENT === 'Staging' })} >
+              <Outlet />
+            </div>
+          </Scrollbars>
         </div>
       </div>
-      <ProfileDialog
-        user={user}
-        owned={true}
-        hideBackdrop={false}
-        editProfileClick={() => {
-          setOpenProfileDialog(false);
-          setOpenSettingDialog({ chooseTabId: "my-profile", open: true });
-        }}
-        open={openProfileDialog}
-        onClose={() => setOpenProfileDialog(false)}
-      />
+
       <PersonalSettingDialog
         chooseTabId={openSettingDialog.chooseTabId}
         open={openSettingDialog.open}

@@ -1,21 +1,24 @@
 import Router from "./routes";
-import ThemeProvider from './theme';
+import ThemeProvider from "./theme";
 import React from "react";
-import { SnackbarProvider } from 'notistack';
+import { SnackbarProvider } from "notistack";
 import { ConfirmDialogProvider } from "./contexts/ConfirmDialogContext";
-import { ImportExcelDialogProvider } from "./contexts/ImportExcelDialogContext";
-import './index.css';
+import { LoadingContextProvider } from "./contexts/LoadingContextProvider";
+import "./index.css";
+import { PreviewSummaryVersionProvider } from "./contexts/PreviewSummaryVContext";
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <SnackbarProvider>
-        <ConfirmDialogProvider>
-          <ImportExcelDialogProvider>
-            <Router />
-          </ImportExcelDialogProvider>
-        </ConfirmDialogProvider>
-      </SnackbarProvider>
-    </ThemeProvider>
+    <LoadingContextProvider>
+      <ThemeProvider>
+        <SnackbarProvider>
+          <ConfirmDialogProvider>
+            <PreviewSummaryVersionProvider>
+              <Router />
+            </PreviewSummaryVersionProvider>
+          </ConfirmDialogProvider>
+        </SnackbarProvider>
+      </ThemeProvider>
+    </LoadingContextProvider>
   );
 }

@@ -2,20 +2,27 @@
   display: grid;
   height: calc(100vh - 60px);
   grid-template-columns: 1fr 500px;
-
+  &.isShowStagingLabel {
+    height: calc(100vh - 60px - 35px);
+  }
   .mainSection {
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: 10px;
+    padding: 0px 10px;
     gap: 10px;
+    height: 100%;
     overflow-y: auto;
+
     .videoContainer {
+      margin: 10px 0px;
       width: 100%;
       aspect-ratio: 16/9;
       border-radius: 20px;
-      // background-color: black;
-
+      overflow: hidden;
+      youtube-video {
+        border-radius: 20px;
+      }
       video {
         border-radius: 20px;
         height: 100%;
@@ -25,12 +32,21 @@
 
     .summaryContainer {
       padding: 20px;
+      margin-bottom: 10px;
       border-radius: 20px;
       border: 1px solid #d3d3d3;
 
       .markdown {
         margin-top: 20px;
         font-size: 14px;
+        a {
+          color: #065fd4;
+          font-weight: 600;
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+
         h2 {
           font-weight: 600;
           font-size: 16px;
@@ -81,6 +97,7 @@
   .chatSection {
     display: flex;
     height: 100%;
+    overflow: hidden;
     flex-direction: column;
     width: 100%;
   }

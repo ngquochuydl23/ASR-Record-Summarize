@@ -66,7 +66,6 @@ async def auth_google_callback(request: Request, db: AsyncSession = Depends(asyn
         value=jwt_token,
         httponly=False,
         secure=True,
-        samesite="Lax",
-        max_age=3600
+        samesite="Lax"
     )
     return response

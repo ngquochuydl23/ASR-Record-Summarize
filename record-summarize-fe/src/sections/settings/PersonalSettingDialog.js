@@ -58,14 +58,6 @@ const settingSidebarItems = [
         parentId: null,
     },
     {
-        id: 'device-management',
-        activeIcon: DevicesIcon,
-        inactiveIcon: DevicesIcon,
-        title: "Quản lí thiết bị",
-        tabComponent: lazy(() => import("./DeviceManagementTabContent")),
-        parentId: null,
-    },
-    {
         id: 'block-users',
         title: "Danh sách chặn",
         tabComponent: lazy(() => import("./BlockUserTabContent")),

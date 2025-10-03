@@ -12,8 +12,9 @@ from typing import Optional, Dict, Any
 class PipelineItemType(int, enum.Enum):
     CREATE_RECORD = 0
     TRANSCRIBE = 1
-    RAG_INDEX = 2
-    GENERATE_SUM = 3
+    GENERATE_SUM = 2
+    RAG_INDEX = 3 #Remove
+    CHATBOT_PREPARATION = 4
 
 
 class PipelineItemStatus(str, enum.Enum):

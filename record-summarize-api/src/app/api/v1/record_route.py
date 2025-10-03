@@ -3,12 +3,12 @@ import asyncio
 import re
 import json
 from datetime import datetime
-from typing import Annotated, cast, List, Callable, Awaitable
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks
+from typing import Annotated, cast, Optional, Callable, Awaitable
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import desc
-from sqlalchemy.orm import selectinload, noload
+from sqlalchemy import desc, func, or_
+from sqlalchemy.orm import selectinload, noload, load_only
 from .llm_route import llm_service
 from .transcription_route import transcription_service
 from ...connection_manager import manager
@@ -16,23 +16,29 @@ from ...constants.record_constants import RECORD_SUMMARIZE_STRUCTURES
 from ...core.db.database import async_get_db, local_session
 from ...core.exceptions.app_exception import AppException
 from ...dtos.llm import RequestRAGSearch
-from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecordDto
+from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecordDto, PaginatedRecordsDto, \
+    MinimalRecordDto, RecordUpdateDto
 from ...dtos.user import UserDto
 from ...models import RecordModel, UserModel, AttachmentModel, RecordPipelineItemModel, SummaryVersionModel
 from ...models.record_pipeline_items import PipelineItemType, PipelineItemStatus
-from ...models.records import PermissionLevel, RecordContentType, RecordSourceType
+from ...models.records import PermissionLevel, RecordContentType, RecordSourceType, RecordChatbotPreparationState, \
+    RecordLang
 from ...services.ffmpeg_service import FFMpegService
 from ...services.rag_index_service import RagIndexService
 from ...services.s3_service import S3Service
 from ..dependencies import get_current_user
 from ...core.logger import logging
 from ...services.transcription_service import TranscriptionService
+from ...services.youtube_service import YoutubeService
+from ...utils.apply_paginate import apply_paginate
 from ...utils.extract_text_from_file import extract_text
 
 s3_service = S3Service()
 rag_index_service = RagIndexService()
 transcription_service = TranscriptionService()
-router = APIRouter(tags=["Record"])
+youtube_service = YoutubeService()
+
+router = APIRouter(tags=["Records"])
 
 
 @router.post("/records", status_code=201)
@@ -42,7 +48,7 @@ async def create_records(
         db: Annotated[AsyncSession, Depends(async_get_db)],
         background_tasks: BackgroundTasks
 ) -> dict:
-    duration = await FFMpegService.get_duration_video(body.url)
+    duration = await FFMpegService.get_duration_video(body.url) if body.source_type == RecordSourceType.LOCAL else 0
     record = RecordModel(
         id=uuid.uuid4(),
         title=body.title,
@@ -54,6 +60,7 @@ async def create_records(
         emails=body.emails,
         lang=body.lang,
         source_type=body.source_type,
+        chatbot_preparation_state=RecordChatbotPreparationState.PREPARING,
         record_content_type=body.record_content_type,
         attachments=[
             AttachmentModel(
@@ -83,13 +90,13 @@ async def create_records(
             ),
             RecordPipelineItemModel(
                 id=uuid.uuid4(),
-                type=PipelineItemType.RAG_INDEX,
+                type=PipelineItemType.GENERATE_SUM,
                 status=PipelineItemStatus.PENDING,
                 extra={}
             ),
             RecordPipelineItemModel(
                 id=uuid.uuid4(),
-                type=PipelineItemType.GENERATE_SUM,
+                type=PipelineItemType.CHATBOT_PREPARATION,
                 status=PipelineItemStatus.PENDING,
                 extra={}
             )
@@ -110,12 +117,13 @@ async def get_record_by_id(
 ) -> RecordDto:
     result = await db.execute(
         select(RecordModel)
+        .join(RecordModel.current_version, isouter=True)
         .options(
             selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
+            selectinload(RecordModel.current_version),
             selectinload(RecordModel.pipeline_items),
-            noload(RecordModel.rag_documents),
-            noload(RecordModel.current_version),
+            noload(RecordModel.rag_documents)
         )
         .where(RecordModel.id == record_id
                and UserModel.id == current_user.id
@@ -125,35 +133,111 @@ async def get_record_by_id(
     return cast(RecordDto, record)
 
 
-@router.get("/records", response_model=List[RecordDto])
+@router.get("/records", response_model=PaginatedRecordsDto)
 async def get_records(
         current_user: Annotated[UserDto, Depends(get_current_user)],
-        db: Annotated[AsyncSession, Depends(async_get_db)]
-) -> RecordDto:
-    result = await db.execute(
+        db: Annotated[AsyncSession, Depends(async_get_db)],
+        s: Optional[str] = None,
+        unpublished: Optional[bool] = None,
+        page: int = Query(1, ge=1),
+        limit: int = Query(10, gt=0, le=100),
+) -> PaginatedRecordsDto:
+    offset, limit = apply_paginate(page, limit)
+    query = (
         select(RecordModel)
         .options(
-            selectinload(RecordModel.creator),
+            load_only(
+                RecordModel.id,
+                RecordModel.title,
+                RecordModel.record_content_type,
+                RecordModel.lang,
+                RecordModel.emails,
+                RecordModel.source_type,
+                RecordModel.permission,
+                RecordModel.published,
+                RecordModel.current_step,
+                RecordModel.chatbot_preparation_state,
+                RecordModel.created_at,
+                RecordModel.updated_at,
+                RecordModel.is_deleted
+            ),
             noload(RecordModel.attachments),
             noload(RecordModel.rag_documents),
             noload(RecordModel.current_version),
+            selectinload(RecordModel.creator),
             selectinload(RecordModel.pipeline_items)
+            .load_only(
+                RecordPipelineItemModel.id,
+                RecordPipelineItemModel.type,
+                RecordPipelineItemModel.status,
+                RecordPipelineItemModel.error_message,
+            )
         )
-        .where(RecordModel.is_deleted == False)
         .order_by(desc(RecordModel.created_at))
+        .where(RecordModel.is_deleted == False)
+        .where(or_(
+            RecordModel.creator_id == current_user['id'],
+            RecordModel.emails.any(current_user['email']),
+        ))
     )
-    return cast(RecordDto, result.scalars().all())
+
+    if s:
+        search = f"%{s.lower()}%"
+        query = query.where(
+            or_(
+                func.lower(RecordModel.title).like(search),
+                func.lower(RecordModel.description).like(search),
+                func.lower(func.array_to_string(RecordModel.emails, ' ')).like(search)
+            )
+        )
+    if unpublished:
+        query = query.where(RecordModel.published != unpublished)
+
+    result = await db.execute(query.offset(offset).limit(limit))
+    count_stmt = select(func.count()).select_from(RecordModel).where(RecordModel.is_deleted == False)
+    total = (await db.execute(count_stmt)).scalar_one()
+    records = result.unique().scalars().all()
+    return PaginatedRecordsDto(
+        total=total,
+        page=page,
+        limit=limit,
+        items=[MinimalRecordDto.model_validate(r) for r in records]
+    )
 
 
-# @router.put("/records/{record_id}", response_model=RecordDto)
-# async def update_meeting(
-#     request: Request,
-#     record_id: str,
-#     body: Rec,
-#     db: Annotated[AsyncSession, Depends(async_get_db)]
-# ) -> MeetingDto:
-#     meeting = dict({})
-#     return cast(MeetingDto, meeting)
+@router.put("/records/{record_id}", response_model=RecordDto)
+async def update_record(
+        record_id: str,
+        body: RecordUpdateDto,
+        db: Annotated[AsyncSession, Depends(async_get_db)]
+) -> RecordDto:
+    stmt = (select(RecordModel)
+            .options(
+                selectinload(RecordModel.creator),
+                selectinload(RecordModel.pipeline_items),
+                noload(RecordModel.attachments),
+                noload(RecordModel.rag_documents),
+                noload(RecordModel.current_version),
+            )
+            .where(RecordModel.id == record_id))
+    result = await db.execute(stmt)
+    record = result.scalar_one_or_none()
+
+    if not record:
+        raise AppException(f"Record with id {record_id} not found")
+
+    record.title = body.title
+    record.description = body.description
+    record.record_content_type = RecordContentType(body.record_content_type)
+    record.url = body.url
+    record.emails = body.emails
+    record.lang = RecordLang(body.lang)
+    record.source_type = RecordSourceType(body.source_type)
+
+    await db.commit()
+    await db.refresh(record)
+
+    return cast(RecordDto, record)
 
 
 @router.delete("/records/{record_id}")
@@ -208,17 +292,21 @@ async def publish_record(
     if not record:
         raise AppException("Record is null")
 
-    if not all(item.status == PipelineItemStatus.SUCCESS for item in record.pipeline_items):
+    if record.pipeline_items[2].status != PipelineItemStatus.SUCCESS:
         raise AppException("Cannot publish unsuccessful record.")
 
     if record.published:
         raise AppException("Cannot execute with published record.")
 
     last_version = record.summary_versions[0]
+    record.summary_versions[0].published = True
     record.current_version_id = last_version.id
     record.published = True
     await db.commit()
-    return {"message": "Published."}
+    return {
+        "message": "Published.",
+        "id": record.id
+    }
 
 
 @router.delete("/records/{record_id}/cancel")
@@ -333,6 +421,31 @@ async def generate_form_helper(body: RequestGenerateFormRecordDto):
     return json.loads(json_str)
 
 
+@router.post("/records/{record_id}/retry-chatbot")
+async def retry_chatbot(db: Annotated[AsyncSession, Depends(async_get_db)], record_id: str):
+    result = await db.execute(
+        select(RecordModel)
+        .options(
+            selectinload(RecordModel.attachments),
+            selectinload(RecordModel.creator),
+            selectinload(RecordModel.pipeline_items),
+            selectinload(RecordModel.rag_documents)
+        )
+        .where(RecordModel.id == record_id
+               # and UserModel.id == current_user.id
+               and not RecordModel.is_deleted)
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise AppException("Record is null")
+
+    await rag_index_service.execute_rag_index(db, record)
+    record.chatbot_preparation_state = RecordChatbotPreparationState.DONE
+    db.add(record)
+    await db.commit()
+    return {"message": "success"}
+
+
 @router.websocket("/records/ws/{record_id}")
 async def websocket_task_endpoint(websocket: WebSocket, record_id: str):
     await manager.connect(record_id, websocket)
@@ -363,9 +476,8 @@ async def _record_creating_task(record_id: uuid.UUID):
                 return
 
             transcribe_result = await _execute_step(record, record.pipeline_items[1], transcribe_stage, db)
-            await _execute_step(record, record.pipeline_items[2], store_vectordb_stage, db)
+            summary_result = await _execute_step(record, record.pipeline_items[2], llm_summarize_stage, db)
 
-            summary_result = await _execute_step(record, record.pipeline_items[3], llm_summarize_stage, db)
             record.subtitle_url = transcribe_result["subtitle_s3_key"]
             record.summary_versions.append(SummaryVersionModel(
                 id=uuid.uuid4(),
@@ -375,7 +487,7 @@ async def _record_creating_task(record_id: uuid.UUID):
             ))
             db.add(record)
             await db.commit()
-
+            await _execute_step(record, record.pipeline_items[3], store_vectordb_stage, db)
         except Exception as e:
             logging.error("Error", str(e))
             await db.rollback()
@@ -419,9 +531,10 @@ async def _execute_step(
         pipeline_item.status = PipelineItemStatus.FAILED
         pipeline_item.finished_at = datetime.utcnow()
         pipeline_item.error_message = str(e)
+        if pipeline_item.type == PipelineItemType.CHATBOT_PREPARATION:
+            record.chatbot_preparation_state = RecordChatbotPreparationState.FAILED
         db.add(record)
         db.add(pipeline_item)
-
         await db.commit()
         await db.refresh(pipeline_item)
         await manager.broadcast(str(record.id), pipeline_item.to_dict())
@@ -429,25 +542,26 @@ async def _execute_step(
 
 
 async def transcribe_stage(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
-    if record.source_type == RecordSourceType.LOCAL:
-        extract_audio_result = await FFMpegService.extract_audio(record.url, f'wavs/record-{str(record.id)}.wav')
-        subtitle_file = f'vtts/record-{record.lang}-{str(record.id)}.vtt'
-        transcribe_result = await transcription_service.generate_subtitle(
-            wav_path=extract_audio_result['output'],
-            output_path=subtitle_file,
-            lang=record.lang
-        )
-        uploaded_result = await s3_service.upload_file_from_path(subtitle_file, folder='vtts')
-        return {
-            "subtitle_s3_key": uploaded_result.url,
-            "transcribe_result": transcribe_result,
-            "extract_audio_result": extract_audio_result
-        }
-    else:
-        # generate vtt with youtube - gemini
-        # save
-        # upload
-        raise NotImplementedError()
+    url = record.url
+    if record.source_type == RecordSourceType.YOUTUBE:
+        logging.info(f"Youtube downloading {record.url}")
+        url = await youtube_service.download_youtube_via_link(record.url)
+        if url is None:
+            raise AppException("Download youtube video failed.")
+
+    extract_audio_result = await FFMpegService.extract_audio(url, f'wavs/record-{str(record.id)}.wav')
+    subtitle_file = f'vtts/record-{record.lang}-{str(record.id)}.vtt'
+    transcribe_result = await transcription_service.generate_subtitle(
+        wav_path=extract_audio_result['output'],
+        output_path=subtitle_file,
+        lang=record.lang
+    )
+    uploaded_result = await s3_service.upload_file_from_path(subtitle_file, folder='vtts')
+    return {
+        "subtitle_s3_key": uploaded_result.url,
+        "transcribe_result": transcribe_result,
+        "extract_audio_result": extract_audio_result
+    }
 
 
 async def store_vectordb_stage(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):

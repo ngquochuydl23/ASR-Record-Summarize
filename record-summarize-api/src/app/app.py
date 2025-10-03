@@ -7,19 +7,29 @@ from starlette.middleware.sessions import SessionMiddleware
 from middlewares.exception_handling_middleware import ExceptionHandlingMiddleware
 from src.app.connection_manager import manager
 from src.app.core.config import settings
+from src.app.utils.ffmpeg_util import check_ffmpeg
 from src.app.utils.gpu_utils import check_gpu
 from src.app.api import router
 from src.app.core.logger import logging
 
 
-app = FastAPI(title="ASR Meeting Api")
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+app = FastAPI(title="ASR Record Api")
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    same_site="none",
+    https_only=True
+)
 app.add_middleware(ExceptionHandlingMiddleware)
 app.include_router(router)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://easysum-staging.pgonevn.com",
+        "https://easysum.pgonevn.com"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -48,5 +58,6 @@ async def websocket_task_endpoint(websocket: WebSocket, record_id: str):
 
 
 if __name__ == "__main__":
+    check_ffmpeg()
     logging.info(json.dumps(check_gpu(), indent=4))
     uvicorn.run(app, host="0.0.0.0", port=2025)

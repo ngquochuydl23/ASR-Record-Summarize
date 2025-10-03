@@ -1,0 +1,20 @@
+.welcomeView {
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 30px;
+  .title {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 60px;
+    span {
+      background: linear-gradient(90.56deg, #43b97f, #16dadc 45%, #22a5ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  }
+
+  .description {
+    font-size: 14px;
+    color: gray;
+  }
+}

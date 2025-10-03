@@ -7,8 +7,10 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./huggingface-cache:/cache:rw
-      - ./meeting-api/uploads:/uploads
-      - ./meeting-api/wavs:/wavs
+      - ./record-summarize-api/uploads:/uploads
+      - ./record-summarize-api/wavs:/wavs
+      - ./record-summarize-api/vtts:/vtts
+      - ./record-summarize-api/youtube_downloads:/youtube_downloads
     ports:
       - "2025:2025"
     restart: always
@@ -21,7 +23,7 @@ services:
     environment:
       NODE_ENV: production
     ports:
-      - 2024:3000
+      - 2024:80
     restart: always
     depends_on:
       - record-summarize-api

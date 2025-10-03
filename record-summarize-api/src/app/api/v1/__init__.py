@@ -7,6 +7,7 @@ from .auth_route import router as auth_router
 from .pipeline_route import router as pipeline_router
 from .llm_route import router as llm_router
 from .summary_version_route import router as summary_version_router
+from .conversation_route import router as conversation_router
 
 router = APIRouter(prefix="/v1")
 routes = [
@@ -17,7 +18,8 @@ routes = [
     storage_router,
     pipeline_router,
     llm_router,
-    summary_version_router
+    summary_version_router,
+    conversation_router
 ]
 
 for route in routes:

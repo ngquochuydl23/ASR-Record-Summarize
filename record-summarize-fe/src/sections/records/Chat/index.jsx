@@ -93,7 +93,6 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
         agent_msg_status: data.agent_msg_status,
       }]);
     } else if (data.type === 'error') {
-      console.log(data);
       setWaiting(false);
       setSteamingData('');
       setMessages(prev => [...prev, {

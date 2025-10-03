@@ -75,6 +75,7 @@ async def publish_summary_version(version_id: str, db: Annotated[AsyncSession, D
     )
     record = record_result.scalar_one_or_none()
     record.current_version_id = summary.id
+    record.published = True
     record_result.published = True
     summary.published = True
 

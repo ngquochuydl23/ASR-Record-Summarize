@@ -117,12 +117,13 @@ async def get_record_by_id(
 ) -> RecordDto:
     result = await db.execute(
         select(RecordModel)
+        .join(RecordModel.current_version, isouter=True)
         .options(
             selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
+            selectinload(RecordModel.current_version),
             selectinload(RecordModel.pipeline_items),
-            noload(RecordModel.rag_documents),
-            noload(RecordModel.current_version),
+            noload(RecordModel.rag_documents)
         )
         .where(RecordModel.id == record_id
                and UserModel.id == current_user.id
@@ -302,7 +303,10 @@ async def publish_record(
     record.current_version_id = last_version.id
     record.published = True
     await db.commit()
-    return {"message": "Published."}
+    return {
+        "message": "Published.",
+        "id": record.id
+    }
 
 
 @router.delete("/records/{record_id}/cancel")

@@ -21,6 +21,7 @@ export const colors = {
   secondaryColor: "rgb(26, 28, 30)",
   cardColor: "rgb(26, 28, 30)",
   ratingColor: "#f5b700",
+  pendingColor: '#f29339',
   borderColor: "#d3d3d3",
   textSecondaryColor: "#606060",
   textPrimaryColor: "#000",

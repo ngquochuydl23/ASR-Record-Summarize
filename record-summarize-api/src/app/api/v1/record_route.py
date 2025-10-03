@@ -303,7 +303,10 @@ async def publish_record(
     record.current_version_id = last_version.id
     record.published = True
     await db.commit()
-    return {"message": "Published."}
+    return {
+        "message": "Published.",
+        "id": record.id
+    }
 
 
 @router.delete("/records/{record_id}/cancel")

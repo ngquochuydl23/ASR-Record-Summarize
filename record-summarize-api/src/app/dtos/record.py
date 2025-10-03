@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from src.app.dtos.attachment import AttachmentCreateDto, AttachmentDto
-from src.app.dtos.record_pipeline_item import MinimalRecordPipelineItemDto
+from src.app.dtos.record_pipeline_item import MinimalRecordPipelineItemDto, RecordPipelineItemDto
 from src.app.dtos.summary_record import SummaryRecordDto
 from src.app.models.records import PermissionLevel
 
@@ -54,7 +54,7 @@ class RecordDto(BaseModel):
     emails: List[str]
     source_type: str
     attachments: List[AttachmentDto]
-    pipeline_items: List[object]
+    pipeline_items: List[RecordPipelineItemDto]
     published: Optional[bool]
     current_step: Optional[int]
     creator: Optional[object]

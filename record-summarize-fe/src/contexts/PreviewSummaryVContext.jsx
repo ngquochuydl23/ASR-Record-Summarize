@@ -9,7 +9,6 @@ const PreviewSummaryVersionContext = createContext(null);
 export const PreviewSummaryVersionProvider = ({ children }) => {
   const [recordId, setRecordId] = useState(null);
   const openPreviewDialog = (_recordId) => {
-    console.log(_recordId);
     setRecordId(_recordId);
   };
 

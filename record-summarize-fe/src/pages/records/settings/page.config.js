@@ -30,6 +30,7 @@ export const StatusMapStrings = {
   Done: "Hoàn thành",
   Running: "Đang chạy",
   Success: "Thành công",
+  Pending: "Đang chờ",
   Failed: "Thất bại",
   Cancelled: "Đã hủy",
 };

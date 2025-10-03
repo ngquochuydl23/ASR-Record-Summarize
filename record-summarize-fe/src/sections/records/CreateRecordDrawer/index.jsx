@@ -61,7 +61,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
     }
     createRecord(payload)
       .then((response) => {
-        navigate(AppRoute.RECORDS);
+        navigate(`/records/${response.id}/setting`);
         enqueueSnackbar('Tạo tóm tắt thành công', {
           variant: 'success',
           anchorOrigin: {
@@ -91,7 +91,6 @@ const CreateRecordDrawer = ({ open, onClose }) => {
     uploadFile(e.target.files[0])
       .then(({ data }) => {
         setFieldValue('url', data.url);
-        console.log(data);
       })
       .catch((error) => {
         setFieldValue('url', '');

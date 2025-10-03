@@ -178,7 +178,6 @@ const RecordSettingPage = () => {
     uploadFile(e.target.files[0])
       .then(({ data }) => {
         setFieldValue('url', data.url);
-        console.log(data);
       })
       .catch((error) => {
         setFieldValue('url', '');
@@ -316,8 +315,39 @@ const RecordSettingPage = () => {
     return record?.current_step || PipelineItemTypeEnum.CREATE_RECORD;
   }, [record?.pipeline_items]);
 
+  const handleWsConnected = () => {
+    console.log("[RecordSettingPage] Connected to WebSocket");
+  }
+
+  const handleWsDisconnected = () => {
+    console.log("[RecordSettingPage] Disconnected from WebSocket");
+  }
+
+  const pipelineItems = useMemo(() => {
+    return record?.pipeline_items ?? [];
+  }, [record]);
+
+  const onReceiveMsg = (data) => {
+    console.log(data);
+    setRecord((prev) => ({
+      ...prev,
+      pipeline_items: prev.pipeline_items.map((item) => item.id === data.id ? { ...item, ...data } : item)
+    }));
+  }
+
   useEffect(() => {
     getRecordDetail();
+    if (recordId && !_.some(record?.pipeline_items, (item) => item?.status === "Running")) {
+      const ws = new WebSocket(`${process.env.REACT_APP_WS_ENDPOINT}/records/ws/${recordId}`);
+      ws.onopen = handleWsConnected;
+      ws.onclose = handleWsDisconnected;
+      ws.onmessage = (event) => onReceiveMsg(JSON.parse(event.data));
+      return () => {
+        ws.close();
+      }
+    } else {
+      console.log("Not Observe event");
+    }
   }, [recordId]);
 
   useEffect(() => {
@@ -608,14 +638,13 @@ const RecordSettingPage = () => {
         <div className={styles.workflowLayout}>
           <Stepper
             activeStep={defaultCurrentStep}
-            a//ctiveStep={PipelineSteps[record.current_step].index}
             orientation='vertical'>
             {Object.values(PipelineItemTypeEnum)
               .filter((v) => typeof v === "number")
               .map((stepId) => {
                 const step = PipelineSteps[stepId];
-                const log = record.pipeline_items.find((l) => l.type === stepId);
-                const completed = record.current_step === PipelineItemTypeEnum.CHATBOT_PREPARATION && log.status === 'Success';
+                const log = pipelineItems.find((l) => Number(l.type) === stepId);
+                const completed = record.current_step === PipelineItemTypeEnum.CHATBOT_PREPARATION && log?.status === 'Success';
                 return (
                   <Step key={stepId} completed={completed} disabled={!completed}
                     className={classNames(styles.stepItem, { [styles.stepItemfailed]: log?.status === "Failed", })} >
@@ -639,7 +668,7 @@ const RecordSettingPage = () => {
                             [styles.cancelled]: log?.status === "Cancelled",
                           })}
                         >
-                          {StatusMapStrings[log.status] || log.status}
+                          {StatusMapStrings[log?.status] || log?.status}
                           {log?.status === "Success" && <div className={styles.finishedAtTime}>{moment(log?.finished_at).format('MMMM Do YYYY, h:mm:ss a')}</div>}
                         </span>
                         : undefined
@@ -648,11 +677,11 @@ const RecordSettingPage = () => {
                       {step.stepName}
                     </StepLabel>
                     <StepContent slotProps={{ transition: { unmountOnExit: false } }}>
-                      {log.error_message
-                        ? <div className={styles.stepItemErrorMsg}>{log.error_message}</div>
+                      {log?.error_message
+                        ? <div className={styles.stepItemErrorMsg}>{log?.error_message}</div>
                         : <div className={styles.stepItemDescription}>{step.stepDescription}</div>
                       }
-                      {(log.type === PipelineItemTypeEnum.GENERATE_SUM) &&
+                      {(log?.type === PipelineItemTypeEnum.GENERATE_SUM) &&
                         <div className={styles.previewLastSummaryButton}>
                           <div className='flex flex-col w-full overflow-hidden'>
                             <div className={styles.recordTitle}>{_.capitalize(record?.title)}</div>

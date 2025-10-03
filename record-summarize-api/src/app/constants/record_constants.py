@@ -46,8 +46,8 @@ RECORD_SUMMARIZE_STRUCTURES = {
         - Ứng dụng thực tiễn / lời khuyên từ giảng viên  
         - *Trích dẫn lời nhấn mạnh*: “...”  
         
-        ## 4. Tài liệu liên quan
-        - Slide, PDF, sách, link tham khảo (nếu có)
+        ## 4. Tin tức
+        - Slide bài giảng, PDF handout, sách tham khảo, link bài báo cập nhật (nếu có)
         
         Yêu cầu:
         - Trình bày mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
@@ -92,8 +92,8 @@ RECORD_SUMMARIZE_STRUCTURES = {
         - Các kế hoạch tiếp theo / lời khuyên từ người chủ trì  
         - *Trích dẫn lời nhấn mạnh*: “...”  
         
-        ## 4. Tài liệu liên quan
-        - Biên bản cuộc họp, tài liệu tham khảo, link (nếu có)
+        ## 4. Tin tức
+        - Biên bản họp, agenda, tài liệu đính kèm, link cập nhật tiến độ (nếu có)
         
         Yêu cầu:
         - Trình bày mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
@@ -146,8 +146,8 @@ RECORD_SUMMARIZE_STRUCTURES = {
         - Lời khuyên và chiến lược từ người hướng dẫn  
         - *Trích dẫn lời nhấn mạnh*: “...”  
         
-        ## 4. Tài liệu liên quan
-        - Slide, tài liệu tham khảo, link (nếu có)
+        ## 4. Tin tức
+        - Slide hướng dẫn, workbook, tài liệu thực hành, link cập nhật công cụ (nếu có)
         
         Yêu cầu:
         - Trình bày mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
@@ -194,11 +194,11 @@ RECORD_SUMMARIZE_STRUCTURES = {
         - Các kết luận hoặc lời khuyên từ người được phỏng vấn  
         - *Trích dẫn lời nhấn mạnh*: “...”  
         
-        ## 4. Tài liệu liên quan
-        - Link, bài báo, sách, tài liệu tham khảo (nếu có)
+        ## 4. Tin tức
+        - Link video đầy đủ, bài báo liên quan, profile người được phỏng vấn, tin tức cập nhật (nếu có)
         
         Yêu cầu:
-        - Trình bạch mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
+        - Trình bày mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
         - Luôn giữ format Markdown.
         Format text để xuống dòng
     """,
@@ -240,8 +240,8 @@ RECORD_SUMMARIZE_STRUCTURES = {
         - Các lời khuyên và bài học từ khách mời  
         - *Trích dẫn lời nhấn mạnh*: “...”  
         
-        ## 4. Tài liệu liên quan
-        - Link, sách, tài liệu tham khảo (nếu có)
+        ## 4. Tin tức
+        - Link tập talkshow, sách của khách mời, bài viết liên quan, tin tức mới nhất (nếu có)
         
         Yêu cầu:
         - Trình bày mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
@@ -286,8 +286,8 @@ RECORD_SUMMARIZE_STRUCTURES = {
         - Các nhận định và kết luận từ phóng viên  
         - *Trích dẫn lời nhấn mạnh*: “...”  
         
-        ## 4. Tài liệu liên quan
-        - Link, bài báo, tài liệu tham khảo (nếu có)
+        ## 4. Tin tức
+        - Link bài báo gốc, nguồn sự kiện, báo cáo chính thức, cập nhật mới nhất (nếu có)
         
         Yêu cầu:
         - Trình bày mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
@@ -298,7 +298,7 @@ RECORD_SUMMARIZE_STRUCTURES = {
     "Documentary": """
         Bạn là một trợ lý tóm tắt video tài liệu.
         Nhiệm vụ của bạn: Dựa trên transcript video tài liệu, tiêu đề, mô tả và tài liệu tham khảo (nếu có), hãy tạo bản tóm tắt theo đúng khung ghi chú dưới đây.
-        Trình bày bằng Markdown, có cấu trúc rõ ràng, ngắn gọn, dễ học, kèm trích dẫn trực tiếp từ transcript với timestamp nếu có.
+        Tr trình bày bằng Markdown, có cấu trúc rõ ràng, ngắn gọn, dễ học, kèm trích dẫn trực tiếp từ transcript với timestamp nếu có.
         
         Cấu trúc bắt buộc:
         
@@ -332,8 +332,8 @@ RECORD_SUMMARIZE_STRUCTURES = {
         - Những bài học, khuyến nghị từ tài liệu  
         - *Trích dẫn lời nhấn mạnh*: “...”  
         
-        ## 4. Tài liệu liên quan
-        - Link, tài liệu tham khảo (nếu có)
+        ## 4. Tin tức
+        - Link phim đầy đủ, sách lịch sử/sự kiện, nguồn nghiên cứu, tin tức liên quan (nếu có)
         
         Yêu cầu:
         - Trình bày mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
@@ -377,8 +377,8 @@ RECORD_SUMMARIZE_STRUCTURES = {
         - Những điều cần lưu ý hoặc lời khuyên từ chương trình  
         - *Trích dẫn lời nhấn mạnh*: “...”  
         
-        ## 4. Tài liệu liên quan
-        - Link, bài viết, tài liệu tham khảo (nếu có)
+        ## 4. Tin tức
+        - Link video gốc, bài viết review, thông tin nghệ sĩ, tin tức hậu trường (nếu có)
         
         Yêu cầu:
         - Trình bày mạch lạc, ngắn gọn, không thêm ý ngoài transcript hoặc tài liệu cung cấp.
@@ -386,4 +386,3 @@ RECORD_SUMMARIZE_STRUCTURES = {
         Format text để xuống dòng
     """
 }
-

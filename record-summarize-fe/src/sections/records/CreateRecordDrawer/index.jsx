@@ -1,31 +1,47 @@
 import BaseDrawer, { BaseHeaderDrawer } from "@/components/BaseDrawer";
 import LoadingButton from "@/components/buttons/LoadingButton";
 import { BootstrapInput } from "@/components/fields/BootstrapField";
-import { Autocomplete, Button, Chip, CircularProgress, FormControl, IconButton, InputAdornment, InputLabel, TextField, Tooltip } from "@mui/material";
+import {
+  Autocomplete,
+  Button,
+  Chip,
+  CircularProgress,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  TextField,
+  Tooltip,
+} from "@mui/material";
 import { Field, FieldArray, Form, Formik } from "formik";
 import { useSnackbar } from "notistack";
 import { useRef, useState } from "react";
 import * as Yup from "yup";
-import _ from 'lodash';
+import _ from "lodash";
 import { BootstrapAutocomplete } from "@/components/fields/BootstrapAutocomplete";
 import IcWizard from "@/assets/icons/IcWizard";
-import styles from './styles.module.scss';
+import styles from "./styles.module.scss";
 import PromptView from "../Prompts";
-import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { colors } from "@/theme/theme.global";
 import IcMsWord from "@/assets/icons/IcMsWord";
 import IcPdf from "@/assets/icons/IcPdf";
 import { uploadFile } from "@/repositories/storage.repository";
 import IcExcel from "@/assets/icons/IcExcel";
 import readS3Object from "@/utils/avatar/readS3Object";
-import ReactPlayer from 'react-player'
+import ReactPlayer from "react-player";
 import { createRecord } from "@/repositories/record.repository";
 import { useNavigate } from "react-router-dom";
-import { AppRoute, RecordContentTypes, SourceTypes, VideoLanguages } from "@/constants/app.constants";
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import YouTubeIcon from '@mui/icons-material/YouTube';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import {
+  AppRoute,
+  RecordContentTypes,
+  SourceTypes,
+  VideoLanguages,
+} from "@/constants/app.constants";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import YouTubeIcon from "@mui/icons-material/YouTube";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { getYoutubeEmbedUrl } from "@/utils/youtube";
 
 const CreateRecordDrawer = ({ open, onClose }) => {
@@ -36,54 +52,49 @@ const CreateRecordDrawer = ({ open, onClose }) => {
   const [videoUploading, setVideoUploading] = useState(false);
   const [youtubeChecking, setYoutubeChecking] = useState(false);
   const validationSchema = Yup.object({
-    title: Yup
-      .string()
-      .required("Tiêu đề là bắt buộc"),
-    record_content_type: Yup
-      .string()
-      .required("Thể loại là bắt buộc"),
-    url: Yup
-      .string()
-      .required("Video là bắt buộc"),
-    lang: Yup
-      .string()
-      .required("Ngôn ngữ là bắt buộc"),
+    title: Yup.string().required("Tiêu đề là bắt buộc"),
+    record_content_type: Yup.string().required("Thể loại là bắt buộc"),
+    url: Yup.string().required("Video là bắt buộc"),
+    lang: Yup.string().required("Ngôn ngữ là bắt buộc"),
     youtubeLink: Yup.string()
-      .matches(/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[&?]\S*)?$/, "Vui lòng nhập đường dẫn Youtube hợp lệ")
+      .matches(
+        /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?:[&?]\S*)?$/,
+        "Vui lòng nhập đường dẫn Youtube hợp lệ"
+      )
       .optional(),
   });
 
   const handleSubmit = async (values, { setFieldError, resetForm }) => {
-    const { youtubeLink, ...data } = values
+    const { youtubeLink, ...data } = values;
     const payload = {
       ...data,
-      url: data.source_type === 'local' ? data.url : youtubeLink
-    }
+      url: data.source_type === "local" ? data.url : youtubeLink,
+    };
     createRecord(payload)
       .then((response) => {
         navigate(`/records/${response.id}/setting`);
         enqueueSnackbar('Tạo tóm tắt thành công', {
           variant: 'success',
           anchorOrigin: {
-            vertical: 'bottom',
-            horizontal: 'right'
-          }
+            vertical: "bottom",
+            horizontal: "right",
+          },
         });
         onClose(response);
         resetForm();
       })
       .catch((error) => {
         console.log(error);
-        enqueueSnackbar('Tạo tóm tắt thất bại', {
-          variant: 'error',
+        enqueueSnackbar("Tạo tóm tắt thất bại", {
+          variant: "error",
           anchorOrigin: {
-            vertical: 'bottom',
-            horizontal: 'right'
-          }
+            vertical: "bottom",
+            horizontal: "right",
+          },
         });
       })
-      .finally(() => setLoading(false))
-  }
+      .finally(() => setLoading(false));
+  };
 
   const handleUploadVideo = (e, setFieldValue, setFieldError) => {
     if (_.isEmpty(e.target.files) || !e.target.files[0]) return;
@@ -93,11 +104,11 @@ const CreateRecordDrawer = ({ open, onClose }) => {
         setFieldValue('url', data.url);
       })
       .catch((error) => {
-        setFieldValue('url', '');
+        setFieldValue("url", "");
         console.log(error);
       })
       .finally(() => setVideoUploading(false));
-  }
+  };
 
   const [anchorEl, setAnchorEl] = useState(null);
   const handleClick = (event) => {
@@ -108,7 +119,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
   };
 
   const openPrompt = Boolean(anchorEl);
-  const id = openPrompt ? 'simple-popover' : undefined;
+  const id = openPrompt ? "simple-popover" : undefined;
 
   const handleCheckYoutube = (link) => {
     if (_.isEmpty(link)) return Promise.resolve(false);
@@ -116,7 +127,11 @@ const CreateRecordDrawer = ({ open, onClose }) => {
     return new Promise((resolve) => {
       setTimeout(async () => {
         try {
-          const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(link)}&format=json`);
+          const res = await fetch(
+            `https://www.youtube.com/oembed?url=${encodeURIComponent(
+              link
+            )}&format=json`
+          );
           if (res.ok) {
             resolve(true);
           } else {
@@ -132,22 +147,31 @@ const CreateRecordDrawer = ({ open, onClose }) => {
   };
 
   return (
-    <BaseDrawer paperProps={{ width: '50vw' }} open={open} onClose={onClose}>
+    <BaseDrawer paperProps={{ width: "50vw" }} open={open} onClose={onClose}>
       <Formik
         initialValues={{
-          title: '',
-          description: '',
+          title: "",
+          description: "",
           record_content_type: null,
-          url: '',
-          youtubeLink: '',
+          url: "",
+          youtubeLink: "",
           attachments: [],
           emails: [],
           lang: null,
-          source_type: 'youtube'
+          source_type: "youtube",
         }}
         validationSchema={validationSchema}
-        onSubmit={handleSubmit}>
-        {({ values, errors, touched, dirty, setFieldValue, validateField, setFieldError }) => {
+        onSubmit={handleSubmit}
+      >
+        {({
+          values,
+          errors,
+          touched,
+          dirty,
+          setFieldValue,
+          validateField,
+          setFieldError,
+        }) => {
           return (
             <Form>
               <BaseHeaderDrawer title="Tạo tóm tắt" onClose={onClose}>
@@ -155,10 +179,11 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                   disabled={!dirty || !_.isEmpty(errors)}
                   loading={loading}
                   fullWidth={false}
-                  variant='contained'
-                  type='submit'
-                  size='medium'
-                  sx={{}}>
+                  variant="contained"
+                  type="submit"
+                  size="medium"
+                  sx={{}}
+                >
                   Tạo
                 </LoadingButton>
               </BaseHeaderDrawer>
@@ -167,92 +192,155 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                   <h5 className="mb-2 font-[600]">Thông tin video</h5>
                   <div className="flex gap-2">
                     <FormControl variant="standard" fullWidth>
-                      <InputLabel required shrink htmlFor="title">Tiêu đề</InputLabel>
-                      <Field as={BootstrapInput} name="title" id="title" size="small" sx={{ fontSize: "14px" }} fullWidth />
+                      <InputLabel required shrink htmlFor="title">
+                        Tiêu đề
+                      </InputLabel>
+                      <Field
+                        as={BootstrapInput}
+                        name="title"
+                        id="title"
+                        size="small"
+                        sx={{ fontSize: "14px" }}
+                        fullWidth
+                      />
                       {touched.title && errors.title ? (
-                        <div className="text-errorColor text-[12px] mt-[2px]">{errors.title}</div>
-                      ) : (<div div className="text-textSecondaryColor text-[12px] mt-[2px]">
-                        Give your product a short and clear title.
-                        50-60 characters is the recommended length for search engines.
-                      </div>)}
+                        <div className="text-errorColor text-[12px] mt-[2px]">
+                          {errors.title}
+                        </div>
+                      ) : (
+                        <div className="text-textSecondaryColor text-[12px] mt-[2px] italic">
+                          Nhập tiêu đề ngắn gọn, rõ ràng cho video (khuyến nghị
+                          50-60 ký tự).
+                        </div>
+                      )}
                     </FormControl>
-                    <Button onClick={handleClick} startIcon={<IcWizard />}
-                      variant="outlined" sx={{ width: '140px', marginTop: '24px' }}>Trợ lý AI</Button>
-                    <PromptView id={id} open={openPrompt} anchorEl={anchorEl} onClose={handleClose}
+                    <Button
+                      onClick={handleClick}
+                      startIcon={<IcWizard />}
+                      variant="outlined"
+                      sx={{ width: "140px", marginTop: "24px" }}
+                    >
+                      Trợ lý AI
+                    </Button>
+                    <PromptView
+                      id={id}
+                      open={openPrompt}
+                      anchorEl={anchorEl}
+                      onClose={handleClose}
                       onDeclineResult={() => {
-                        setFieldValue('title', '');
-                        setFieldValue('description', '');
-                        setFieldValue('record_content_type', '');
+                        setFieldValue("title", "");
+                        setFieldValue("description", "");
+                        setFieldValue("record_content_type", "");
                       }}
                       onPreviewResult={(response) => {
-                        setFieldValue('title', response.title);
-                        setFieldValue('description', response.description);
-                        setFieldValue('record_content_type', response.record_content_type);
+                        setFieldValue("title", response.title);
+                        setFieldValue("description", response.description);
+                        setFieldValue(
+                          "record_content_type",
+                          response.record_content_type
+                        );
                       }}
                       onAcceptResult={(response) => {
-                        setFieldValue('title', response.title);
-                        setFieldValue('description', response.description);
-                        setFieldValue('record_content_type', response.record_content_type);
-                      }} />
+                        setFieldValue("title", response.title);
+                        setFieldValue("description", response.description);
+                        setFieldValue(
+                          "record_content_type",
+                          response.record_content_type
+                        );
+                      }}
+                    />
                   </div>
                   <div className="flex gap-2">
-                    <FormControl variant="standard" fullWidth >
-                      <InputLabel shrink htmlFor="record_content_type" required size="small">Thể loại</InputLabel>
+                    <FormControl variant="standard" fullWidth>
+                      <InputLabel
+                        shrink
+                        htmlFor="record_content_type"
+                        required
+                        size="small"
+                      >
+                        Thể loại
+                      </InputLabel>
                       <BootstrapAutocomplete
                         id="record_content_type"
                         name="record_content_type"
                         placeholder="Chọn thể loại"
-                        value={RecordContentTypes.find(x => x.id === values.record_content_type)}
+                        value={RecordContentTypes.find(
+                          (x) => x.id === values.record_content_type
+                        )}
                         options={RecordContentTypes || []}
                         getOptionKey={(option) => option.id}
                         getOptionLabel={(option) => option.label}
-                        onChange={(e, value, reason) => setFieldValue('record_content_type', value.id)}
+                        onChange={(e, value, reason) =>
+                          setFieldValue("record_content_type", value.id)
+                        }
                       />
-                      {touched.record_content_type && errors.record_content_type && (
-                        <div className="text-errorColor text-[12px] mt-[2px]">{errors.record_content_type}</div>
-                      )}
+                      {touched.record_content_type &&
+                        errors.record_content_type && (
+                          <div className="text-errorColor text-[12px] mt-[2px]">
+                            {errors.record_content_type}
+                          </div>
+                        )}
                     </FormControl>
-                    <FormControl variant="standard" fullWidth >
-                      <InputLabel shrink htmlFor="lang" size="small" required>Ngôn ngữ</InputLabel>
+                    <FormControl variant="standard" fullWidth>
+                      <InputLabel shrink htmlFor="lang" size="small" required>
+                        Ngôn ngữ
+                      </InputLabel>
                       <BootstrapAutocomplete
                         id="lang"
                         name="lang"
                         placeholder="Chọn ngôn ngữ"
-                        value={VideoLanguages.find(x => x.id === values.lang)}
+                        value={VideoLanguages.find((x) => x.id === values.lang)}
                         options={VideoLanguages || []}
                         getOptionKey={(option) => option.id}
                         getOptionLabel={(option) => option.label}
-                        onChange={(e, value, reason) => setFieldValue('lang', value.id)}
+                        onChange={(e, value, reason) =>
+                          setFieldValue("lang", value.id)
+                        }
                       />
                       {touched.lang && errors.lang && (
-                        <div className="text-errorColor text-[12px] mt-[2px]">{errors.lang}</div>
+                        <div className="text-errorColor text-[12px] mt-[2px]">
+                          {errors.lang}
+                        </div>
                       )}
                     </FormControl>
                   </div>
                   <div className="flex gap-2">
-                    <FormControl variant="standard" fullWidth >
-                      <InputLabel shrink htmlFor="lang" size="small" required>Nguồn video</InputLabel>
+                    <FormControl variant="standard" fullWidth>
+                      <InputLabel
+                        shrink
+                        htmlFor="source_type"
+                        size="small"
+                        required
+                      >
+                        Nguồn video
+                      </InputLabel>
                       <BootstrapAutocomplete
                         id="source_type"
                         name="source_type"
                         placeholder="Chọn nguồn video"
-                        value={SourceTypes.find(x => x.id === values.source_type)}
+                        value={SourceTypes.find(
+                          (x) => x.id === values.source_type
+                        )}
                         options={SourceTypes || []}
                         getOptionKey={(option) => option.id}
                         getOptionLabel={(option) => option.label}
                         onChange={(e, value, reason) => {
-                          setFieldValue('url', '');
-                          setFieldValue('youtubeLink', '');
-                          setFieldValue('source_type', value.id);
+                          setFieldValue("url", "");
+                          setFieldValue("youtubeLink", "");
+                          setFieldValue("source_type", value.id);
                         }}
                       />
                       {touched.source_type && errors.source_type && (
-                        <div className="text-errorColor text-[12px] mt-[2px]">{errors.source_type}</div>
+                        <div className="text-errorColor text-[12px] mt-[2px]">
+                          {errors.source_type}
+                        </div>
                       )}
                     </FormControl>
                   </div>
-                  <FormControl variant="standard" fullWidth sx={{ mt: '10px' }}>
-                    <InputLabel shrink htmlFor="description">Mô tả</InputLabel>
+                  <FormControl variant="standard" fullWidth sx={{ mt: "10px" }}>
+                    <InputLabel shrink htmlFor="description">
+                      Mô tả
+                    </InputLabel>
                     <Field
                       as={BootstrapInput}
                       name="description"
@@ -263,22 +351,31 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                       rows={5}
                       sx={{
                         fontSize: "14px",
-                        '& .MuiInputBase-input': {
-                          borderRadius: '15px'
-                        }
+                        "& .MuiInputBase-input": {
+                          borderRadius: "15px",
+                        },
                       }}
                       fullWidth
                     />
                     {touched.description && errors.description && (
-                      <div className="text-errorColor text-[12px] mt-[2px]">{errors.description}</div>
+                      <div className="text-errorColor text-[12px] mt-[2px]">
+                        {errors.description}
+                      </div>
+                    )}
+                    {!touched.description && !errors.description && (
+                      <div className="text-textSecondaryColor text-[12px] mt-[2px] italic">
+                        Cung cấp mô tả chi tiết về nội dung video.
+                      </div>
                     )}
                   </FormControl>
                 </div>
-                <FormControl variant="standard" fullWidth sx={{ mt: '10px' }}>
-                  <InputLabel shrink htmlFor="lang" size="small">Chia sẻ đến</InputLabel>
+                <FormControl variant="standard" fullWidth sx={{ mt: "10px" }}>
+                  <InputLabel shrink htmlFor="emails" size="small">
+                    Chia sẻ đến
+                  </InputLabel>
                   <Autocomplete
                     id="emails"
-                    sx={{ mt: '24px' }}
+                    sx={{ mt: "24px" }}
                     name="emails"
                     placeholder="Nhập email"
                     multiple
@@ -287,54 +384,135 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                     options={[]}
                     renderTags={(value, getTagProps) =>
                       value.map((option, index) => (
-                        <Chip label={option}  {...getTagProps({ index })}
-                          onDelete={() => setFieldValue('emails', values.emails.filter((_, i) => i !== index))} />
+                        <Chip
+                          label={option}
+                          {...getTagProps({ index })}
+                          onDelete={() =>
+                            setFieldValue(
+                              "emails",
+                              values.emails.filter((_, i) => i !== index)
+                            )
+                          }
+                        />
                       ))
                     }
-                    onChange={(e, value, reason) => setFieldValue('emails', value)}
-                    renderInput={params => <TextField {...params} variant="outlined" placeholder="Nhập emails" />}
+                    onChange={(e, value, reason) =>
+                      setFieldValue("emails", value)
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        variant="outlined"
+                        placeholder="Nhập email"
+                      />
+                    )}
                   />
                   {touched.emails && errors.emails && (
-                    <div>{errors.emails}</div>
+                    <div className="text-errorColor text-[12px] mt-[2px]">
+                      {errors.emails}
+                    </div>
+                  )}
+                  {!touched.emails && !errors.emails && (
+                    <div className="text-textSecondaryColor text-[12px] mt-[2px] italic">
+                      Nhập địa chỉ email của người muốn chia sẻ.
+                    </div>
                   )}
                 </FormControl>
-                <input id="media.input" type="file" accept="video/*" style={{ display: 'none' }}
-                  onChange={(e) => handleUploadVideo(e, setFieldValue, setFieldError)} />
-                <div className={styles.gridMedia} >
+                <input
+                  id="media.input"
+                  type="file"
+                  accept="video/*"
+                  style={{ display: "none" }}
+                  onChange={(e) =>
+                    handleUploadVideo(e, setFieldValue, setFieldError)
+                  }
+                />
+                <div className={styles.gridMedia}>
                   <div className="flex flex-col w-full">
                     <h5 className="font-[600] w-full mt-4">Video</h5>
-                    <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
-                      Each objective must have <strong>at least 1</strong> key result to ensure progress can be tracked.
-                      To maintain clarity and focus, limit each objective to <strong>no more than 5</strong> key results.
+                    <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full italic">
+                      Liên kết video muốn tóm tắt.
                     </div>
-                    {!values.url
-                      ? <div className="flex flex-col gap-2 w-full">
-                        {values.source_type === 'local'
-                          ? <div className={styles.mediaPlaceHolder} onClick={() => document.getElementById("media.input")?.click()}>
-                            {videoUploading ? <CircularProgress /> : <OndemandVideoIcon />}
-                            <div className={styles.title}>{videoUploading ? "Đang tải lên video" : "Tải lên video"}</div>
-                            <div className={styles.helperText}>Video có dung lượng tối đa là 20mb.</div>
+                    {!values.url ? (
+                      <div className="flex flex-col gap-2 w-full">
+                        {values.source_type === "local" ? (
+                          <div
+                            className={styles.mediaPlaceHolder}
+                            onClick={() =>
+                              document.getElementById("media.input")?.click()
+                            }
+                          >
+                            {videoUploading ? (
+                              <CircularProgress />
+                            ) : (
+                              <OndemandVideoIcon />
+                            )}
+                            <div className={styles.title}>
+                              {videoUploading
+                                ? "Đang tải lên video"
+                                : "Tải lên video"}
+                            </div>
+                            <div className={styles.helperText}>
+                              Video có dung lượng tối đa là 20MB.
+                            </div>
                           </div>
-                          : <div className={styles.youtubePasteLink}>
-                            <FormControl variant="standard" fullWidth sx={{ mt: '10px' }}>
-                              <InputLabel shrink htmlFor="youtubeLink">Đường dẫn Youtube</InputLabel>
+                        ) : (
+                          <div className={styles.youtubePasteLink}>
+                            <FormControl
+                              variant="standard"
+                              fullWidth
+                              sx={{ mt: "10px" }}
+                            >
+                              <InputLabel shrink htmlFor="youtubeLink">
+                                Đường dẫn Youtube
+                              </InputLabel>
                               <Field
-                                startAdornment={<InputAdornment position="start"><YouTubeIcon sx={{ color: '#B2071D' }} /></InputAdornment>}
+                                startAdornment={
+                                  <InputAdornment position="start">
+                                    <YouTubeIcon sx={{ color: "#B2071D" }} />
+                                  </InputAdornment>
+                                }
                                 endAdornment={
                                   <InputAdornment position="end">
-                                    {youtubeChecking && <div className={styles.loadingContainer}><CircularProgress size='20px' /></div>}
-                                    {!youtubeChecking && values.youtubeLink && !errors.youtubeLink && <CheckCircleIcon sx={{ color: colors.successColorBg }} />}
-                                    {!youtubeChecking && errors.youtubeLink && <ErrorOutlineIcon sx={{ color: colors.errorColor }} />}
-                                  </InputAdornment>}
+                                    {youtubeChecking && (
+                                      <div className={styles.loadingContainer}>
+                                        <CircularProgress size="20px" />
+                                      </div>
+                                    )}
+                                    {!youtubeChecking &&
+                                      values.youtubeLink &&
+                                      !errors.youtubeLink && (
+                                        <CheckCircleIcon
+                                          sx={{ color: colors.successColorBg }}
+                                        />
+                                      )}
+                                    {!youtubeChecking && errors.youtubeLink && (
+                                      <ErrorOutlineIcon
+                                        sx={{ color: colors.errorColor }}
+                                      />
+                                    )}
+                                  </InputAdornment>
+                                }
                                 as={BootstrapInput}
                                 onChange={(e) => {
-                                  setFieldValue('youtubeLink', e.target.value);
+                                  setFieldValue("youtubeLink", e.target.value);
                                   setYoutubeChecking(false);
                                   if (!errors.youtubeLink) {
-                                    handleCheckYoutube(e, setFieldValue, setFieldError)
-                                      .then(() => setFieldValue("url", e.target.value))
-                                      .catch(() => setFieldError("youtubeLink", "Không tìm thấy video"))
-                                  };
+                                    handleCheckYoutube(
+                                      e,
+                                      setFieldValue,
+                                      setFieldError
+                                    )
+                                      .then(() =>
+                                        setFieldValue("url", e.target.value)
+                                      )
+                                      .catch(() =>
+                                        setFieldError(
+                                          "youtubeLink",
+                                          "Không tìm thấy video"
+                                        )
+                                      );
+                                  }
                                 }}
                                 name="youtubeLink"
                                 id="youtubeLink"
@@ -343,104 +521,168 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                                 fullWidth
                               />
                               {touched.youtubeLink && errors.youtubeLink && (
-                                <div className="text-errorColor text-[12px] mt-[2px]">{errors.youtubeLink}</div>
+                                <div className="text-errorColor text-[12px] mt-[2px]">
+                                  {errors.youtubeLink}
+                                </div>
                               )}
                             </FormControl>
-                            {!_.isEmpty(values.youtubeLink) && !youtubeChecking && _.isEmpty(errors.youtubeLink) &&
-                              <iframe
-                                className={styles.ytbPreview}
-                                title="Preview youtube"
-                                src={getYoutubeEmbedUrl(values.youtubeLink)}
-                                width="100%"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowfullscreen ></iframe>
-                            }
+                            {!_.isEmpty(values.youtubeLink) &&
+                              !youtubeChecking &&
+                              _.isEmpty(errors.youtubeLink) && (
+                                <iframe
+                                  className={styles.ytbPreview}
+                                  title="Preview youtube"
+                                  src={getYoutubeEmbedUrl(values.youtubeLink)}
+                                  width="100%"
+                                  frameborder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowfullscreen
+                                ></iframe>
+                              )}
                           </div>
-                        }
+                        )}
                       </div>
-                      : <div className={styles.videoPreview}>
-                        <ReactPlayer ref={playerRef} width={"100%"} height={"100%"}
-                          controls src={readS3Object(values?.url)} />
+                    ) : (
+                      <div className={styles.videoPreview}>
+                        <ReactPlayer
+                          ref={playerRef}
+                          width={"100%"}
+                          height={"100%"}
+                          controls
+                          src={readS3Object(values?.url)}
+                        />
                       </div>
-                    }
+                    )}
                   </div>
                   <div className="flex flex-col w-full overflow-hidden">
-                    <h5 className="font-[600] w-full mt-4">Tải lên tài liệu đính kèm</h5>
-                    <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
-                      Each objective must have <strong>at least 1</strong> key result to ensure progress can be tracked.
-                      To maintain clarity and focus, limit each objective to <strong>no more than 5</strong> key results.
+                    <h5 className="font-[600] w-full mt-4">
+                      Tải lên tài liệu đính kèm
+                    </h5>
+                    <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full italic">
+                      Tải lên tài liệu đính kèm (pdf, doc, xls, ppt, txt) muốn
+                      tóm tắt.
                     </div>
                     <div className={styles.attachmentContainer}>
                       <FieldArray name="attachments">
                         {({ push, remove, replace }) => {
                           const handleUploadFile = (event) => {
                             if (_.isEmpty(event.target.files)) return;
-                            Array.from(event.target.files).forEach((file, idx) => {
-                              const index = values.attachments.length + idx;
-                              push({
-                                filename: file.name,
-                                mime: file.type,
-                                size: file.size,
-                                url: null,
-                                loading: true,
-                                state: "uploading",
-                              });
-                              uploadFile(file)
-                                .then(({ data }) => {
-                                  console.log(index);
-                                  replace(index, { ...data, loading: false, state: 'success' });
-                                })
-                                .catch((error) => {
-                                  console.log(error);
-                                  replace(index, { ...values.attachments[index], loading: false, state: 'error' });
+                            Array.from(event.target.files).forEach(
+                              (file, idx) => {
+                                const index = values.attachments.length + idx;
+                                push({
+                                  filename: file.name,
+                                  mime: file.type,
+                                  size: file.size,
+                                  url: null,
+                                  loading: true,
+                                  state: "uploading",
                                 });
-                            });
-                          }
+                                uploadFile(file)
+                                  .then(({ data }) => {
+                                    console.log(index);
+                                    replace(index, {
+                                      ...data,
+                                      loading: false,
+                                      state: "success",
+                                    });
+                                  })
+                                  .catch((error) => {
+                                    console.log(error);
+                                    replace(index, {
+                                      ...values.attachments[index],
+                                      loading: false,
+                                      state: "error",
+                                    });
+                                  });
+                              }
+                            );
+                          };
                           return (
                             <div className={styles.attachments}>
                               {values.attachments.map((attachment, index) => {
-                                const isTxt = attachment?.mime === "text/plain"
-                                const isExcel = attachment?.mime === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                const isDocx = attachment?.mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || attachment?.mime === "application/msword";
-                                const isPdf = attachment?.mime === "application/pdf";
+                                const isTxt = attachment?.mime === "text/plain";
+                                const isExcel =
+                                  attachment?.mime ===
+                                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                                const isDocx =
+                                  attachment?.mime ===
+                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+                                  attachment?.mime === "application/msword";
+                                const isPdf =
+                                  attachment?.mime === "application/pdf";
                                 return (
-                                  <div className={styles.attachmentItem} key={index}>
+                                  <div
+                                    className={styles.attachmentItem}
+                                    key={index}
+                                  >
                                     {isDocx && <IcMsWord />}
                                     {isPdf && <IcPdf />}
                                     {isExcel && <IcExcel />}
                                     <div className="flex flex-col overflow-hidden w-full">
                                       <div className={styles.titleWrapper}>
                                         <Tooltip title={attachment?.filename}>
-                                          <span className={styles.title}>{attachment?.filename}</span>
+                                          <span className={styles.title}>
+                                            {attachment?.filename}
+                                          </span>
                                         </Tooltip>
                                       </div>
-                                      {isDocx && <div className={styles.mime}>{'application/docx'}</div>}
-                                      {isPdf && <div className={styles.mime}>{'application/pdf'}</div>}
-                                      {isExcel && <div className={styles.mime}>{'application/sheet'}</div>}
+                                      {isDocx && (
+                                        <div className={styles.mime}>
+                                          {"application/docx"}
+                                        </div>
+                                      )}
+                                      {isPdf && (
+                                        <div className={styles.mime}>
+                                          {"application/pdf"}
+                                        </div>
+                                      )}
+                                      {isExcel && (
+                                        <div className={styles.mime}>
+                                          {"application/sheet"}
+                                        </div>
+                                      )}
                                     </div>
-                                    {attachment.loading &&
+                                    {attachment.loading && (
                                       <div className={styles.loadingContainer}>
-                                        <CircularProgress size='20px' />
+                                        <CircularProgress size="20px" />
                                       </div>
-                                    }
-                                    {(!attachment.loading && attachment.state === 'success') &&
-                                      <IconButton onClick={() => remove(index)}>
-                                        <DeleteOutlineIcon sx={{ color: colors.errorColor }} />
-                                      </IconButton>
-                                    }
+                                    )}
+                                    {!attachment.loading &&
+                                      attachment.state === "success" && (
+                                        <IconButton
+                                          onClick={() => remove(index)}
+                                        >
+                                          <DeleteOutlineIcon
+                                            sx={{ color: colors.errorColor }}
+                                          />
+                                        </IconButton>
+                                      )}
                                   </div>
                                 );
                               })}
-                              <Button variant="outlined" className="mt-4" type="button" onClick={() => { document.getElementById('media.attachments')?.click() }}>
+                              <Button
+                                variant="outlined"
+                                className="mt-4"
+                                type="button"
+                                onClick={() => {
+                                  document
+                                    .getElementById("media.attachments")
+                                    ?.click();
+                                }}
+                              >
                                 Thêm tệp đính kèm
                               </Button>
                               <input
-                                id="media.attachments" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
-                                style={{ display: 'none' }} onChange={handleUploadFile}>
-                              </input>
+                                id="media.attachments"
+                                type="file"
+                                multiple
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                                style={{ display: "none" }}
+                                onChange={handleUploadFile}
+                              ></input>
                             </div>
-                          )
+                          );
                         }}
                       </FieldArray>
                     </div>
@@ -448,11 +690,11 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                 </div>
               </div>
             </Form>
-          )
+          );
         }}
       </Formik>
-    </BaseDrawer >
-  )
-}
+    </BaseDrawer>
+  );
+};
 
 export default CreateRecordDrawer;

@@ -1,0 +1,12 @@
+Bạn là một trợ lý thông minh. Tôi sẽ cung cấp cho bạn các đoạn thông tin (chunks) được trích xuất từ:
+1. Video bài giảng (transcript, phụ đề)
+2. Tài liệu PDF liên quan (slide, handout, sách tham khảo)
+Tiêu đề video:
+  {{ title }}
+
+Nội dung transcript:
+  {{ subtitle }}
+Nội dung tệp đính kèm:
+  {{ context }}
+
+{{ structure }}

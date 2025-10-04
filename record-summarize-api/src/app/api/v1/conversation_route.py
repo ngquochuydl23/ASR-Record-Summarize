@@ -1,7 +1,6 @@
 from .llm_route import llm_service
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks, Query
 from typing import Annotated, cast, List, Optional
-from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy import select, and_, desc, asc, func, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import noload, selectinload, joinedload
@@ -24,6 +23,8 @@ from google.genai import types
 from ...utils.apply_paginate import apply_paginate
 import uuid
 import os
+
+from ...utils.prompt_template import get_prompt_template
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "templates", 'prompts')
 router = APIRouter(tags=["Conversations"])
@@ -219,13 +220,13 @@ async def _ask_llm(conversation_id: uuid.UUID, record_id: uuid.UUID, message_id:
         context = "\n\n".join([f"{chunk['content']}" for i, chunk in enumerate(chunks)])
         if message.web_search and message.reply_from_id:
             reply_from_msg = await _get_msg_by_id(db, message.reply_from_id)
-            prompt = _get_prompt_template("chatbot_answer_allow_search.text").render(
+            prompt = get_prompt_template(TEMPLATE_DIR, "chatbot_answer_allow_search.text").render(
                 context=context,
                 question=message.msg_content,
                 previous_question=reply_from_msg.msg_content
             )
         else:
-            prompt = _get_prompt_template("chatbot_answer_non_search.text").render(
+            prompt = get_prompt_template(TEMPLATE_DIR, "chatbot_answer_non_search.text").render(
                 context=context,
                 question=message.msg_content
             )
@@ -286,10 +287,6 @@ async def _ask_llm(conversation_id: uuid.UUID, record_id: uuid.UUID, message_id:
             await db.commit()
             await db.refresh(ai_msg)
 
-
-def _get_prompt_template(path: str):
-    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR), autoescape=select_autoescape())
-    return env.get_template(path)
 
 async def _get_msg_by_id(db, id: uuid) -> MessageModel:
     result = await db.execute(

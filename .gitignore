@@ -19,5 +19,8 @@ record-summarize-api/youtube_downloads
 
 .redis
 huggingface-cache
+record-summarize-notification-api
+record-summarize-notification-api/.env.*
+redis_data
 
 

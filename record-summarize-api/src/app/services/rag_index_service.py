@@ -1,15 +1,18 @@
 from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.app.core.logger import logging
 from src.app.models import RecordModel, RagDocumentModel, RagChunkModel
 from src.app.models.rag_document import RAGSourceTypeEnum
 from src.app.services.llm_service import LLMService
 from src.app.utils.chunk_text import chunk_text
-from src.app.utils.extract_text_from_file import extract_text
+from src.app.utils.extract_text_from_file import extract_text, extract_text_from_bytes
+from .s3_service import S3Service
 from ..core.db.database import async_get_db
 from sqlalchemy import select
 import uuid
 import asyncio
+import os
 
 from ..models.records import RecordChatbotPreparationState
 
@@ -17,13 +20,12 @@ from ..models.records import RecordChatbotPreparationState
 class RagIndexService:
     def __init__(self):
         self.llm_service = LLMService()
+        self.s3_service = S3Service()
 
     async def execute_rag_index(self, db: Annotated[AsyncSession, Depends(async_get_db)], record: RecordModel):
-        pipeline_item_extras = record.pipeline_items[1].extra
-        subtitle_path =  pipeline_item_extras['transcribe_result']['output_path']
-
-        with open(subtitle_path, "r", encoding="utf-8") as f:
-            content = f.read()
+        logging.info("RagIndexService - Downloading subtitle from S3")
+        subtitle_vtt_key = record.pipeline_items[1].extra.get("subtitle_s3_key")
+        content = await self.s3_service.read_s3_file(subtitle_vtt_key)
         embeddings = []
         chunks = chunk_text(content, chunk_size=500)
         for chunk in chunks:
@@ -50,7 +52,9 @@ class RagIndexService:
             if attachment.is_rag:
                 continue
             attachment.is_rag = True
-            content = extract_text(attachment.url)
+            bytes = await self.s3_service.read_s3_file_as_bytes(attachment.url)
+            ext = os.path.splitext(attachment.url)[1].lower()
+            content = extract_text_from_bytes(bytes, ext)
             if not content:
                 continue
 

@@ -33,12 +33,7 @@ import readS3Object from "@/utils/avatar/readS3Object";
 import ReactPlayer from "react-player";
 import { createRecord } from "@/repositories/record.repository";
 import { useNavigate } from "react-router-dom";
-import {
-  AppRoute,
-  RecordContentTypes,
-  SourceTypes,
-  VideoLanguages,
-} from "@/constants/app.constants";
+import { RecordContentTypes, SourceTypes, VideoLanguages } from "@/constants/app.constants";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";

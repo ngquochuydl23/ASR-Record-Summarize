@@ -45,17 +45,6 @@ async def ping():
     return "Pong"
 
 
-@app.websocket("/ws/{record_id}")
-async def websocket_task_endpoint(websocket: WebSocket, record_id: str):
-    await manager.connect(websocket)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            await manager.broadcast(f"Client says: {data}")
-    except WebSocketDisconnect:
-        manager.disconnect(record_id, websocket)
-        await manager.broadcast(record_id, f"Client left {record_id}")
-
 
 if __name__ == "__main__":
     check_ffmpeg()

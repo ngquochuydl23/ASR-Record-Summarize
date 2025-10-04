@@ -16,4 +16,4 @@ export const createRecord = (body) => http.post('/records', body);
 
 export const retryChatbot = (id) => http.post(`/records/${id}/retry-chatbot`);
 
-
+export const rerunWF = (recordId, body) => http.post(`/records/${recordId}/rerun-workflow`, body);

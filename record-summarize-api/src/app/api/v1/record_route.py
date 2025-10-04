@@ -1,23 +1,23 @@
 import uuid
 import asyncio
 import re
+import os
 import json
 from datetime import datetime
-from typing import Annotated, cast, Optional, Callable, Awaitable
+from typing import Annotated, cast, Optional, Callable, Awaitable, List
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import desc, func, or_
-from sqlalchemy.orm import selectinload, noload, load_only
+from sqlalchemy.orm import selectinload, noload, load_only, with_loader_criteria
 from .llm_route import llm_service
-from .transcription_route import transcription_service
 from ...connection_manager import manager
 from ...constants.record_constants import RECORD_SUMMARIZE_STRUCTURES
 from ...core.db.database import async_get_db, local_session
 from ...core.exceptions.app_exception import AppException
 from ...dtos.llm import RequestRAGSearch
 from ...dtos.record import RecordDto, RecordCreateDto, RequestGenerateFormRecordDto, PaginatedRecordsDto, \
-    MinimalRecordDto, RecordUpdateDto
+    MinimalRecordDto, RecordUpdateDto, RequestRerunWorkflow
 from ...dtos.user import UserDto
 from ...models import RecordModel, UserModel, AttachmentModel, RecordPipelineItemModel, SummaryVersionModel
 from ...models.record_pipeline_items import PipelineItemType, PipelineItemStatus
@@ -31,7 +31,13 @@ from ...core.logger import logging
 from ...services.transcription_service import TranscriptionService
 from ...services.youtube_service import YoutubeService
 from ...utils.apply_paginate import apply_paginate
-from ...utils.extract_text_from_file import extract_text
+from ...utils.extract_text_from_file import extract_text, extract_text_from_bytes
+from ...utils.prompt_template import get_prompt_template
+
+TRANSCRIBE_WF_STEP = 1
+SUMMARIZE_WF_STEP = 2
+CHATBOT_PREPARATION = 3
+TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "templates", 'prompts')
 
 s3_service = S3Service()
 rag_index_service = RagIndexService()
@@ -109,6 +115,48 @@ async def create_records(
     return record.to_dict()
 
 
+@router.post("/records/{record_id}/rerun-workflow")
+async def rerun_workflow_record(
+        record_id: str,
+        body: RequestRerunWorkflow,
+        current_user: Annotated[UserDto, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(async_get_db)],
+        background_tasks: BackgroundTasks
+):
+    result = await db.execute(
+        select(RecordModel)
+        .join(RecordModel.current_version, isouter=True)
+        .options(
+            selectinload(RecordModel.attachments),
+            selectinload(RecordModel.creator),
+            selectinload(RecordModel.current_version),
+            selectinload(RecordModel.pipeline_items),
+            noload(RecordModel.rag_documents),
+            with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
+        )
+        .where(RecordModel.id == record_id and UserModel.id == current_user.id and not RecordModel.is_deleted)
+    )
+    record = result.scalar_one_or_none()
+    if not record:
+        raise AppException(f"Record is null")
+
+    start_idx = next((i for i, item in enumerate(record.pipeline_items) if item.id == body.from_step_id), TRANSCRIBE_WF_STEP)
+    for pipeline_item in record.pipeline_items[start_idx:]:  # Renew pipeline item by copying the old one. Set status is PENDING
+        pipeline_item.is_deleted = True
+        record.pipeline_items.append(RecordPipelineItemModel(
+            id=uuid.uuid4(),
+            type=pipeline_item.type,
+            status=PipelineItemStatus.PENDING,
+            extra={}
+        ))
+
+    db.add(record)
+    await db.commit()
+    await db.refresh(record)
+    background_tasks.add_task(_run_workflow_tasks, record.id, start_idx)
+    return record.to_dict()
+
+
 @router.get("/records/{record_id}", response_model=RecordDto)
 async def get_record_by_id(
         record_id: str,
@@ -123,7 +171,8 @@ async def get_record_by_id(
             selectinload(RecordModel.creator),
             selectinload(RecordModel.current_version),
             selectinload(RecordModel.pipeline_items),
-            noload(RecordModel.rag_documents)
+            noload(RecordModel.rag_documents),
+            with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
         )
         .where(RecordModel.id == record_id
                and UserModel.id == current_user.id
@@ -141,66 +190,72 @@ async def get_records(
         unpublished: Optional[bool] = None,
         page: int = Query(1, ge=1),
         limit: int = Query(10, gt=0, le=100),
+        source_type: Optional[str] = Query(None),
+        record_content_type: Optional[List[str]] = Query(None)
 ) -> PaginatedRecordsDto:
     offset, limit = apply_paginate(page, limit)
-    query = (
+    base_query = (
         select(RecordModel)
-        .options(
-            load_only(
-                RecordModel.id,
-                RecordModel.title,
-                RecordModel.record_content_type,
-                RecordModel.lang,
-                RecordModel.emails,
-                RecordModel.source_type,
-                RecordModel.permission,
-                RecordModel.published,
-                RecordModel.current_step,
-                RecordModel.chatbot_preparation_state,
-                RecordModel.created_at,
-                RecordModel.updated_at,
-                RecordModel.is_deleted
-            ),
-            noload(RecordModel.attachments),
-            noload(RecordModel.rag_documents),
-            noload(RecordModel.current_version),
-            selectinload(RecordModel.creator),
-            selectinload(RecordModel.pipeline_items)
-            .load_only(
-                RecordPipelineItemModel.id,
-                RecordPipelineItemModel.type,
-                RecordPipelineItemModel.status,
-                RecordPipelineItemModel.error_message,
-            )
-        )
-        .order_by(desc(RecordModel.created_at))
         .where(RecordModel.is_deleted == False)
-        .where(or_(
-            RecordModel.creator_id == current_user['id'],
-            RecordModel.emails.any(current_user['email']),
-        ))
+        .where(or_(RecordModel.creator_id == current_user['id'], RecordModel.emails.any(current_user['email'])))
     )
 
     if s:
         search = f"%{s.lower()}%"
-        query = query.where(
-            or_(
-                func.lower(RecordModel.title).like(search),
-                func.lower(RecordModel.description).like(search),
-                func.lower(func.array_to_string(RecordModel.emails, ' ')).like(search)
-            )
-        )
+        base_query = base_query.where(or_(
+            func.lower(RecordModel.title).like(search),
+            func.lower(RecordModel.description).like(search),
+            func.lower(func.array_to_string(RecordModel.emails, ' ')).like(search)
+        ))
+
+    if source_type:
+        base_query = base_query.where(RecordModel.source_type == source_type)
+
     if unpublished:
-        query = query.where(RecordModel.published != unpublished)
+        base_query = base_query.where(RecordModel.published != unpublished)
+
+    if record_content_type and len(record_content_type) > 0:
+        base_query = base_query.where(RecordModel.record_content_type.in_(record_content_type))
+
+    query = (base_query
+        .options(load_only(
+            RecordModel.id,
+            RecordModel.title,
+            RecordModel.record_content_type,
+            RecordModel.lang,
+            RecordModel.emails,
+            RecordModel.source_type,
+            RecordModel.permission,
+            RecordModel.published,
+            RecordModel.current_step,
+            RecordModel.chatbot_preparation_state,
+            RecordModel.created_at,
+            RecordModel.updated_at,
+            RecordModel.is_deleted
+        ),
+        noload(RecordModel.attachments),
+        noload(RecordModel.rag_documents),
+        noload(RecordModel.current_version),
+        selectinload(RecordModel.creator),
+        selectinload(RecordModel.pipeline_items)
+        .load_only(
+            RecordPipelineItemModel.id,
+            RecordPipelineItemModel.type,
+            RecordPipelineItemModel.status,
+            RecordPipelineItemModel.error_message,
+        ),
+        with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
+    ).order_by(desc(RecordModel.created_at)))
 
     result = await db.execute(query.offset(offset).limit(limit))
-    count_stmt = select(func.count()).select_from(RecordModel).where(RecordModel.is_deleted == False)
+    count_stmt = select(func.count()).select_from(base_query.subquery())
     total = (await db.execute(count_stmt)).scalar_one()
     records = result.unique().scalars().all()
     return PaginatedRecordsDto(
         total=total,
         page=page,
         limit=limit,
+        count=len(records),
         items=[MinimalRecordDto.model_validate(r) for r in records]
     )
 
@@ -212,13 +267,14 @@ async def update_record(
         db: Annotated[AsyncSession, Depends(async_get_db)]
 ) -> RecordDto:
     stmt = (select(RecordModel)
-            .options(
-                selectinload(RecordModel.creator),
-                selectinload(RecordModel.pipeline_items),
-                noload(RecordModel.attachments),
-                noload(RecordModel.rag_documents),
-                noload(RecordModel.current_version),
-            )
+        .options(
+        selectinload(RecordModel.creator),
+        selectinload(RecordModel.pipeline_items),
+        noload(RecordModel.attachments),
+        noload(RecordModel.rag_documents),
+        noload(RecordModel.current_version),
+        with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
+    )
             .where(RecordModel.id == record_id))
     result = await db.execute(stmt)
     record = result.scalar_one_or_none()
@@ -241,7 +297,7 @@ async def update_record(
 
 
 @router.delete("/records/{record_id}")
-async def delete_user(
+async def delete_record(
         record_id: str,
         current_user: Annotated[UserDto, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(async_get_db)],
@@ -250,7 +306,7 @@ async def delete_user(
         select(RecordModel)
         .options(
             selectinload(RecordModel.creator),
-            selectinload(RecordModel.pipeline_items),
+            noload(RecordModel.pipeline_items),
             noload(RecordModel.attachments),
             noload(RecordModel.rag_documents),
             noload(RecordModel.current_version),
@@ -282,7 +338,8 @@ async def publish_record(
             selectinload(RecordModel.pipeline_items),
             selectinload(RecordModel.summary_versions),
             noload(RecordModel.rag_documents),
-            noload(RecordModel.current_version)
+            noload(RecordModel.current_version),
+            with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
         )
         .where(RecordModel.id == record_id
                and UserModel.id == current_user.id
@@ -320,7 +377,8 @@ async def cancel_record(
         .options(
             selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
-            selectinload(RecordModel.pipeline_items)
+            selectinload(RecordModel.pipeline_items),
+            with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
         )
         .where(RecordModel.id == record_id
                and UserModel.id == current_user.id
@@ -351,7 +409,8 @@ async def rag_index_record(
             selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
             selectinload(RecordModel.pipeline_items),
-            selectinload(RecordModel.rag_documents)
+            selectinload(RecordModel.rag_documents),
+            with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
         )
         .where(RecordModel.id == record_id
                # and UserModel.id == current_user.id
@@ -378,7 +437,8 @@ async def search_similar(
             selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
             selectinload(RecordModel.pipeline_items),
-            selectinload(RecordModel.rag_documents)
+            selectinload(RecordModel.rag_documents),
+            with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
         )
         .where(RecordModel.id == record_id
                # and UserModel.id == current_user.id
@@ -429,10 +489,11 @@ async def retry_chatbot(db: Annotated[AsyncSession, Depends(async_get_db)], reco
             selectinload(RecordModel.attachments),
             selectinload(RecordModel.creator),
             selectinload(RecordModel.pipeline_items),
-            selectinload(RecordModel.rag_documents)
+            selectinload(RecordModel.rag_documents),
+            with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
         )
         .where(RecordModel.id == record_id
-               # and UserModel.id == current_user.id
+               # and UserModel.id == current_user['id']
                and not RecordModel.is_deleted)
     )
     record = result.scalar_one_or_none()
@@ -468,6 +529,7 @@ async def _record_creating_task(record_id: uuid.UUID):
                     selectinload(RecordModel.pipeline_items),
                     selectinload(RecordModel.rag_documents),
                     selectinload(RecordModel.summary_versions),
+                    with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
                 )
                 .where(RecordModel.id == record_id, RecordModel.is_deleted.is_(False))
             )
@@ -494,6 +556,56 @@ async def _record_creating_task(record_id: uuid.UUID):
             raise
 
 
+async def _run_workflow_tasks(record_id: uuid.UUID, start_idx: int = TRANSCRIBE_WF_STEP):
+    async with local_session() as db:
+        try:
+            result = await db.execute(
+                select(RecordModel)
+                .options(
+                    selectinload(RecordModel.attachments),
+                    selectinload(RecordModel.creator),
+                    selectinload(RecordModel.pipeline_items),
+                    selectinload(RecordModel.rag_documents),
+                    selectinload(RecordModel.summary_versions),
+                    with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
+                )
+                .where(RecordModel.id == record_id, RecordModel.is_deleted.is_(False))
+            )
+            record = result.scalar_one_or_none()
+            if not record:
+                return
+
+            step_funcs = {
+                TRANSCRIBE_WF_STEP: lambda record, db:
+                _execute_step(record, record.pipeline_items[TRANSCRIBE_WF_STEP], transcribe_stage, db),
+                SUMMARIZE_WF_STEP: lambda record, db:
+                _execute_step(record, record.pipeline_items[SUMMARIZE_WF_STEP], llm_summarize_stage, db),
+                CHATBOT_PREPARATION: lambda record, db:
+                _execute_step(record, record.pipeline_items[CHATBOT_PREPARATION], store_vectordb_stage, db)
+            }
+
+            for wf_step in range(start_idx, CHATBOT_PREPARATION + 1):
+                result = await step_funcs[wf_step](record, db)
+                # if wf_step == TRANSCRIBE_WF_STEP:
+                #     record.subtitle_url = result["subtitle_s3_key"]
+
+                # if wf_step == SUMMARIZE_WF_STEP:
+                #     record.summary_versions.append(
+                #         SummaryVersionModel(
+                #             id=uuid.uuid4(),
+                #             title=f"v{len(record.summary_versions) + 1}",
+                #             summary_content=result["summary"],
+                #             published=False
+                #         )
+                #     )
+                #     db.add(record)
+                #     await db.commit()
+        except Exception as e:
+            logging.error("Error", str(e))
+            await db.rollback()
+            raise
+
+
 async def _execute_step(
         record: RecordModel,
         pipeline_item: RecordPipelineItemModel,
@@ -503,7 +615,7 @@ async def _execute_step(
     logging.info(f"Record-{str(record.id)} - {pipeline_item.type} RUNNING")
     record.current_step = pipeline_item.type
     pipeline_item.status = PipelineItemStatus.RUNNING
-    pipeline_item.start_time = datetime.utcnow()
+    pipeline_item.start_time = datetime.now()
 
     db.add(record)
     db.add(pipeline_item)
@@ -514,7 +626,7 @@ async def _execute_step(
     try:
         extra_data = await func(record, db)
         pipeline_item.status = PipelineItemStatus.SUCCESS
-        pipeline_item.finished_at = datetime.utcnow()
+        pipeline_item.finished_at = datetime.now()
         pipeline_item.extra = extra_data if extra_data is not None else {}
         db.add(record)
         db.add(pipeline_item)
@@ -541,9 +653,11 @@ async def _execute_step(
         raise Exception(f"Record-{str(record.id)} - {pipeline_item.type} ERROR")
 
 
+# BUG
 async def transcribe_stage(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
     url = record.url
     if record.source_type == RecordSourceType.YOUTUBE:
+        # BUG - ERROR
         logging.info(f"Youtube downloading {record.url}")
         url = await youtube_service.download_youtube_via_link(record.url)
         if url is None:
@@ -551,12 +665,13 @@ async def transcribe_stage(record: RecordModel, db: Annotated[AsyncSession, Depe
 
     extract_audio_result = await FFMpegService.extract_audio(url, f'wavs/record-{str(record.id)}.wav')
     subtitle_file = f'vtts/record-{record.lang}-{str(record.id)}.vtt'
-    transcribe_result = await transcription_service.generate_subtitle(
-        wav_path=extract_audio_result['output'],
-        output_path=subtitle_file,
-        lang=record.lang
-    )
+    transcribe_result = await transcription_service.generate_subtitle(wav_path=extract_audio_result['output'],
+                                                                      output_path=subtitle_file, lang=record.lang)
     uploaded_result = await s3_service.upload_file_from_path(subtitle_file, folder='vtts')
+    record.subtitle_url = uploaded_result.url
+    db.add(record)
+    await db.commit()
+    await db.refresh(record)
     return {
         "subtitle_s3_key": uploaded_result.url,
         "transcribe_result": transcribe_result,
@@ -570,23 +685,38 @@ async def store_vectordb_stage(record: RecordModel, db: Annotated[AsyncSession, 
 
 
 async def llm_summarize_stage(record: RecordModel, db: Annotated[AsyncSession, Depends(async_get_db)]):
-    transcribe_output = record.pipeline_items[1].extra.get("transcribe_result", {}).get("output_path")
-    with open(transcribe_output, "r", encoding="utf-8") as f:
-        subtitle = f.read()
-    context = "\n".join([extract_text(item.url) for item in record.attachments])
-    prompt = f"""
-       Bạn là một trợ lý thông minh. Tôi sẽ cung cấp cho bạn các đoạn thông tin (chunks) được trích xuất từ:
-       1. Video bài giảng (transcript, phụ đề)
-       2. Tài liệu PDF liên quan (slide, handout, sách tham khảo)
+    logging.info("LLM_Summarize - Downloading subtitle from S3")
+    subtitle_vtt_key = record.pipeline_items[TRANSCRIBE_WF_STEP].extra.get("subtitle_s3_key")
+    subtitle = await s3_service.read_s3_file(subtitle_vtt_key)
 
-       Nội dung transcript:
-       {subtitle}
-       Nội dung tệp đính kèm: 
-       {context}
-       
-       {RECORD_SUMMARIZE_STRUCTURES[record.record_content_type]}
-       """
+    context_parts = []
+    logging.info("LLM_Summarize - Downloading attachments from S3")
+    for item in record.attachments:
+        bytes = await s3_service.read_s3_file_as_bytes(item.url)
+        ext = os.path.splitext(item.url)[1].lower()
+        context_part = extract_text_from_bytes(bytes, ext)
+        context_parts.append(context_part)
+
+    context = "\n".join(context_parts)
+    prompt = get_prompt_template(TEMPLATE_DIR, "llm_summarize_prompt.text").render(
+        title=record.title,
+        subtitle=subtitle,
+        context=context,
+        structure=RECORD_SUMMARIZE_STRUCTURES[record.record_content_type]
+    )
+    logging.info("LLM_Summarize - Summarizing")
     response_llm = await asyncio.to_thread(llm_service.generate_text_gemini, prompt)
+    record.summary_versions.append(
+        SummaryVersionModel(
+            id=uuid.uuid4(),
+            title=f"v{len(record.summary_versions) + 1}",
+            summary_content=response_llm,
+            published=False
+        )
+    )
+    db.add(record)
+    await db.commit()
+    await db.refresh(record)
     return {
         "system_prompt": prompt,
         "summary": response_llm

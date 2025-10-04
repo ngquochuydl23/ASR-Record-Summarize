@@ -21,6 +21,21 @@ services:
           devices:
             - capabilities: [gpu]
     restart: always
+    networks:
+      - api-local-network
+
+  record-summarize-notification-api:
+    container_name: record-summarize-notification-api
+    build:
+      context: ./record-summarize-notification-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    ports:
+      - 0.0.0.0:2026:2026
+    networks:
+      - api-local-network
 
   record-summarize-fe:
     container_name: record-summarize-fe
@@ -34,3 +49,7 @@ services:
     restart: always
     depends_on:
       - record-summarize-api
+
+networks:
+  api-local-network:
+    driver: bridge

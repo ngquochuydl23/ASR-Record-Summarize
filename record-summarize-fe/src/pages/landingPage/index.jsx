@@ -178,7 +178,7 @@ const Login = () => {
         <Toolbar>
           <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
             <img
-              src="./Smart-Chatbot.png"
+              src="./chatbot2.png"
               alt="EasySUM Icon"
               style={{ width: 32, height: 32, marginRight: 8 }}
             />
@@ -204,7 +204,8 @@ const Login = () => {
             variant="outlined"
             sx={{ color: "white", borderColor: "white", ml: 2 }}
             onClick={handleGoogleLogin}
-            type="button">
+            type="button"
+          >
             Đăng nhập
           </Button>
         </Toolbar>
@@ -270,7 +271,8 @@ const Login = () => {
                       background: "white",
                       color: "#333",
                     }}
-                    type="button">
+                    type="button"
+                  >
                     Thử miễn phí
                   </Button>
                   <Button
@@ -334,11 +336,7 @@ const Login = () => {
             </Grid>
             <Grid item>
               <Box sx={{ textAlign: "center", px: 2 }}>
-                <img
-                  src="./edx.png"
-                  alt="edX"
-                  style={{ height: 40 }}
-                />
+                <img src="./edx.png" alt="edX" style={{ height: 40 }} />
               </Box>
             </Grid>
             <Grid item>
@@ -660,7 +658,8 @@ const Login = () => {
                             color: "white",
                           }),
                         }}
-                        type="button">
+                        type="button"
+                      >
                         {plan.buttonText}
                       </Button>
                     </CardActions>
@@ -723,9 +722,18 @@ const Login = () => {
                       >
                         "{testimonial.comment}"
                       </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                        }}
+                      >
                         <Box>
-                          <Typography variant="h6" sx={{ color: "#7C3AED", fontStyle: "italic" }}>
+                          <Typography
+                            variant="h6"
+                            sx={{ color: "#7C3AED", fontStyle: "italic" }}
+                          >
                             {testimonial.name}
                           </Typography>
                         </Box>
@@ -843,7 +851,7 @@ const Login = () => {
               <motion.div variants={fadeInUp}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <img
-                    src="./Smart-Chatbot.png"
+                    src="./chatbot2.png"
                     alt="EasySUM Icon"
                     style={{ width: 32, height: 32, marginRight: 8 }}
                   />

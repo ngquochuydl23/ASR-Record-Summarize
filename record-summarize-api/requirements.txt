@@ -40,3 +40,4 @@ python-docx
 langchain
 librosa
 yt-dlp
+python-pptx

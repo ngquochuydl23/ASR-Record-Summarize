@@ -9,7 +9,7 @@ export const PipelineSteps = {
   },
   [PipelineItemTypeEnum.TRANSCRIBE]: {
     index: 1,
-    stepName: "Nhận diện giọng nói",
+    stepName: "Nhận dạng giọng nói",
     stepDescription: "Chuyển phần âm thanh thành văn bản để bạn dễ theo dõi.",
   },
   [PipelineItemTypeEnum.GENERATE_SUM]: {

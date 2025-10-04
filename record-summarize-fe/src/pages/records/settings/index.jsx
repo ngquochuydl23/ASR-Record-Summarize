@@ -2,12 +2,12 @@ import { Autocomplete, Box, Breadcrumbs, Button, Chip, CircularProgress, FormCon
 import styles from './styles.module.scss';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import Link from '@mui/material/Link';
-import { AppRoute, PipelineItemTypeEnum, RecordContentTypes, SourceTypeEnum, SourceTypes, VideoLanguages } from '@/constants/app.constants';
+import { AppRoute, PipelineItemStatusEnum, PipelineItemTypeEnum, RecordContentTypes, SourceTypeEnum, SourceTypes, VideoLanguages } from '@/constants/app.constants';
 import classNames from 'classnames';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLoading } from '@/contexts/LoadingContextProvider';
 import { useNavigate, useParams } from 'react-router-dom';
-import { updateRecordById, getRecordById } from '@/repositories/record.repository';
+import { updateRecordById, getRecordById, rerunWF } from '@/repositories/record.repository';
 import { getLastestVersionByRecord } from '@/repositories/summary-version.repository';
 import { PipelineSteps, StatusMapStrings } from './page.config';
 import { useFormik } from 'formik';
@@ -309,10 +309,10 @@ const RecordSettingPage = () => {
   }
 
   const defaultCurrentStep = useMemo(() => {
-    if (_.every(record?.pipeline_items, (item) => item?.status === "Success")) {
-      return PipelineItemTypeEnum.GENERATE_SUM;
+    if (_.every(record?.pipeline_items, (item) => item?.status === PipelineItemStatusEnum.Success)) {
+      return PipelineSteps[PipelineItemTypeEnum.GENERATE_SUM].index;
     }
-    return record?.current_step || PipelineItemTypeEnum.CREATE_RECORD;
+    return PipelineSteps[record?.current_step || PipelineItemTypeEnum.CREATE_RECORD].index
   }, [record?.pipeline_items]);
 
   const handleWsConnected = () => {
@@ -328,16 +328,30 @@ const RecordSettingPage = () => {
   }, [record]);
 
   const onReceiveMsg = (data) => {
-    console.log(data);
     setRecord((prev) => ({
       ...prev,
       pipeline_items: prev.pipeline_items.map((item) => item.id === data.id ? { ...item, ...data } : item)
     }));
+
+    if (data.type === PipelineItemTypeEnum.GENERATE_SUM && data.status === PipelineItemStatusEnum.Success) {
+      getLastestVersionByRecord(recordId)
+        .then((response) => setLastVersion(response))
+        .catch((error) => { console.log(error); });
+    }
+  }
+
+  const handleRetryStep = (stepData) => {
+    rerunWF(recordId, { from_step_id: stepData?.id })
+      .then(() => { })
+      .catch((error) => { console.log(error); })
+      .finally(() => {
+
+      });
   }
 
   useEffect(() => {
     getRecordDetail();
-    if (recordId && !_.some(record?.pipeline_items, (item) => item?.status === "Running")) {
+    if (recordId && !_.some(record?.pipeline_items, (item) => item?.status === PipelineItemStatusEnum.Running)) {
       const ws = new WebSocket(`${process.env.REACT_APP_WS_ENDPOINT}/records/ws/${recordId}`);
       ws.onopen = handleWsConnected;
       ws.onclose = handleWsDisconnected;
@@ -636,23 +650,21 @@ const RecordSettingPage = () => {
           </form>
         </Scrollbars>
         <div className={styles.workflowLayout}>
-          <Stepper
-            activeStep={defaultCurrentStep}
-            orientation='vertical'>
+          <Stepper activeStep={defaultCurrentStep} orientation='vertical'>
             {Object.values(PipelineItemTypeEnum)
               .filter((v) => typeof v === "number")
               .map((stepId) => {
                 const step = PipelineSteps[stepId];
                 const log = pipelineItems.find((l) => Number(l.type) === stepId);
-                const completed = record.current_step === PipelineItemTypeEnum.CHATBOT_PREPARATION && log?.status === 'Success';
+                const completed = record.current_step === PipelineItemTypeEnum.CHATBOT_PREPARATION && log?.status === PipelineItemStatusEnum.Success;
                 return (
-                  <Step key={stepId} completed={completed} disabled={!completed}
-                    className={classNames(styles.stepItem, { [styles.stepItemfailed]: log?.status === "Failed", })} >
+                  <Step key={log?.id} completed={completed} disabled={!completed}
+                    className={classNames(styles.stepItem, { [styles.stepItemfailed]: log?.status === PipelineItemStatusEnum.Failed, })} >
                     <StepLabel
                       StepIconProps={{
-                        completed: log?.status === "Success",
-                        error: log?.status === "Failed",
-                        ...(log?.status === "Pending" && {
+                        completed: log?.status === PipelineItemStatusEnum.Success,
+                        error: log?.status === PipelineItemStatusEnum.Failed,
+                        ...(log?.status === PipelineItemStatusEnum.Pending && {
                           completed: true,
                           error: true
                         })
@@ -661,15 +673,15 @@ const RecordSettingPage = () => {
                       optional={log
                         ? <span
                           className={classNames(styles.stepItemStatus, {
-                            [styles.success]: log?.status === "Success",
-                            [styles.failed]: log?.status === "Failed",
-                            [styles.pending]: log?.status === "Pending",
-                            [styles.running]: log?.status === "Running",
-                            [styles.cancelled]: log?.status === "Cancelled",
+                            [styles.success]: log?.status === PipelineItemStatusEnum.Success,
+                            [styles.failed]: log?.status === PipelineItemStatusEnum.Failed,
+                            [styles.pending]: log?.status === PipelineItemStatusEnum.Pending,
+                            [styles.running]: log?.status === PipelineItemStatusEnum.Running,
+                            [styles.cancelled]: log?.status === PipelineItemStatusEnum.Cancelled,
                           })}
                         >
                           {StatusMapStrings[log?.status] || log?.status}
-                          {log?.status === "Success" && <div className={styles.finishedAtTime}>{moment(log?.finished_at).format('MMMM Do YYYY, h:mm:ss a')}</div>}
+                          {log?.status === PipelineItemStatusEnum.Success && <div className={styles.finishedAtTime}>{moment(log?.finished_at).format('MMMM Do YYYY, h:mm:ss a')}</div>}
                         </span>
                         : undefined
                       }
@@ -681,7 +693,7 @@ const RecordSettingPage = () => {
                         ? <div className={styles.stepItemErrorMsg}>{log?.error_message}</div>
                         : <div className={styles.stepItemDescription}>{step.stepDescription}</div>
                       }
-                      {(log?.type === PipelineItemTypeEnum.GENERATE_SUM) &&
+                      {(log?.type === PipelineItemTypeEnum.GENERATE_SUM && log?.status === PipelineItemStatusEnum.Success) &&
                         <div className={styles.previewLastSummaryButton}>
                           <div className='flex flex-col w-full overflow-hidden'>
                             <div className={styles.recordTitle}>{_.capitalize(record?.title)}</div>
@@ -699,9 +711,12 @@ const RecordSettingPage = () => {
                           </div>
                         </div>
                       }
-                      {log?.status === "Failed" &&
+                      {log?.status === PipelineItemStatusEnum.Failed &&
                         <div className='flex mt-3'>
-                          <Button variant='outlined' size='medium' startIcon={<ReplayIcon />}>Thử lại</Button>
+                          <Button variant='outlined' size='medium' startIcon={<ReplayIcon />}
+                            onClick={() => handleRetryStep(log)}>
+                            Thử lại
+                          </Button>
                         </div>
                       }
                     </StepContent>

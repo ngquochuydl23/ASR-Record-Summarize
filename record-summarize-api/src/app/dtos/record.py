@@ -41,6 +41,9 @@ class RecordUpdateDto(BaseModel):
 class RecordUpdateInternal(RecordUpdateDto):
     updated_at: datetime
 
+class RequestRerunWorkflow(BaseModel):
+    from_step_id: uuid.UUID
+
 
 class RecordDto(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -102,4 +105,5 @@ class PaginatedRecordsDto(BaseModel):
     total: int
     page: int
     limit: int
+    count: int
     items: List[MinimalRecordDto]

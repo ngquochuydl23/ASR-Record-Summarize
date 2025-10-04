@@ -99,6 +99,12 @@ class OpenAISettings(BaseSettings):
     OPENAI_EMBEDDING_MODEL: str = config("OPENAI_EMBEDDING_MODEL", default="text-embedding-3-small")
 
 
+class RedisCacheSettings(BaseSettings):
+    REDIS_CACHED_HOST: str = config("REDIS_CACHED_HOST", default='localhost')
+    REDIS_CACHED_PORT: str = config("REDIS_CACHED_PORT", default=6379)
+    REDIS_PASSWORD: str = config("REDIS_PASSWORD", default=None)
+    REDIS_URL: str = f"redis://default:{REDIS_PASSWORD}@{REDIS_CACHED_HOST}:{REDIS_CACHED_PORT}/"
+
 class Settings(
     AppSettings,
     PostgresSettings,
@@ -111,7 +117,8 @@ class Settings(
     S3StorageSettings,
     GoogleSSOSettings,
     GeminiSettings,
-    OpenAISettings
+    OpenAISettings,
+    RedisCacheSettings
 ):
     pass
 

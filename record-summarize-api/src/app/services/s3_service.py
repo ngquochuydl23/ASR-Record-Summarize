@@ -9,10 +9,11 @@ from ..dtos.storage import UploadFileResponseDto
 import asyncio
 import os
 import mimetypes
-
+from redis import asyncio as aioredis
 
 class S3Service:
     def __init__(self):
+        self.redis = aioredis.from_url(settings.REDIS_URL, db=0)
         self.s3 = boto3.client(
             's3',
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -20,6 +21,26 @@ class S3Service:
             region_name=settings.S3_REGION_NAME
         )
         os.makedirs("./uploads", exist_ok=True)
+
+    async def read_s3_file(self, key):
+        return (await self.read_s3_file_as_bytes(key)).decode("utf-8")
+
+    async def read_s3_file_as_bytes(self, key):
+        cached_data = await self.redis.get(key)
+        if cached_data:
+            return cached_data
+
+        if os.path.exists(key):
+            with open(key, "rb") as f:
+                await self.redis.set(key, f.read())
+                return f.read()
+
+        obj = self.s3.get_object(Bucket=settings.S3_BUCKET_NAME, Key=key)
+        downloaded_byte = obj["Body"].read()
+        await self.redis.set(key, downloaded_byte)
+        with open(key, "wb") as f:
+            f.write(downloaded_byte)
+        return downloaded_byte
 
     async def upload_file(self, file: UploadFile, folder='uploads', local_cache=True) -> UploadFileResponseDto:
         content = await file.read()
@@ -42,6 +63,7 @@ class S3Service:
                 ContentType=content_type,
                 ACL="public-read"
             )
+            await self.redis.set(key, content)
         except (BotoCoreError, NoCredentialsError) as e:
             raise BadRequestException(f"S3 upload failed: {str(e)}")
         return UploadFileResponseDto(url=key, filename=f"{name}", mime=content_type, size=size)

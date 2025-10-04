@@ -116,6 +116,14 @@ export const ChatbotPreparingStateEnum = {
   FAILED: "failed",
 };
 
+export const PipelineItemStatusEnum = {
+  Success: "Success",
+  Failed: "Failed",
+  Pending: "Pending",
+  Running: "Running",
+  Cancelled: "Cancelled"
+};
+
 export const PipelineStepTitle = [
   "Đang tạo record",
   "Đang xử lý video và sinh phụ đề",

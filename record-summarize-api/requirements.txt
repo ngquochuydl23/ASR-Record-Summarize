@@ -41,3 +41,4 @@ langchain
 librosa
 yt-dlp
 python-pptx
+redis

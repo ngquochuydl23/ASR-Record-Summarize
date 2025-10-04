@@ -120,25 +120,19 @@ const Login = () => {
 
   const testimonials = [
     {
-      name: "Nguyễn Văn A",
+      name: "_ Nguyễn Văn A",
       comment:
         "Ứng dụng này giúp tôi tổng hợp bài giảng nhanh chóng, tiết kiệm hàng giờ học tập.",
-      avatar:
-        "https://ui-avatars.com/api/?name=Nguyen+Van+A&size=60&background=7C3AED&color=fff",
     },
     {
-      name: "Trần Thị B",
+      name: "_ Trần Thị B",
       comment:
         "Nhận dạng giọng nói chính xác cao, rất hữu ích cho sinh viên như tôi.",
-      avatar:
-        "https://ui-avatars.com/api/?name=Tran+Thi+B&size=60&background=7C3AED&color=fff",
     },
     {
-      name: "Lê Văn C",
+      name: "_ Lê Văn C",
       comment:
         "Mô hình ngôn ngữ lớn hỗ trợ trả lời câu hỏi từ bài giảng tuyệt vời.",
-      avatar:
-        "https://ui-avatars.com/api/?name=Le+Van+C&size=60&background=7C3AED&color=fff",
     },
   ];
 
@@ -184,7 +178,7 @@ const Login = () => {
         <Toolbar>
           <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
             <img
-              src="https://img.lovepik.com/png/20231104/Smart-Chatbot-Cartoon-Clipart-science-concept-artificial-intelligence_494066_wh860.png"
+              src="./Smart-Chatbot.png"
               alt="EasySUM Icon"
               style={{ width: 32, height: 32, marginRight: 8 }}
             />
@@ -210,7 +204,7 @@ const Login = () => {
             variant="outlined"
             sx={{ color: "white", borderColor: "white", ml: 2 }}
             onClick={handleGoogleLogin}
-          >
+            type="button">
             Đăng nhập
           </Button>
         </Toolbar>
@@ -276,10 +270,11 @@ const Login = () => {
                       background: "white",
                       color: "#333",
                     }}
-                  >
+                    type="button">
                     Thử miễn phí
                   </Button>
                   <Button
+                    onClick={handleGoogleLogin}
                     variant="outlined"
                     size="large"
                     sx={{
@@ -301,7 +296,7 @@ const Login = () => {
               <motion.div variants={fadeInUp}>
                 <Box sx={{ textAlign: "center" }}>
                   <img
-                    src="https://emandai.net/wp-content/uploads/2024/05/AI-Voicebot-EMandAI.png"
+                    src="./chatbot.png"
                     alt="AI Lecture Summarization Illustration"
                     style={{
                       width: "100%",
@@ -325,13 +320,13 @@ const Login = () => {
             align="center"
             sx={{ color: "white", mb: 2, fontWeight: 600 }}
           >
-            Hơn 25.000 sinh viên và giảng viên sử dụng EasySUM
+            Hơn 10.000 sinh viên và giảng viên sử dụng EasySUM
           </Typography>
           <Grid container spacing={2} justifyContent="center">
             <Grid item>
               <Box sx={{ textAlign: "center", px: 2 }}>
                 <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/e/e5/Coursera_logo.PNG"
+                  src="./Coursera.png"
                   alt="Coursera"
                   style={{ height: 40 }}
                 />
@@ -340,7 +335,7 @@ const Login = () => {
             <Grid item>
               <Box sx={{ textAlign: "center", px: 2 }}>
                 <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/e/e5/EdX_Logo.PNG"
+                  src="./edx.png"
                   alt="edX"
                   style={{ height: 40 }}
                 />
@@ -349,7 +344,7 @@ const Login = () => {
             <Grid item>
               <Box sx={{ textAlign: "center", px: 2 }}>
                 <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/9/97/Khan_Academy_logo.svg"
+                  src="./KhanAcademy.png"
                   alt="Khan Academy"
                   style={{ height: 40 }}
                 />
@@ -357,17 +352,13 @@ const Login = () => {
             </Grid>
             <Grid item>
               <Box sx={{ textAlign: "center", px: 2 }}>
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/2/24/Zoom-Logo.png"
-                  alt="Zoom"
-                  style={{ height: 40 }}
-                />
+                <img src="./zoom.png" alt="Zoom" style={{ height: 40 }} />
               </Box>
             </Grid>
             <Grid item>
               <Box sx={{ textAlign: "center", px: 2 }}>
                 <img
-                  src="https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/139310/Originals/cach-su-dung-google-meet-1.jpg"
+                  src="./google-meet.png"
                   alt="Google Meet"
                   style={{ height: 40 }}
                 />
@@ -512,6 +503,7 @@ const Login = () => {
           </Grid>
           <Box sx={{ textAlign: "center", mt: 4 }}>
             <Button
+              onClick={handleGoogleLogin}
               variant="contained"
               sx={{
                 px: 4,
@@ -540,7 +532,7 @@ const Login = () => {
                   Lợi Ích Bạn Sẽ Nhận Được
                 </Typography>
                 <img
-                  src="https://vnptai.io/storage/thumbnail/09012025-170118-57d76ab3-255b-4d44-81d6-ee05b9781adb.jpg"
+                  src="./chatbot1.jpg"
                   alt="Lecture Benefits Illustration"
                   style={{ width: "100%", borderRadius: 16 }}
                 />
@@ -668,7 +660,7 @@ const Login = () => {
                             color: "white",
                           }),
                         }}
-                      >
+                        type="button">
                         {plan.buttonText}
                       </Button>
                     </CardActions>
@@ -727,23 +719,13 @@ const Login = () => {
                     <CardContent>
                       <Typography
                         variant="body1"
-                        sx={{ color: "#333", mb: 2, fontStyle: "italic" }}
+                        sx={{ color: "#333", mb: 2, fontWeight: "bold" }}
                       >
                         "{testimonial.comment}"
                       </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <img
-                          src={testimonial.avatar}
-                          alt={testimonial.name}
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "50%",
-                            mr: 2,
-                          }}
-                        />
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
                         <Box>
-                          <Typography variant="h6" sx={{ color: "#7C3AED" }}>
+                          <Typography variant="h6" sx={{ color: "#7C3AED", fontStyle: "italic" }}>
                             {testimonial.name}
                           </Typography>
                         </Box>
@@ -828,6 +810,7 @@ const Login = () => {
                 }}
               />
               <Button
+                onClick={handleGoogleLogin}
                 variant="contained"
                 sx={{
                   width: { xs: "100%", md: 300 },
@@ -860,7 +843,7 @@ const Login = () => {
               <motion.div variants={fadeInUp}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <img
-                    src="https://img.lovepik.com/png/20231104/Smart-Chatbot-Cartoon-Clipart-science-concept-artificial-intelligence_494066_wh860.png"
+                    src="./Smart-Chatbot.png"
                     alt="EasySUM Icon"
                     style={{ width: 32, height: 32, marginRight: 8 }}
                   />

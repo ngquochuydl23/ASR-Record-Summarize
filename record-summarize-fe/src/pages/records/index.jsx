@@ -18,13 +18,30 @@ const Page = () => {
       page: 1,
       limit: 10,
       s: "",
+      record_content_type: [],
+      source_type: null,
+      lang: null
     },
     onSubmit: () => { },
   });
   const [debouncedValues] = useDebounce(formik.values, 500);
-
   const [{ loading, value, error }, doFetch] = useAsyncFn(async () => {
-    return await getRecords(debouncedValues);
+    const {
+      unpublished,
+      page,
+      limit,
+      s,
+      source_type,
+      lang,
+      record_content_type
+    } = debouncedValues;
+    const recordContentTypeIds = Array.isArray(record_content_type)
+      ? record_content_type.map((x) => x.id)
+      : [];
+
+    return await getRecords({
+      unpublished, page, limit, s, record_content_type: recordContentTypeIds, source_type, lang
+    });
   }, [debouncedValues]);
 
   useEffect(() => {
@@ -40,17 +57,13 @@ const Page = () => {
     <DashboardCard>
       <div className="flex flex-col">
         <AdminHeader title={"Video được tóm tắt"}>
-          <Button
-            startIcon={<AddIcon />}
-            variant="outlined" onClick={() => setOpenDrawer(true)}>
+          <Button startIcon={<AddIcon />} variant="outlined" onClick={() => setOpenDrawer(true)}>
             Tạo tóm tắt
           </Button>
         </AdminHeader>
         <RecordTable
           filter={formik.values}
           onChangeFilter={formik.setValues}
-          onRowsPerPageChange={() => { }}
-          onPageChange={() => { }}
           onRefresh={doFetch}
           page={value?.page}
           limit={value?.limit}

@@ -30,6 +30,7 @@ export const colors = {
   errorColor: "#B42318",
   errorColorBg: "#ee6d9b",
   successColorBg: "#44be84",
+  disabledColor: '#d3d3d3'
 };
 
 export const typography = {

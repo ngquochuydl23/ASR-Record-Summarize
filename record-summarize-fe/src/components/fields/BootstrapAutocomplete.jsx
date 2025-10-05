@@ -1,8 +1,9 @@
-import * as React from 'react';
+
 import { alpha, styled } from '@mui/material/styles';
 import { Autocomplete, TextField, CircularProgress, Paper, ListItem } from '@mui/material';
 import { useAsyncFn } from 'react-use';
 import { colors } from '@/theme/theme.global';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const BaseAutocomplete = styled(Autocomplete)(({ theme }) => ({
   'label + &': {
@@ -49,8 +50,23 @@ export const BootstrapAutocomplete = ({
   freeSolo = false,
   sx
 }) => {
+  const ref = useRef();
+  const [borderRadius, setBorderRadius] = useState('15px');
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { height } = entry.contentRect;
+        setBorderRadius(height > 50 ? '15px' : '30px');
+      }
+    });
+
+    resizeObserver.observe(node);
+    return () => resizeObserver.disconnect();
+  }, []);
   return (
-    <BaseAutocomplete
+    <BaseAutocomplete ref={ref}
       id={id}
       name={name}
       multiple={multiple}
@@ -60,7 +76,19 @@ export const BootstrapAutocomplete = ({
       getOptionLabel={getOptionLabel}
       getOptionKey={getOptionKey}
       loading={loading}
-      sx={sx}
+      sx={{
+        padding: 0,
+        width: '100%',
+        ...sx,
+        ['& .MuiOutlinedInput-root']: {
+          borderRadius: borderRadius,
+          '&.Mui-focused': {
+            borderRadius: borderRadius,
+            borderWidth: 0
+          },
+        },
+
+      }}
       onChange={onChange}
       PaperComponent={({ children }) => (
         <Paper
@@ -70,9 +98,18 @@ export const BootstrapAutocomplete = ({
         </Paper>
       )}
       renderOption={(props, option) => {
-        const { key, className, ...optionProps } = props;
+        const isDisabled = multiple ? (value || []).map(x => x.id).some((x) => x.id === option.id) : false;
         return (
-          <ListItem {...optionProps} key={option.id}>{option.label}</ListItem>
+          <ListItem {...props}
+            key={option.id}
+            sx={{
+              ['&.Mui-selected']: {
+                backgroundColor: '#d3d3d3'
+              }
+            }}
+            disabled={isDisabled}>
+            {option.label}
+          </ListItem>
         );
       }}
       onInputChange={onInputChange}

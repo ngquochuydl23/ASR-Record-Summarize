@@ -37,6 +37,7 @@ import _, { debounce } from 'lodash';
 import { useSnackbar } from 'notistack';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import YouTubeIcon from '@mui/icons-material/YouTube';
+import FilterRecordDialog from './FilterRecordDialog';
 
 
 const ActionTableCell = ({ item, onRefresh, publishable }) => {
@@ -161,23 +162,31 @@ export const RecordTable = ({
   filter,
   totalCount = 0,
   records = [],
-  onPageChange = () => { },
-  onRowsPerPageChange,
   page = 0,
   limit = 10,
   isLoading,
   onRefresh,
   onChangeFilter = (filter) => { }
 }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
-  const id = open ? 'simple-popover' : undefined;
+  const [openFilterDialog, setOpenFilterDialog] = useState(false);
   const handleChangePage = (event, newPage) => {
-    onPageChange(event, newPage);
+    onChangeFilter({ ...filter, page: newPage + 1 });
   };
 
+  const handleFilterDialog = (data) => {
+    setOpenFilterDialog(false);
+    if (data) {
+      onChangeFilter({
+        ...filter,
+        record_content_type: data?.record_content_type || [],
+        source_type: data?.source_type,
+        lang: data?.lang
+      });
+    }
+  }
+
   const handleChangeRowsPerPage = (event) => {
-    onRowsPerPageChange(event.target.value);
+    onChangeFilter({ ...filter, limit: event.target.value })
   };
 
   const handleSearchChange = useCallback(
@@ -201,37 +210,34 @@ export const RecordTable = ({
     };
   }
 
+  const getDiffCount = () => {
+    const defaultValues = {
+      record_content_type: [],
+      source_type: null,
+      lang: null,
+    };
+    const currentValues = {
+      record_content_type: filter?.record_content_type || [],
+      source_type: filter?.source_type || null,
+      lang: filter?.lang || null,
+    };
+    let diffCount = 0;
+    Object.keys(defaultValues).forEach((key) => {
+      if (!_.isEqual(currentValues[key], defaultValues[key])) {
+        diffCount += 1;
+      }
+    });
+    return diffCount;
+  };
+
   return (
     <div className='flex flex-col'>
       <div className='flex my-[15px] justify-between'>
         <Stack direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
           <div>
             <Button
-              onClick={(event) => setAnchorEl(event.currentTarget)}
-              size="small"
-              variant="outlined"
-              startIcon={<TuneIcon />}
-              fullWidth={false}>
-              Lọc
-            </Button>
-            <Popover
-              id={id}
-              open={open}
-              anchorEl={anchorEl}
-              onClose={() => setAnchorEl(null)}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-              PaperProps={{ sx: { width: '250px', padding: '10px' } }}
-              transformOrigin={{ vertical: 'top', horizontal: 'left' }}>
-              <Stack sx={{ width: '100%', backgroundColor: 'white' }}>
-                <Button
-                  sx={{ fontSize: '14px', height: '30px', borderRadius: '4px' }}
-                  variant="contained"
-                  fullWidth={false}
-                  onClick={handleUnpublishedToggle}>
-                  Apply
-                </Button>
-              </Stack>
-            </Popover>
+              onClick={(event) => setOpenFilterDialog(true)} size="small"
+              variant="outlined" startIcon={<TuneIcon />} fullWidth={false}>Lọc {getDiffCount() > 0 && <span className='ml-1'>({getDiffCount()})</span>}</Button>
             <Button
               onClick={handleUnpublishedToggle}
               sx={{
@@ -369,6 +375,9 @@ export const RecordTable = ({
         rowsPerPageOptions={[10, 20, 50, 100, { value: -1, label: 'Tất cả' }]}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-    </div >
+      <FilterRecordDialog
+        filterData={filter}
+        open={openFilterDialog} onClose={handleFilterDialog} />
+    </div>
   );
 };

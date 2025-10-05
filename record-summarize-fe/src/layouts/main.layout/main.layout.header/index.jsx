@@ -29,7 +29,7 @@ const MainLayoutHeader = ({ openNotificationList, showHeader = false }) => {
     Cookies.remove("access_token");
     Cookies.remove("refresh_token");
     localStorage.clear();
-    navigate("/auth/login");
+    navigate("/home");
   };
 
   const handleClick = (event) => {

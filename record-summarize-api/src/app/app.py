@@ -1,11 +1,10 @@
 import uvicorn
 import json
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from middlewares.exception_handling_middleware import ExceptionHandlingMiddleware
-from src.app.connection_manager import manager
 from src.app.core.config import settings
 from src.app.utils.ffmpeg_util import check_ffmpeg
 from src.app.utils.gpu_utils import check_gpu
@@ -13,7 +12,7 @@ from src.app.api import router
 from src.app.core.logger import logging
 
 
-app = FastAPI(title="ASR Record Api")
+app = FastAPI(title="ASR Record Summarize Api")
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SECRET_KEY,

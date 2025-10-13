@@ -307,34 +307,35 @@ export const RecordTable = ({
           {isLoading
             ? <div></div>
             : <TableBody>
-              {records.map((item, index) => {
+              {records.map((item) => {
                 const runningStep = item.pipeline_items.find(x => x.status === 'Running');
                 const { isCompleted, percentage, isFailed } = getProgressRecord(item);
                 return (
                   <TableRow hover key={item.id}>
                     <TableCell width="15%">
-                      <Tooltip title={item.title}>
-                        <Typography
-                          sx={{
-                            maxWidth: '200px',
-                            fontWeight: 600,
-                            overflow: 'hidden',
-                            whiteSpace: "nowrap",
-                            textOverflow: "ellipsis"
-                          }} variant="subtitle2">
-                          {item.title}
-                        </Typography>
-                      </Tooltip>
+                      <div className={styles.titleCell}>
+                        <img className={styles.thumbnail} alt={item?.title}
+                          src={item?.thumbnail ? item?.thumbnail : "./default-thumbnail.jpg"}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "./default-thumbnail.jpg";
+                          }} />
+                        <Tooltip title={item.title}>
+                          <Typography className={styles.title} variant="subtitle2">
+                            {item.title}
+                          </Typography>
+                        </Tooltip>
+                      </div>
                     </TableCell>
                     <TableCell width="10%">{item.collection ? item.collection.title : `-`}</TableCell>
                     <TableCell width="10%">{item.record_content_type ? RecordContentType[item.record_content_type] : '-'}</TableCell>
-                    <TableCell>
+                    <TableCell width="5%">
                       {item.source_type === SourceTypeEnum.LOCAL
                         ? <Tooltip title="Tải lên"><CloudUploadOutlinedIcon /></Tooltip>
                         : <Tooltip title="Từ youtube"><YouTubeIcon /></Tooltip>
                       }
                     </TableCell>
-                    <TableCell>
+                    <TableCell width="10%">
                       <Tooltip title={isCompleted ? "Hoàn thành" : PipelineStepTitle[runningStep?.type]}>
                         <ProgressBar
                           barContainerClassName={styles.container}
@@ -347,15 +348,14 @@ export const RecordTable = ({
                       </Tooltip>
                     </TableCell>
                     <TableCell align='center' width="10%">{item.published ? `Đã xuất bản` : `Lưu nháp`}</TableCell>
-                    <TableCell>
-                      <div className='flex gap-2'>
-                        <Avatar sx={{ width: '24px', height: '24px' }}
+                    <TableCell align='center' width="5%">
+                      <Tooltip title={item?.creator?.full_name}>
+                        <Avatar sx={{ width: '30px', height: '30px' }}
                           alt='avatar'
                           src={readUrl(item?.creator?.avatar, true)} />
-                        <Typography fontSize="13px" fontWeight="500">{item?.creator?.full_name}</Typography>
-                      </div>
+                      </Tooltip>
                     </TableCell>
-                    <TableCell>{moment(item.created_at).format("DD/MM/YYYY")}</TableCell>
+                    <TableCell width="5%">{moment(item.created_at).format("DD/MM/YYYY")}</TableCell>
                     <ActionTableCell publishable={isCompleted} onRefresh={onRefresh} item={item} />
                   </TableRow>
                 );

@@ -14,6 +14,17 @@ services:
     ports:
       - "2025:2025"
     restart: always
+  
+  record-tgenerator-api:
+    container_name: record-tgenerator-api
+    build:
+      context: ./record-tgenerator-api
+      dockerfile: Dockerfile
+    volumes:
+      - ./keras-cache:/root/.keras/
+    ports:
+      - "2026:2026"
+    restart: always
 
   record-summarize-fe:
     container_name: record-summarize-fe

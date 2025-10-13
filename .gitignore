@@ -17,10 +17,17 @@ record-summarize-api/vtts
 record-summarize-api/youtube_downloads
 
 
+record-tgenerator-api/.idea
+record-tgenerator-api/.venv
+record-tgenerator-api/src/app/logs
+record-tgenerator-api/thumbnails
+record-tgenerator-api/temp-frames-*
+record-tgenerator-api/uploads
+
 .redis
 huggingface-cache
-record-summarize-notification-api
-record-summarize-notification-api/.env.*
+record-notification-api
+record-notification-api/.env.*
 redis_data
 
 

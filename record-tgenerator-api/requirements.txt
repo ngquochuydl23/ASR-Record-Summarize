@@ -1,0 +1,10 @@
+numpy
+scikit-learn
+matplotlib
+opencv-python
+tqdm
+tensorflow==2.20
+pillow
+fastapi[standard]
+uvicorn
+pyyaml

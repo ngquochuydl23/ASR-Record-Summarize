@@ -224,6 +224,7 @@ async def get_records(
             RecordModel.record_content_type,
             RecordModel.lang,
             RecordModel.emails,
+            RecordModel.thumbnail,
             RecordModel.source_type,
             RecordModel.permission,
             RecordModel.published,

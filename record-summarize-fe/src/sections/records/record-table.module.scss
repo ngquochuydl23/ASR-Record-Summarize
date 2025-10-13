@@ -23,11 +23,31 @@
   height: 20px;
 }
 
-
 .loadingContainer {
   height: 46px;
   width: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.titleCell {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .thumbnail {
+    aspect-ratio: 16/9;
+    border-radius: 4px;
+    width: 80px;
+  }
+
+  .title {
+    font-weight: 600;
+    overflow: hidden;
+    max-width: 250px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 }

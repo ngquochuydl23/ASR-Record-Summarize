@@ -149,3 +149,4 @@ class RecordModel(Base, BaseMixin):
         default_factory=lambda: [],
         order_by="SummaryVersionModel.created_at.desc()",
     )
+    thumbnail: Mapped[Optional[str]] = mapped_column(String, nullable=True, default=None)

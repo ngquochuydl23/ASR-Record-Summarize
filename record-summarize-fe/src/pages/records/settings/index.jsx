@@ -704,7 +704,7 @@ const RecordSettingPage = () => {
                               <Tooltip title="Xem trước"><SlideshowOutlinedIcon /></Tooltip>
                             </IconButton>
                             <Tooltip title="Xuất bản">
-                              <IconButton className={styles.iconBtn} disabled={record?.current_version?.id === lastVersion?.id}>
+                              <IconButton className={styles.iconBtn} disabled={record?.current_version_id === lastVersion?.id}>
                                 <PublishOutlinedIcon />
                               </IconButton>
                             </Tooltip>

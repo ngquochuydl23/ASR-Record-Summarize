@@ -64,6 +64,7 @@ class RecordDto(BaseModel):
     current_version_id: Optional[uuid.UUID]
     current_version: Optional[SummaryRecordDto]
     duration: Optional[float]
+    thumbnail: Optional[str]
     chatbot_preparation_state: Optional[str]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
@@ -75,6 +76,7 @@ class MinimalRecordDto(BaseModel):
     record_content_type: Optional[str]
     lang: Optional[str]
     emails: List[str]
+    thumbnail: Optional[str]
     source_type: str
     permission: str
     pipeline_items: List[MinimalRecordPipelineItemDto]

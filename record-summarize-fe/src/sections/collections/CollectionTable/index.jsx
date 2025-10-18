@@ -15,36 +15,55 @@ import {
   TableRow,
   TextField,
   Tooltip,
-  Typography
+  Typography,
+  Skeleton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import TuneIcon from '@mui/icons-material/Tune';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Search } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '@/theme/theme.global';
-import TableLoading from '@/components/TableLoading';
-import styles from './collection-table.module.scss';
-import { readUrl } from '@/utils/readUrl';
-import moment from 'moment';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
-import { deteleRecord, publishLastVRecord } from '@/repositories/record.repository';
-import _ from 'lodash';
 import { useSnackbar } from 'notistack';
-import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
-import YouTubeIcon from '@mui/icons-material/YouTube';
+import { delCategory } from '@/repositories/category.repository';
+import { useConfirmDialog } from '@/contexts/ConfirmDialogContext';
+import TableSortLabel from '@mui/material/TableSortLabel';
 
+// Skeleton component for loading state
+const SkeletonRow = () => (
+  <TableRow>
+    <TableCell>
+      <Skeleton variant="text" width="60%" height={20} />
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width="30%" height={20} />
+    </TableCell>
+    <TableCell>
+      <div className='flex gap-2'>
+        <Skeleton variant="circular" width={24} height={24} />
+        <Skeleton variant="text" width="80%" height={20} />
+      </div>
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width="40%" height={20} />
+    </TableCell>
+    <TableCell align='right'>
+      <Skeleton variant="circular" width={30} height={30} />
+    </TableCell>
+  </TableRow>
+);
 
-const ActionTableCell = ({ item, onRefresh, publishable }) => {
+const ActionTableCell = ({ item, onRefresh, onEdit }) => {
   const { enqueueSnackbar } = useSnackbar();
-  const [publishing, setPublishing] = useState(false);
+  const confirm = useConfirmDialog();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  const id = open ? "simple-popover" : undefined;
-  const navigate = useNavigate();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -55,102 +74,62 @@ const ActionTableCell = ({ item, onRefresh, publishable }) => {
     setAnchorEl(null);
   };
 
-  const handlePublishLastRecord = (e) => {
-    e.preventDefault();
-    setPublishing(true);
-    publishLastVRecord(item.id)
-      .then(() => {
-        onRefresh();
-      })
-      .catch((err) => { console.log(err) })
-      .finally(() => setPublishing(false));
-  }
-
-  const handleEditRecord = (e) => {
+  const handleEdit = () => {
     handleClose();
-    e.preventDefault();
-  }
+    onEdit(item);
+  };
 
-  const handleDeleteRecord = (e) => {
+  const handleDelete = async () => {
     handleClose();
-    e.preventDefault();
-    deteleRecord(item.id)
-      .then(() => {
-        enqueueSnackbar('Xóa tóm tắt thành công', {
-          variant: 'success',
-          anchorOrigin: {
-            vertical: 'bottom',
-            horizontal: 'right'
-          }
-        });
-        onRefresh();
-      })
-      .catch((err) => {
-        console.log(err);
-        enqueueSnackbar('Xóa tóm tắt thất bại', {
-          variant: 'error',
-          anchorOrigin: {
-            vertical: 'bottom',
-            horizontal: 'right'
-          }
-        });
+    const ok = await confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa bộ sưu tập này? Hành động không thể hoàn tác.',
+      button: { confirm: { text: 'Xóa' }, cancel: { text: 'Hủy' } }
+    });
+    if (!ok) return;
+    try {
+      await delCategory(item.id);
+      enqueueSnackbar('Xóa danh mục thành công', {
+        variant: 'success',
+        anchorOrigin: { vertical: 'bottom', horizontal: 'right' }
       });
-  }
+      onRefresh();
+    } catch (err) {
+      enqueueSnackbar(err?.message || 'Xóa thất bại', {
+        variant: 'error',
+        anchorOrigin: { vertical: 'bottom', horizontal: 'right' }
+      });
+    }
+  };
 
   return (
     <TableCell align='right' width="10%">
-      <div className='flex'>
-        {item?.published
-          ? <IconButton
-            onClick={(e) => {
-              navigate('/records/' + item.id + '/play');
-              e.preventDefault();
-            }}>
-            <Tooltip title="Xem">
-              <PlayArrowRoundedIcon sx={{ width: '30px', height: '30px' }} />
-            </Tooltip>
-          </IconButton>
-          :
-          <div>
-            {!publishing
-              ? <Tooltip title={publishable ? "Xuất bản" : "Bạn không thể xuất bản vì chưa hoàn thành"}>
-                <IconButton onClick={handlePublishLastRecord} disabled={!publishable}>
-                  <PublishOutlinedIcon />
-                </IconButton>
-              </Tooltip>
-              : <div className={styles.loadingContainer}>
-                <CircularProgress size='20px' />
-              </div>
-            }
-          </div>
-        }
-        <IconButton onClick={handleClick}>
-          <Tooltip title="Thêm">
-            <MoreVertIcon sx={{ width: '30px' }} />
-          </Tooltip>
-        </IconButton>
-        <Popover
-          id={id}
-          open={open}
-          anchorEl={anchorEl}
-          onClose={handleClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}>
-          <div className="inside-popover">
-            <ul className="menu-list">
-              <li className="menu-list-item" onClick={handleEditRecord}>
-                <DriveFileRenameOutlineIcon className='mr-3' />
-                {'Sửa'}
-              </li>
-              <Divider className="my-[2px]" />
-              <li className="menu-list-item red" onClick={handleDeleteRecord}>
-                <DeleteOutlineIcon className='mr-3' />
-                {'Xóa'}
-              </li>
-            </ul>
-          </div>
-        </Popover>
-      </div>
+      <IconButton onClick={handleClick}>
+        <Tooltip title="Thao tác">
+          <MoreVertIcon sx={{ width: '30px', height: '30px' }} />
+        </Tooltip>
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem onClick={handleEdit}>
+          <ListItemIcon>
+            <DriveFileRenameOutlineIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Sửa</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleDelete}>
+          <ListItemIcon>
+            <DeleteOutlineIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Xóa</ListItemText>
+        </MenuItem>
+      </Menu>
     </TableCell>
   );
 }
@@ -160,15 +139,21 @@ export const CollectionTable = ({
   collections = [],
   onPageChange = () => { },
   onRowsPerPageChange,
-  offset = 0,
+  page = 0,
   limit = 10,
   isLoading,
   onRefresh,
-  onChangeFilter = (filter) => { }
+  onChangeFilter = (filter) => { },
+  onSearchChange = () => { },
+  onRequestEdit = () => { },
+  onSortChange = () => { },
+  sort = { orderBy: null, order: 'asc' }
 }) => {
   const [filter, setFilter] = useState({
     search: '',
-    unpublished: false
+    unpublished: false,
+    title: '',
+    creator: ''
   });
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -184,7 +169,9 @@ export const CollectionTable = ({
   };
 
   const handleSearchChange = (e) => {
-    setFilter({ ...filter, search: e.target.value });
+    const searchValue = e.target.value;
+    setFilter({ ...filter, search: searchValue });
+    onSearchChange(searchValue);
   };
 
   const handleUnpublishedToggle = () => {
@@ -212,14 +199,29 @@ export const CollectionTable = ({
               anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
               PaperProps={{ sx: { width: '250px', padding: '10px' } }}
               transformOrigin={{ vertical: 'top', horizontal: 'left' }}>
-              <Stack sx={{ width: '100%', backgroundColor: 'white' }}>
-                <Button
-                  sx={{ fontSize: '14px', height: '30px', borderRadius: '4px' }}
-                  variant="contained"
-                  fullWidth={false}
-                  onClick={handleUnpublishedToggle}>
-                  Apply
-                </Button>
+              <Stack sx={{ width: '100%', backgroundColor: 'white' }} spacing={1}>
+                <TextField
+                  size='small'
+                  label='Tiêu đề'
+                  value={filter.title}
+                  onChange={(e) => setFilter({ ...filter, title: e.target.value })}
+                />
+                <TextField
+                  size='small'
+                  label='Người tạo'
+                  value={filter.creator}
+                  onChange={(e) => setFilter({ ...filter, creator: e.target.value })}
+                />
+                <div className='flex gap-2 justify-end mt-1'>
+                  <Button size='small' onClick={() => setFilter({ ...filter, title: '', creator: '' })}>Xóa</Button>
+                  <Button
+                    sx={{ fontSize: '14px', height: '30px', borderRadius: '4px' }}
+                    variant="contained"
+                    fullWidth={false}
+                    onClick={() => { onChangeFilter({ title: filter.title, creator: filter.creator }); setAnchorEl(null); }}>
+                    Áp dụng
+                  </Button>
+                </div>
               </Stack>
             </Popover>
             <Button
@@ -244,7 +246,7 @@ export const CollectionTable = ({
           <TextField
             size='small'
             value={filter.search}
-            placeholder='Tìm theo tên'
+            placeholder='Tìm kiếm ...'
             InputProps={{
               startAdornment: <InputAdornment
                 sx={{
@@ -273,66 +275,86 @@ export const CollectionTable = ({
             onChange={handleSearchChange} />
         </Stack>
       </div>
-      {isLoading
-        ? <div><TableLoading /></div>
-        : <div>
-          <div className='min-w-[800] min-h-[65vh]'>
-            <Table>
-              <TableHead className='bg-white'>
-                <TableRow sx={{ borderTop: `1px solid ${colors.borderColor}`, borderBottom: `1px solid ${colors.borderColor}` }}>
-                  <TableCell>Tiêu đề</TableCell>
-                  <TableCell>Số video</TableCell>
-                  <TableCell>Người tạo</TableCell>
-                  <TableCell>Chia sẻ</TableCell>
-                  {/* <TableCell align='right'></TableCell> */}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {collections.map((item, index) => {
-                  return (
-                    <TableRow hover key={item.id}>
-                      <TableCell width="15%">
-                        <Tooltip title={item.title}>
-                          <Typography
-                            sx={{
-                              maxWidth: '200px',
-                              fontWeight: 600,
-                              overflow: 'hidden',
-                              whiteSpace: "nowrap",
-                              textOverflow: "ellipsis"
-                            }} variant="subtitle2">
-                            {item.title}
-                          </Typography>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>{`-`}</TableCell>
-                      <TableCell>{'-'}</TableCell>
-                      <TableCell align='center' width="10%">{`-`}</TableCell>
-                      {/* <TableCell> */}
-                      {/* <div className='flex gap-2'>
-                          <Avatar sx={{ width: '24px', height: '24px' }}
-                            alt='avatar'
-                            src={readUrl(item?.creator?.avatar, true)} />
-                          <Typography fontSize="13px" fontWeight="500">{item?.creator?.full_name}</Typography>
-                        </div> */}
-                      {/* </TableCell> */}
-                      {/* <ActionTableCell publishable={isCompleted} onRefresh={onRefresh} item={item} /> */}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-          <TablePagination
-            component="div"
-            count={totalCount}
-            page={offset}
-            onPageChange={handleChangePage}
-            rowsPerPage={limit}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </div>
-      }
+      <div className='min-w-[800] min-h-[65vh]'>
+        <Table>
+          <TableHead className='bg-white'>
+            <TableRow sx={{ borderTop: `1px solid ${colors.borderColor}`, borderBottom: `1px solid ${colors.borderColor}` }}>
+              <TableCell sortDirection={sort.orderBy === 'title' ? sort.order : false}>
+                <TableSortLabel
+                  active={sort.orderBy === 'title'}
+                  direction={sort.orderBy === 'title' ? sort.order : 'asc'}
+                  onClick={() => onSortChange('title')}
+                >
+                  Tiêu đề
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sortDirection={sort.orderBy === 'record_count' ? sort.order : false}>
+                <TableSortLabel
+                  active={sort.orderBy === 'record_count'}
+                  direction={sort.orderBy === 'record_count' ? sort.order : 'asc'}
+                  onClick={() => onSortChange('record_count')}
+                >
+                  Số video
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>Người tạo</TableCell>
+              <TableCell>Chia sẻ</TableCell>
+              <TableCell align='right'></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {isLoading ? (
+              // Show skeleton rows while loading
+              Array.from({ length: limit }).map((_, index) => (
+                <SkeletonRow key={`skeleton-${index}`} />
+              ))
+            ) : (
+              // Show actual data
+              collections.map((item, index) => {
+                return (
+                  <TableRow hover key={item.id}>
+                    <TableCell width="15%">
+                      <Tooltip title={item.title}>
+                        <Typography
+                          sx={{
+                            maxWidth: '200px',
+                            fontWeight: 600,
+                            overflow: 'hidden',
+                            whiteSpace: "nowrap",
+                            textOverflow: "ellipsis"
+                          }} variant="subtitle2">
+                          {item.title}
+                        </Typography>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>{item.record_count || 0}</TableCell>
+                    <TableCell>
+                      <div className='flex gap-2'>
+                        <Avatar sx={{ width: '24px', height: '24px' }}
+                          alt='avatar'
+                          src={item?.creator?.avatar} />
+                        <Typography fontSize="13px" fontWeight="500">{item?.creator?.full_name}</Typography>
+                      </div>
+                    </TableCell>
+                    <TableCell align='center' width="10%">
+                      {item.parent ? 'Có' : 'Không'}
+                    </TableCell>
+                    <ActionTableCell item={item} onRefresh={onRefresh} onEdit={onRequestEdit} />
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <TablePagination
+        component="div"
+        count={totalCount}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={limit}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
     </div >
   );
 };

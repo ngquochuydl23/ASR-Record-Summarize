@@ -5,7 +5,7 @@ import { Field, Form, Formik } from 'formik';
 import { useEffect, useState } from 'react';
 import * as Yup from "yup";
 import _ from 'lodash';
-import { createCategory, getCategories } from '@/repositories/category.repository';
+import { createCategory, getCategories, updateCategory } from '@/repositories/category.repository';
 import { HttpCommonMsg } from '@/constants/app.constants';
 import { useSnackbar } from 'notistack';
 import { useAsyncFn } from 'react-use';
@@ -32,9 +32,11 @@ const CreateUpdateCategoryDrawer = ({ open, onClose, onCreate, category }) => {
 
   const handleSubmit = async (values, { setFieldError, resetForm }) => {
     setLoading(true);
-    createCategory(values)
+    const isEditing = !!category?.id;
+    const action = isEditing ? updateCategory(category.id, values) : createCategory(values);
+    action
       .then((category) => {
-        enqueueSnackbar('Tạo thành công', {
+        enqueueSnackbar(isEditing ? 'Cập nhật thành công' : 'Tạo thành công', {
           variant: 'success',
           anchorOrigin: {
             vertical: 'bottom',
@@ -94,7 +96,7 @@ const CreateUpdateCategoryDrawer = ({ open, onClose, onCreate, category }) => {
           {({ errors, touched, dirty, setFieldValue, setFieldError, values }) => {
             return (
               <Form>
-                <BaseHeaderDrawer title="Tạo danh mục" onClose={onClose}>
+                <BaseHeaderDrawer title={category?.id ? "Cập nhật danh mục" : "Tạo danh mục"} onClose={onClose}>
                   <LoadingButton
                     disabled={!dirty || !_.isEmpty(errors)}
                     loading={loading}
@@ -103,7 +105,7 @@ const CreateUpdateCategoryDrawer = ({ open, onClose, onCreate, category }) => {
                     type='submit'
                     size='medium'
                     sx={{}}>
-                    Tạo
+                    {category?.id ? 'Lưu' : 'Tạo'}
                   </LoadingButton>
                 </BaseHeaderDrawer>
                 <FormControl
@@ -111,7 +113,6 @@ const CreateUpdateCategoryDrawer = ({ open, onClose, onCreate, category }) => {
                   fullWidth
                   onChange={(e) => {
                     setFieldValue('slug', generateSlug(e.target.value));
-                    setFieldError('slug', 'Đường dẫn đã tồn tại');
                   }}>
                   <InputLabel shrink htmlFor="title">Tên danh mục</InputLabel>
                   <Field
@@ -166,15 +167,16 @@ const CreateUpdateCategoryDrawer = ({ open, onClose, onCreate, category }) => {
                   <BootstrapAutocomplete
                     id="parentId"
                     name="parentId"
-                    options={parentData.categories || []}
+                    options={parentData?.categories || []}
                     loading={fetchLoading}
-                  
-                    value={bind(parentData.categories, values.parentId)}
-                    onChange={(e, value, reason) => setFieldValue('parentId', value.id)}
+                    getOptionKey={(option) => option.id}
+                    getOptionLabel={(option) => option.title}
+                    value={bind(parentData?.categories || [], values.parentId)}
+                    onChange={(e, value, reason) => setFieldValue('parentId', value?.id || null)}
                   />
-                  {touched.wardOrVillage && errors.wardOrVillage && (
+                  {touched.parentId && errors.parentId && (
                     <div className="text-errorColor text-[12px] mt-[2px]">
-                      {errors.wardOrVillage}
+                      {errors.parentId}
                     </div>
                   )}
                 </FormControl>

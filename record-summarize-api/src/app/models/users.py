@@ -38,3 +38,4 @@ class UserModel(Base, BaseMixin):
     records = relationship("RecordModel", back_populates="creator", default_factory=lambda: [])
     conversations = relationship("ConversationModel", default_factory=lambda: [])
     messages = relationship("MessageModel", default_factory=lambda: [])
+    categories = relationship("CategoryModel", back_populates="creator", default_factory=lambda: [])

@@ -1,11 +1,18 @@
 import { http } from "./https";
 
-export const getCategories = (params) => http.get('/category', { params });
+// Keep existing singular endpoints for backward-compat with backend
+// and also support plural variants if backend expects "/categories".
+const base = "/category"; // fallback
+const pluralBase = "/categories";
 
-export const getBySlug = (slug) => http.get(`/category/by-slug/${slug}`);
+export const getCategories = (params) => http.get(pluralBase, { params }).catch(() => http.get(base, { params }));
 
-export const getCategoryById = (id) => http.get(`/category/${id}`);
+export const getBySlug = (slug) => http.get(`${pluralBase}/by-slug/${slug}`).catch(() => http.get(`${base}/by-slug/${slug}`));
 
-export const createCategory = (body) => http.post(`/category/`, body);
+export const getCategoryById = (id) => http.get(`${pluralBase}/${id}`).catch(() => http.get(`${base}/${id}`));
 
-export const delCategory = (id) => http.delete('/category/' + id)
+export const createCategory = (body) => http.post(`${pluralBase}/`, body).catch(() => http.post(`${base}/`, body));
+
+export const updateCategory = (id, body) => http.put(`${pluralBase}/${id}`, body).catch(() => http.put(`${base}/${id}`, body));
+
+export const delCategory = (id) => http.delete(`${pluralBase}/${id}`).catch(() => http.delete(`${base}/` + id));

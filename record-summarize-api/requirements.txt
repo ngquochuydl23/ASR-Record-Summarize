@@ -42,3 +42,4 @@ librosa
 yt-dlp
 python-pptx
 redis
+langchain-text-splitters

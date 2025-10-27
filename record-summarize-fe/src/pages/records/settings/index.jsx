@@ -42,7 +42,8 @@ import moment from 'moment';
 import Check from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import PauseOutlinedIcon from '@mui/icons-material/PauseOutlined';
-
+import HistoryIcon from '@mui/icons-material/History';
+import SummaryVersionDialog from '@/components/dialogs/SummaryVersionDialog';
 
 const QontoStepIconRoot = styled('div')(({ theme }) => ({
   color: '#eaeaf0',
@@ -98,6 +99,7 @@ const RecordSettingPage = () => {
   const [videoUploading, setVideoUploading] = useState(false);
   const [youtubeChecking, setYoutubeChecking] = useState(false);
   const [lastVersion, setLastVersion] = useState(null);
+  const [openSVManageDialog, setOpenSVManageDialog] = useState(false)
   const validationSchema = Yup.object({
     title: Yup
       .string()
@@ -497,7 +499,7 @@ const RecordSettingPage = () => {
               </div>
               <div className={styles.videoPreview}>
                 <div className="flex flex-col w-full">
-                  <h5 className="font-[600] w-full mt-4">Video</h5>
+                  <h5 className={styles.sectionTitle} style={{ marginBottom: '0rem' }}>Video</h5>
                   <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
                     Each objective must have <strong>at least 1</strong> key result to ensure progress can be tracked.
                     To maintain clarity and focus, limit each objective to <strong>no more than 5</strong> key results.
@@ -587,7 +589,7 @@ const RecordSettingPage = () => {
                 <input id="media.input" type="file" accept="video/*" style={{ display: 'none' }}
                   onChange={(e) => handleUploadVideo(e, setFieldValue, setFieldError)} />
                 <div className="flex flex-col w-full overflow-hidden mt-2">
-                  <h5 className="font-[600] w-full mt-4">Tải lên tài liệu đính kèm</h5>
+                  <h5 className={styles.sectionTitle} style={{ marginBottom: '0rem', marginTop: '1rem' }}>Tải lên tài liệu đính kèm</h5>
                   <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
                     Each objective must have <strong>at least 1</strong> key result to ensure progress can be tracked.
                     To maintain clarity and focus, limit each objective to <strong>no more than 5</strong> key results.
@@ -639,13 +641,19 @@ const RecordSettingPage = () => {
                 </div>
               </div>
             </div>
-            <div className='flex gap-2 mr-[30px] mb-[30px] flex-1 justify-end'>
-              <Button variant='outlined' size='medium'>Hủy</Button>
-              <LoadingButton variant='contained' size='medium' loading={updating} type="submit"
-                disabled={!hasDiff(record, values)
-                  || _.some(values.attachments, item => item?.loading && item?.state === "uploading")
-                  || !_.isEmpty(errors)} sx={{ width: '150px' }}>Cập nhật
-              </LoadingButton>
+            <div className='flex mr-[30px] mb-[30px] flex-1 justify-between'>
+              <Button variant='outlined' size='medium' startIcon={<HistoryIcon />}
+                onClick={() => setOpenSVManageDialog(true)}>
+                Xem các phiên bản tóm tắt
+              </Button>
+              <div className='flex gap-2'>
+                <Button variant='outlined' size='medium'>Hủy</Button>
+                <LoadingButton variant='contained' size='medium' loading={updating} type="submit"
+                  disabled={!hasDiff(record, values)
+                    || _.some(values.attachments, item => item?.loading && item?.state === "uploading")
+                    || !_.isEmpty(errors)} sx={{ width: '150px' }}>Cập nhật
+                </LoadingButton>
+              </div>
             </div>
           </form>
         </Scrollbars>
@@ -725,6 +733,10 @@ const RecordSettingPage = () => {
               })}
           </Stepper>
         </div>
+        <SummaryVersionDialog
+          recordId={recordId}
+          open={recordId && openSVManageDialog}
+          onClose={() => setOpenSVManageDialog(false)} />
       </div>
     </div>
   )

@@ -1,0 +1,46 @@
+.dialogContent {
+  max-height: 70vh;
+  height: 100%;
+}
+
+.dialogContent {
+  padding: 15px;
+}
+
+.summaryVersionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  .summaryVersionItem {
+    display: flex;
+    border: 1px solid #d3d3d3;
+    padding: 15px 20px;
+    cursor: pointer;
+    border-radius: 7px;
+    flex-direction: row;
+    position: relative;
+    align-items: center;
+    
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    .versionTitle {
+      position: relative;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .createdAt {
+      position: relative;
+      font-size: 13px;
+      font-weight: 400;
+      color: gray;
+    }
+
+    .actionBtns {
+      height: fit-content;
+      display: flex;
+    }
+  }
+}

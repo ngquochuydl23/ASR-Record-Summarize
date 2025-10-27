@@ -16,7 +16,7 @@ import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined';
 import LoadingButton from '@/components/buttons/LoadingButton';
 
 
-const PreviewSummaryVersionDialog = ({ recordId, open, onClose }) => {
+const PreviewSummaryVersionDialog = ({ recordId, open, onClose, hideBackdrop }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -83,7 +83,7 @@ const PreviewSummaryVersionDialog = ({ recordId, open, onClose }) => {
   return (
     <>
       <LoadingBackdrop open={!summaryVersion && loading} />
-      <Dialog open={(!loading && open)} maxWidth='md' fullWidth onClose={handleClose}>
+      <Dialog open={(!loading && open)} maxWidth='md' fullWidth onClose={handleClose} hideBackdrop={hideBackdrop}>
         {summaryVersion &&
           <>
             <DialogTitle sx={{ padding: "10px 5px", gap: '20px' }}>

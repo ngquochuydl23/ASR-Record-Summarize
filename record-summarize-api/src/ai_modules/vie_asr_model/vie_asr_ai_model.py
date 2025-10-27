@@ -25,7 +25,7 @@ class VieASRAIModel:
         self.processor = Wav2Vec2Processor(feature_extractor=self.feature_extractor, tokenizer=self.tokenizer)
         self.model = Wav2Vec2ForCTC.from_pretrained(pretrained_path).to(self.device)
 
-    def load_from_checkpoints(self, checkpoint_name="latest_model.tar"):
+    def load_from_checkpoints(self, checkpoint_name="best_model_21-10-2025.tar"):
         checkpoint_path = os.path.join('./models', checkpoint_name)
         if not os.path.isfile(checkpoint_path):
             logging.warning(f"No checkpoint found at {checkpoint_path}.")

@@ -14,11 +14,12 @@ router = APIRouter(tags=["Summary Version"])
 async def get_summary_versions(record_id: str, db: Annotated[AsyncSession, Depends(async_get_db)]):
     result = await db.execute(
         select(SummaryVersionModel)
-        .options(noload(SummaryVersionModel.record))
-        .where(SummaryVersionModel.is_deleted == False and RecordModel.id == record_id)
+        .options(selectinload(SummaryVersionModel.record))
+        .where(and_(SummaryVersionModel.is_deleted == False, SummaryVersionModel.record_id == record_id))
         .order_by(desc(SummaryVersionModel.created_at))
     )
-    return cast(SummaryRecordDto, result.scalars().all())
+    summaries = result.scalars().all()
+    return [SummaryRecordDto.model_validate(summary, from_attributes=True) for summary in summaries]
 
 
 @router.get("/summary-versions/by-record/{record_id}/lastest", status_code=200, response_model=SummaryRecordDto)

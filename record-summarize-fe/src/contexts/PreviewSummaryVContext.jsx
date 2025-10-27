@@ -7,23 +7,29 @@ import PreviewSummaryVersionDialog from '@/components/dialogs/PreviewSummaryVers
 const PreviewSummaryVersionContext = createContext(null);
 
 export const PreviewSummaryVersionProvider = ({ children }) => {
-  const [recordId, setRecordId] = useState(null);
-  const openPreviewDialog = (_recordId) => {
-    setRecordId(_recordId);
+  const [data, setData] = useState({ recordId: null, config: null });
+  const openPreviewDialog = (_recordId, _config) => {
+    setData({ recordId: _recordId, config: _config });
   };
 
   const closePreviewDialog = () => {
-    setRecordId(null);
+    setData({ recordId: null, config: null });
   }
 
   const handleCancel = () => {
-    setRecordId(null);
+    setData({ recordId: null, config: null });
   };
 
+  const isOpen = React.useMemo(() => Boolean(data?.recordId), [data?.recordId]);
+
   return (
-    <PreviewSummaryVersionContext.Provider value={{ openPreviewDialog, closePreviewDialog }}>
+    <PreviewSummaryVersionContext.Provider value={{ openPreviewDialog, closePreviewDialog, isOpen }}>
       {children}
-      <PreviewSummaryVersionDialog open={Boolean(recordId)} onClose={handleCancel} recordId={recordId} />
+      <PreviewSummaryVersionDialog
+        open={isOpen}
+        hideBackdrop={data?.config?.hideBackdrop || false}
+        onClose={handleCancel}
+        recordId={data?.recordId} />
     </PreviewSummaryVersionContext.Provider>
   );
 };

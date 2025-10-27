@@ -4,7 +4,7 @@ import animationData from '../../assets/lotties/Loading.json';
 
 const LoadingBackdrop = ({ open = false }) => {
   return (
-    <Backdrop sx={(theme) => ({ zIndex: theme.zIndex.drawer + 1 })} open={open}>
+    <Backdrop sx={(theme) => ({ zIndex: 10000 })} open={open}>
       <Lottie
         height={150}
         width={150}

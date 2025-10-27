@@ -111,7 +111,7 @@ async def create_records(
     )
     db.add(record)
     await db.commit()
-    background_tasks.add_task(_record_creating_task, record.id)
+    background_tasks.add_task(_run_workflow_tasks, record.id)
     return record.to_dict()
 
 
@@ -519,44 +519,6 @@ async def websocket_task_endpoint(websocket: WebSocket, record_id: str):
         manager.disconnect(record_id, websocket)
 
 
-async def _record_creating_task(record_id: uuid.UUID):
-    async with local_session() as db:
-        try:
-            result = await db.execute(
-                select(RecordModel)
-                .options(
-                    selectinload(RecordModel.attachments),
-                    selectinload(RecordModel.creator),
-                    selectinload(RecordModel.pipeline_items),
-                    selectinload(RecordModel.rag_documents),
-                    selectinload(RecordModel.summary_versions),
-                    with_loader_criteria(RecordPipelineItemModel, RecordPipelineItemModel.is_deleted == False)
-                )
-                .where(RecordModel.id == record_id, RecordModel.is_deleted.is_(False))
-            )
-            record = result.scalar_one_or_none()
-            if not record:
-                return
-
-            transcribe_result = await _execute_step(record, record.pipeline_items[1], transcribe_stage, db)
-            summary_result = await _execute_step(record, record.pipeline_items[2], llm_summarize_stage, db)
-
-            record.subtitle_url = transcribe_result["subtitle_s3_key"]
-            record.summary_versions.append(SummaryVersionModel(
-                id=uuid.uuid4(),
-                title=f"v{len(record.summary_versions) + 1}",
-                summary_content=summary_result["summary"],
-                published=False
-            ))
-            db.add(record)
-            await db.commit()
-            await _execute_step(record, record.pipeline_items[3], store_vectordb_stage, db)
-        except Exception as e:
-            logging.error("Error", str(e))
-            await db.rollback()
-            raise
-
-
 async def _run_workflow_tasks(record_id: uuid.UUID, start_idx: int = TRANSCRIBE_WF_STEP):
     async with local_session() as db:
         try:
@@ -587,20 +549,6 @@ async def _run_workflow_tasks(record_id: uuid.UUID, start_idx: int = TRANSCRIBE_
 
             for wf_step in range(start_idx, CHATBOT_PREPARATION + 1):
                 result = await step_funcs[wf_step](record, db)
-                # if wf_step == TRANSCRIBE_WF_STEP:
-                #     record.subtitle_url = result["subtitle_s3_key"]
-
-                # if wf_step == SUMMARIZE_WF_STEP:
-                #     record.summary_versions.append(
-                #         SummaryVersionModel(
-                #             id=uuid.uuid4(),
-                #             title=f"v{len(record.summary_versions) + 1}",
-                #             summary_content=result["summary"],
-                #             published=False
-                #         )
-                #     )
-                #     db.add(record)
-                #     await db.commit()
         except Exception as e:
             logging.error("Error", str(e))
             await db.rollback()

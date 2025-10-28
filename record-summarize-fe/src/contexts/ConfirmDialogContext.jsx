@@ -17,6 +17,7 @@ export const ConfirmDialogProvider = ({ children }) => {
   const [resolveFn, setResolveFn] = useState(null);
 
   const confirm = (options) => {
+    console.log(options);
     return new Promise((resolve) => {
       setDialog(options);
       setResolveFn(() => resolve);
@@ -40,14 +41,14 @@ export const ConfirmDialogProvider = ({ children }) => {
         <Dialog
           open={!!dialog}
           onClose={handleCancel}>
-          <DialogTitle id="alert-dialog-title">{dialog.title}</DialogTitle>
+          <DialogTitle id="alert-dialog-title">{dialog?.title}</DialogTitle>
           <DialogContent>
-            <DialogContentText id="alert-dialog-description">{dialog.content}</DialogContentText>
+            <DialogContentText id="alert-dialog-description">{dialog?.content}</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCancel}>{dialog.button.cancel.text || "Cancel"}</Button>
+            <Button onClick={handleCancel} sx={{ color: 'gray' }}>{dialog?.button?.cancel?.text || "Hủy"}</Button>
             <Button onClick={handleConfirm} autoFocus>
-              {dialog.button.confirm.text || "Cancel"}
+              {dialog?.button?.confirm?.text || "Xác nhận"}
             </Button>
           </DialogActions>
         </Dialog>
@@ -61,5 +62,5 @@ export const useConfirmDialog = () => {
   if (!context) {
     throw new Error("useConfirmDialog phải được sử dụng bên trong ConfirmDialogProvider");
   }
-  return context.confirm;
+  return context;
 };

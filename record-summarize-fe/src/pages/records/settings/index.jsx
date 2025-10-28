@@ -44,6 +44,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import PauseOutlinedIcon from '@mui/icons-material/PauseOutlined';
 import HistoryIcon from '@mui/icons-material/History';
 import SummaryVersionDialog from '@/components/dialogs/SummaryVersionDialog';
+import { useConfirmDialog } from '@/contexts/ConfirmDialogContext';
 
 const QontoStepIconRoot = styled('div')(({ theme }) => ({
   color: '#eaeaf0',
@@ -91,6 +92,7 @@ const RecordSettingPage = () => {
   const playerRef = useRef();
   const navigate = useNavigate();
   const { openPreviewDialog } = usePreviewSVDialog();
+  const { confirm } = useConfirmDialog();
   const { recordId } = useParams();
   const [record, setRecord] = useState(null);
   const { isLoading, showLoading, hideLoading } = useLoading();
@@ -129,6 +131,28 @@ const RecordSettingPage = () => {
       }),
   });
 
+  const updateVideo = (id, payload) => {
+    setUpdating(true);
+    updateRecordById(id, payload)
+      .then((response) => {
+        setRecord(response);
+        setUpdating(false);
+        enqueueSnackbar('Cập nhật tóm tắt thành công', {
+          variant: 'success',
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'right'
+          }
+        });
+      })
+      .catch((error) => {
+
+      })
+      .finally(() => {
+
+      });
+  }
+
   const { touched, errors, values, setValues, setFieldValue, setFieldError, getFieldProps, handleSubmit, validateForm } = useFormik({
     validationSchema: validationSchema,
     enableReinitialize: true,
@@ -152,25 +176,16 @@ const RecordSettingPage = () => {
         url: data.source_type === SourceTypeEnum.LOCAL ? data.url : youtubeLink,
         thumnail_url: data.source_type === SourceTypeEnum.LOCAL ? data.thumnail_url : null,
       }
-      setUpdating(true);
-      updateRecordById(id, payload)
-        .then((response) => {
-          setRecord(response);
-          setUpdating(false);
-          enqueueSnackbar('Cập nhật tóm tắt thành công', {
-            variant: 'success',
-            anchorOrigin: {
-              vertical: 'bottom',
-              horizontal: 'right'
-            }
-          });
-        })
-        .catch((error) => {
-
-        })
-        .finally(() => {
+      if (shouldShowConfirmRerunWF()) {
+        confirm({
+          title: 'Sinh tóm tắt mới',
+          content: 'Nội dung và tài liệu đính kèm của bạn đã thay đổi, sinh lại tóm tắt mới để phù hợp với nội dung'
+        }).then(() => {
 
         });
+      } else {
+        updateVideo(id, payload);
+      }
     }
   });
 
@@ -316,6 +331,27 @@ const RecordSettingPage = () => {
     }
     return PipelineSteps[record?.current_step || PipelineItemTypeEnum.CREATE_RECORD].index
   }, [record?.pipeline_items]);
+
+  const shouldShowConfirmRerunWF = () => {
+    if (!record) return false;
+    const keysToCompare = [
+      "record_content_type",
+      "url",
+      "attachments",
+      "lang",
+      "source_type",
+    ];
+    const diffs = {};
+    keysToCompare.forEach((key) => {
+      if (!_.isEqual(record[key], values[key])) {
+        diffs[key] = {
+          oldValue: record[key],
+          newValue: values[key],
+        };
+      }
+    });
+    return !_.isEmpty(diffs);
+  }
 
   const handleWsConnected = () => {
     console.log("[RecordSettingPage] Connected to WebSocket");
@@ -621,7 +657,7 @@ const RecordSettingPage = () => {
                                 <CircularProgress size='20px' />
                               </div>
                             }
-                            {(!attachment.loading && attachment.state === 'success') &&
+                            {(!attachment.loading && (attachment.id || attachment.state === 'success')) &&
                               <IconButton onClick={() => remove(index)}>
                                 <DeleteOutlineIcon sx={{ color: colors.errorColor }} />
                               </IconButton>
@@ -651,7 +687,8 @@ const RecordSettingPage = () => {
                 <LoadingButton variant='contained' size='medium' loading={updating} type="submit"
                   disabled={!hasDiff(record, values)
                     || _.some(values.attachments, item => item?.loading && item?.state === "uploading")
-                    || !_.isEmpty(errors)} sx={{ width: '150px' }}>Cập nhật
+                    || !_.isEmpty(errors)} sx={{ width: '150px' }}>
+                  Cập nhật
                 </LoadingButton>
               </div>
             </div>

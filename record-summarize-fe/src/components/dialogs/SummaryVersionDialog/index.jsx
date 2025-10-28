@@ -82,7 +82,7 @@ const SummaryVersionDialog = ({ recordId, open, onClose }) => {
     deleteSummaryVersionById(versionId)
       .then((response) => {
         setTimeout(() => {
-          setSummaryVersions(response);
+          getVerionList();
           setLoading(false);
           enqueueSnackbar('Xóa thành công', {
             variant: 'success',

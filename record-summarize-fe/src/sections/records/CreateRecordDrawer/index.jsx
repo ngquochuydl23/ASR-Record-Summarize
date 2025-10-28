@@ -203,7 +203,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                           {errors.title}
                         </div>
                       ) : (
-                        <div className="text-textSecondaryColor text-[12px] mt-[2px] italic">
+                        <div className="text-textSecondaryColor text-[12px] mt-[2px]">
                           Nhập tiêu đề ngắn gọn, rõ ràng cho video (khuyến nghị
                           50-60 ký tự).
                         </div>
@@ -358,7 +358,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                       </div>
                     )}
                     {!touched.description && !errors.description && (
-                      <div className="text-textSecondaryColor text-[12px] mt-[2px] italic">
+                      <div className="text-textSecondaryColor text-[12px] mt-[2px]">
                         Cung cấp mô tả chi tiết về nội dung video.
                       </div>
                     )}
@@ -408,7 +408,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                     </div>
                   )}
                   {!touched.emails && !errors.emails && (
-                    <div className="text-textSecondaryColor text-[12px] mt-[2px] italic">
+                    <div className="text-textSecondaryColor text-[12px] mt-[2px]">
                       Nhập địa chỉ email của người muốn chia sẻ.
                     </div>
                   )}
@@ -425,7 +425,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                 <div className={styles.gridMedia}>
                   <div className="flex flex-col w-full">
                     <h5 className="font-[600] w-full mt-4">Video</h5>
-                    <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full italic">
+                    <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
                       Liên kết video muốn tóm tắt.
                     </div>
                     {!values.url ? (
@@ -553,7 +553,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                     <h5 className="font-[600] w-full mt-4">
                       Tải lên tài liệu đính kèm
                     </h5>
-                    <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full italic">
+                    <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
                       Tải lên tài liệu đính kèm (pdf, doc, xls, ppt, txt) muốn
                       tóm tắt.
                     </div>

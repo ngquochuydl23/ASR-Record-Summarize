@@ -1,7 +1,7 @@
 import CloseIcon from '@mui/icons-material/Close';
-import { DialogContent, Dialog, DialogTitle, IconButton, DialogActions, Button, Backdrop, Chip, Tooltip } from '@mui/material';
+import { DialogContent, Dialog, DialogTitle, IconButton, DialogActions, Button, Backdrop, Chip, Tooltip, CircularProgress } from '@mui/material';
 import styles from './styles.module.scss';
-import { getListSummaryVerionsByRecord, getSummaryVersionById, publishedSummaryVersion } from '@/repositories/summary-version.repository';
+import { deleteSummaryVersionById, getListSummaryVerionsByRecord, getSummaryVersionById, publishedSummaryVersion } from '@/repositories/summary-version.repository';
 import LoadingBackdrop from '@/components/LoadingBackdrop';
 import { useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
@@ -11,69 +11,104 @@ import _ from 'lodash';
 import moment from 'moment';
 import SlideshowOutlinedIcon from '@mui/icons-material/SlideshowOutlined';
 import { usePreviewSVDialog } from '@/contexts/PreviewSummaryVContext';
-
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import { useSelector } from 'react-redux';
+import { colors } from '@/theme/theme.global';
 
 const SummaryVersionDialog = ({ recordId, open, onClose }) => {
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useSelector((state) => state.user);
   const [loading, setLoading] = useState(false);
-  const [updating, setUpdating] = useState(false);
   const [summaryVersions, setSummaryVersions] = useState([]);
+  const [publishingId, setPublishingId] = useState(null);
   const { openPreviewDialog } = usePreviewSVDialog();
   const handleClose = () => {
     setSummaryVersions(null);
     onClose();
   }
 
-  // const publish = () => {
-  //   setUpdating(true);
-  //   publishedSummaryVersion(recordId)
-  //     .then(() => {
-  //       setTimeout(() => {
-  //         setSummaryVersion({ ...summaryVersion, published: true });
-  //         enqueueSnackbar('Xuất bản thành công', {
-  //           variant: 'success',
-  //           anchorOrigin: {
-  //             vertical: 'bottom',
-  //             horizontal: 'right'
-  //           }
-  //         });
-  //         setUpdating(false)
-  //       }, 500);
-  //     })
-  //     .catch((error) => {
-  //       console.log(error);
-  //       setTimeout(() => { setUpdating(false) }, 500);
-  //       enqueueSnackbar('Có lỗi xảy ra. Vui lòng thử lại', {
-  //         variant: 'error',
-  //         anchorOrigin: {
-  //           vertical: 'bottom',
-  //           horizontal: 'right'
-  //         }
-  //       });
-  //     });
-  // }
-
-  useEffect(() => {
-    if (open && recordId) {
-      setLoading(true);
-      getListSummaryVerionsByRecord(recordId)
-        .then((response) => {
-          setTimeout(() => {
-            setSummaryVersions(response);
-            setLoading(false)
-          }, 500);
-        })
-        .catch((error) => {
-          console.log(error);
-          setSummaryVersions([]);
-          enqueueSnackbar('Có lỗi xảy ra. Vui lòng thử lại', {
-            variant: 'error',
+  const publish = (versionId) => {
+    setPublishingId(versionId);
+    publishedSummaryVersion(versionId)
+      .then(() => {
+        setTimeout(() => {
+          setPublishingId(null);
+          getVerionList();
+          enqueueSnackbar('Xuất bản thành công', {
+            variant: 'success',
             anchorOrigin: {
               vertical: 'bottom',
               horizontal: 'right'
             }
           });
+        }, 500);
+      })
+      .catch((error) => {
+        console.log(error);
+        setTimeout(() => { setPublishingId(null); }, 500);
+        enqueueSnackbar('Có lỗi xảy ra. Vui lòng thử lại', {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'right'
+          }
         });
+      });
+  }
+
+  const getVerionList = () => {
+    setLoading(true);
+    getListSummaryVerionsByRecord(recordId)
+      .then((response) => {
+        setTimeout(() => {
+          setSummaryVersions(response);
+          setLoading(false)
+        }, 500);
+      })
+      .catch((error) => {
+        console.log(error);
+        setSummaryVersions([]);
+        enqueueSnackbar('Có lỗi xảy ra. Vui lòng thử lại', {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'right'
+          }
+        });
+      });
+  }
+
+  const deleteVersion = (versionId) => {
+    deleteSummaryVersionById(versionId)
+      .then((response) => {
+        setTimeout(() => {
+          setSummaryVersions(response);
+          setLoading(false);
+          enqueueSnackbar('Xóa thành công', {
+            variant: 'success',
+            anchorOrigin: {
+              vertical: 'bottom',
+              horizontal: 'right'
+            }
+          });
+        }, 500);
+      })
+      .catch((error) => {
+        console.log(error);
+        setSummaryVersions([]);
+        enqueueSnackbar('Có lỗi xảy ra. Vui lòng thử lại', {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'right'
+          }
+        });
+      });
+  }
+
+  useEffect(() => {
+    if (open && recordId) {
+      getVerionList();
     }
   }, [open, recordId]);
 
@@ -91,20 +126,29 @@ const SummaryVersionDialog = ({ recordId, open, onClose }) => {
               ? _.map(summaryVersions, (item) => (
                 <div className={styles.summaryVersionItem} key={item?.id}>
                   <div className='flex flex-col w-full gap-[5px]'>
-                    <div className={styles.versionTitle}>{item.record?.title} <span>- {item?.title}</span></div>
-                    <div className={styles.createdAt}>Ngày tạo: {item?.created_at}</div>
+                    <div className={styles.versionTitle}>
+                      {item.record?.title} <span>- {item?.title}</span>
+                      {item?.published && <Chip label="Hiện tại" className='ml-3' size='small'></Chip>}
+                    </div>
+                    <div className={styles.createdAt}>Ngày tạo: {moment(item?.created_at).format('DD/MM/YYYY')} - {user?.full_name}</div>
                   </div>
                   <div className={styles.actionBtns}>
-                    {!item?.published &&
+                    {(!item?.published) &&
                       <Tooltip title="Xuất bản">
-                        <IconButton className={styles.iconBtn} disabled={item?.published}>
+                        <IconButton className={styles.iconBtn} disabled={item?.published} onClick={() => publish(item?.id)}>
                           <PublishOutlinedIcon />
                         </IconButton>
                       </Tooltip>
                     }
+                    {publishingId === item?.id && <CircularProgress size={"20px"} className='mr-3' />}
                     <IconButton className={styles.iconBtn} onClick={() => openPreviewDialog(item?.id, { hideBackdrop: true })}>
                       <Tooltip title="Xem trước"><SlideshowOutlinedIcon /></Tooltip>
                     </IconButton>
+                    {summaryVersions?.length > 1 &&
+                      <IconButton className={styles.iconBtn} onClick={() => deleteVersion(item?.id)}>
+                        <Tooltip title="Xóa"><DeleteOutlineOutlinedIcon color={colors.errorColor} /></Tooltip>
+                      </IconButton>
+                    }
                   </div>
                 </div>
               ))

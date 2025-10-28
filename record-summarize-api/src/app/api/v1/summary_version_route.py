@@ -51,6 +51,26 @@ async def get_version_by_id(version_id: str, db: Annotated[AsyncSession, Depends
     return cast(SummaryRecordDto, summary)
 
 
+@router.delete("/summary-versions/{version_id}",  status_code=200)
+async def delete_version_by_id(version_id: str, db: Annotated[AsyncSession, Depends(async_get_db)]):
+    result = await db.execute(
+        select(SummaryVersionModel)
+        .options(selectinload(SummaryVersionModel.record))
+        .where(and_(SummaryVersionModel.is_deleted.is_(False), SummaryVersionModel.id == version_id))
+    )
+    summary = result.scalar_one_or_none()
+    if not summary:
+        raise AppException(f"No summary version found with id {version_id}")
+
+    if summary.published:
+        raise AppException(f"Cannot delete published summary version {version_id}")
+
+    summary.is_deleted = True
+    await db.commit()
+    await db.refresh(summary)
+    return True
+
+
 @router.post("/summary-versions/{version_id}/publish", status_code=201, response_model=SummaryRecordDto)
 async def publish_summary_version(version_id: str, db: Annotated[AsyncSession, Depends(async_get_db)]):
     result = await db.execute(

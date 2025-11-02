@@ -6,21 +6,13 @@ const Login = () => {
     window.location.href = `${process.env.REACT_APP_API_ENDPOINT}/auth/google/login-redirect`;
   };
 
-  const commonTransformStyle = {
-    opacity: 1,
-    transform:
-      "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
-    transformStyle: "preserve-3d",
-  };
-
   return (
-
     <div className="hero-section">
       <div className="container">
         <img
-          src="https://cdn.prod.website-files.com/656deb9359eefb9acc4ba9a7/686298b1c4d26fdfeb83c513_Group%201321317263.png"
+          src="./chatbot2.png"
           loading="lazy"
-          width="181"
+          width="90"
           alt=""
           className="image-3"
         />
@@ -28,171 +20,90 @@ const Login = () => {
           <div className="flex-center-text">
             <a
               data-w-id="9ddaef7e-92c6-48d1-6e3b-de93cb95297f"
-              style={commonTransformStyle}
-              href="#"
               className="hero-link w-inline-block"
             >
               <div className="hero-link-gradient">
                 <div>New</div>
               </div>
               <div>
-                <strong>New Updates — Early Access October 2025</strong>
+                <strong>Nhận dạng giọng nói</strong>
               </div>
-              <div
-                className="hero-link-arrow"
-                style={{
-                  transform:
-                    "translate3d(-3px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
-                  transformStyle: "preserve-3d",
-                }}
-              />
+              <div className="hero-link-arrow" />
             </a>
 
             <a
               data-w-id="67f7d081-e774-b538-0f4e-7ccf8180a82d"
-              style={commonTransformStyle}
-              href="#"
               className="hero-link w-inline-block"
             >
               <div className="hero-link-gradient">
                 <div>New</div>
               </div>
               <div>
-                <strong>AI Stores. Hosting. Payments. Fully Automated</strong>
+                <strong>Chatbot AI & Mô hình ngôn ngữ lớn</strong>
               </div>
-              <div
-                className="hero-link-arrow"
-                style={{
-                  transform:
-                    "translate3d(-3px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
-                  transformStyle: "preserve-3d",
-                }}
-              />
+              <div className="hero-link-arrow" />
             </a>
 
             <h1
               data-w-id="775cac5c-1aa2-262a-db52-01cc6bff5d4b"
-              style={commonTransformStyle}
               className="hero-text"
             >
-              <strong>The Fastest Way to Launch Your </strong>
-              <span className="text-span-2">Brand</span>
+              <strong>Nhận dạng giọng nói và </strong>
+              <span className="text-span-2">Tổng hợp bài giảng thông minh</span>
             </h1>
 
+            {/* Nút Google Login - Tròn & Gradient */}
             <div
               data-w-id="94ad1a15-a764-a1ee-f194-0bd3f8dcd9ce"
-              className="subscribe-form-holder w-form"
-              style={commonTransformStyle}
+              className="subscribe-form-holder"
             >
-              <form
-                id="wf-form-Waiting-List-Form-V2-30jun"
-                name="wf-form-Waiting-List-Form-V2-30jun"
-                data-name="Waiting List Form V2 (30jun)"
-                method="get"
-                className="subscribe-form"
-                data-wf-page-id="656deb9359eefb9acc4ba9df"
-                data-wf-element-id="94ad1a15-a764-a1ee-f194-0bd3f8dcd9cf"
-                data-turnstile-sitekey="0x4AAAAAAAQTptj2So4dx43e"
-                aria-label="Waiting List Form V2 (30jun)"
+              <div
+                onClick={handleGoogleLogin}
+                className="google-login-button"
+                tabIndex={0}
+                role="button"
+                aria-label="Tiếp tục với Google"
               >
-                <input
-                  className="subscribe-email w-input"
-                  maxLength={256}
-                  name="Email"
-                  data-name="Email"
-                  placeholder="Your mail address"
-                  type="email"
-                  id="Email"
-                  required
-                />
-
-                <a href="#" className="button-gradient w-inline-block">
-                  <div className="button-text">Get Access</div>
-                </a>
-
-                <div
-                  data-w-id="f3c9c12d-963a-9c3b-d373-cfdaaf5475cd"
-                  className="form-button-holder"
-                >
-                  <input
-                    type="submit"
-                    data-wait="Let's start..."
-                    data-w-id="f3c9c12d-963a-9c3b-d373-cfdaaf5475ce"
-                    className="form-submit-button w-button"
-                    value="Reserve Spot"
-                    style={{ color: "rgb(0, 0, 0)" }}
+                <svg className="google-icon" width="20" height="20" viewBox="0 0 48 48">
+                  <path
+                    fill="#EA4335"
+                    d="M24 9.5c3.54 0 6.7 1.22 9.2 3.6l6.85-6.85C36.3 2.7 30.65 0 24 0 14.6 0 6.4 5.4 2.45 13.2l7.98 6.2C12.2 13.55 17.6 9.5 24 9.5z"
                   />
-                  <div className="add-to-cart-button-border-holder">
-                    <div className="add-to-cart-button-border" />
-                  </div>
-                  <div className="add-to-cart-button-gradient" style={{ opacity: 0 }} />
-                </div>
+                  <path
+                    fill="#34A853"
+                    d="M46.1 24.55c0-1.57-.14-3.09-.39-4.55H24v9.02h12.4c-.54 2.93-2.12 5.41-4.52 7.1l7.05 5.48C43.9 37.07 46.1 31.27 46.1 24.55z"
+                  />
+                  <path
+                    fill="#4A90E2"
+                    d="M9.43 28.02A14.46 14.46 0 0 1 8 24c0-1.39.24-2.73.66-4l-7.98-6.2A23.8 23.8 0 0 0 0 24c0 3.83.9 7.46 2.45 10.67l7.98-6.65z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M24 48c6.48 0 11.9-2.13 15.86-5.8l-7.05-5.48c-2.05 1.4-4.67 2.23-7.55 2.23-6.4 0-11.8-4.05-13.57-9.7l-7.98 6.65C6.4 42.6 14.6 48 24 48z"
+                  />
+                </svg>
 
-                <div>
-                  <div>
-                    <iframe
-                      src="https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/ov2/av0/rch/0gvpo/0x4AAAAAAAQTptj2So4dx43e/auto/fbE/auto_expire/normal/auto"
-                      allow="cross-origin-isolated; fullscreen; autoplay"
-                      sandbox="allow-same-origin allow-scripts allow-popups"
-                      id="cf-chl-widget-0gvpo"
-                      tabIndex={-1}
-                      title="Tiện ích chứa thách thức bảo mật Cloudflare"
-                      aria-hidden="true"
-                      style={{
-                        border: "none",
-                        overflow: "hidden",
-                        width: 0,
-                        height: 0,
-                        position: "absolute",
-                        visibility: "hidden",
-                      }}
-                    />
-                    <input
-                      type="hidden"
-                      name="cf-turnstile-response"
-                      id="cf-chl-widget-0gvpo_response"
-                      value="0.XEUh6wn0Fc9bPeBbu6Xny1ykBBh6y-9b9ALkPIEQ_DSqyvfU1L1lhDN0AN2JST3tqn_m7Ro1X3PBp4Bdgpp4XU7cdMxvrAITSaikRBWC2NK2lApP-WBjn8WXDfD54jcaOKQrAXojTGzU0WdedM2ShNpThDPEXRYsGllWL7WEYEBktMVs4q-LWCr2MhNzfYSAT0lTQeE1UYqSygIhS936s7TsNEJMRiLA41T-dx7WhefmrqLKu1TTHrHU2qRyhgSKyhsw186vRoePn89XIZ0lk4IUR1WQ_89kRt-qyj9XZPSP3MWKyGKUQVqajaVYucDB_-0F7OSEJPeapaE9m5zaFQRw7Gr9g87DBjQ2_X0gzD3MbXfhUxfAhsV-1uwOS-dnbh8aw--hXh1OuzsmPbXT7wEWYpO_nxud1NQ4JBa1y-E0yAYygU_MeTNqTtphxdXP7Xf_eocPCXFB5mfsLWte5vhta12-dVbu9jOOfH2sA8Rw9ey0y30wHHLNasiriNygZJyGaT1y7kWcwB2tjEq1oH-WPxAilsQLJ86JAlFAOB6uFItkYEzmuEikJdbQFl4sWctSllUdaV-x-k6KNc710DJ894I9oMk24CYHwW6Dwq4vHnVlCFLSWbGw0fhiLdIVNQI-DCE-LTcGebc92zm3-JcSbXYMrhenW9kC3HZZKy9FKIvGPZvonAHnV2WTyNaNkBgExLf1Xv-aReo9nSRykhUS9xMLeKy_NdZJ3ociTDnfiAGwloMFpiEEHNE8D8uyzX_S_0OXeUgqUHZXX2AWPnGvwmh0GNQ9eBas8Cvln19uuTS2X9VOSsp5w3zrOXfV0EQZV-UpjXhcfKzG2UHDKjgj4EVtsDZlutgS-h4_IYI-fJn4_56mpMFMwGmF7L-L3w4JIiYRigbobh024jMcQw9kxDMQ83fo5DioEA-LLZY.6Z7MKPygqZKOlYNWWO0MQQ.a4e29776b55908cccc8d3a6232046854926ba67953134184963dc5a360ff431f"
-                    />
-                  </div>
-                </div>
-              </form>
-
-              <div
-                className="success-message w-form-done"
-                tabIndex={-1}
-                role="region"
-                aria-label="Waiting List Form V2 (30jun) success"
-              >
-                <div className="gradient-text">Thank you! We got you!</div>
-              </div>
-
-              <div
-                className="error-message w-form-fail"
-                tabIndex={-1}
-                role="region"
-                aria-label="Waiting List Form V2 (30jun) failure"
-              >
-                <div>Oops! Something went wrong. Try again!</div>
+                <span className="google-text">Tiếp tục với Google</span>
               </div>
             </div>
 
             <div
               data-w-id="b043cab7-b293-8915-b3e5-69e971017d2c"
-              style={commonTransformStyle}
               className="hero-description"
             >
-              Everything you need to start selling — your store or landing page, done for you with AI in seconds.
+              Ứng dụng kết hợp nhận dạng giọng nói và mô hình ngôn ngữ lớn giúp chuyển đổi nội dung bài giảng video thành văn bản, tự động tóm tắt và tổng hợp kiến thức, mang đến trải nghiệm học tập nhanh chóng và tiện lợi cho giảng viên và sinh viên.
             </div>
           </div>
         </div>
 
         <div
           data-w-id="fb4bc833-1ed5-26d2-d6d8-631c2c09a613"
-          style={{ opacity: 1 }}
           className="trusted-by-container"
         >
           <div className="trusted-grid-holder" />
-          <div className="trusted-by-text">Built with AI to save you time — designed to help you sell more.</div>
+          <div className="trusted-by-text">GVHD: Võ Quang Hoàng Khang</div>
+          <div className="trusted-by-text">Nguyễn Quốc Huy_21112801</div>
+          <div className="trusted-by-text">Trần Bảo Ngọc_21118081</div>
         </div>
       </div>
 

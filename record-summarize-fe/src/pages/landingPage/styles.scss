@@ -1,3 +1,5 @@
+// styles.scss (cập nhật với các thay đổi: di chuyển inline styles sang SCSS, fix outline, tăng line-height, giảm khoảng cách img-content)
+
 html {
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
@@ -3942,6 +3944,9 @@ blockquote {
   margin-right: auto;
   margin-top: 2rem;
   font-size: 22px;
+  line-height: 1.6; 
+  opacity: 1;
+
 }
 
 .hero-content {
@@ -3952,6 +3957,7 @@ blockquote {
   align-items: center;
   width: 100%;
   display: flex;
+  margin-top: 1rem;
 }
 
 .input-field {
@@ -4124,7 +4130,7 @@ blockquote {
 
 .trusted-by-text {
   text-align: center;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .section-background {
@@ -5077,10 +5083,13 @@ blockquote {
   align-items: center;
   height: auto;
   padding: 2px 5px 2px 2px;
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1;
   transition: color 0.3s;
   display: flex;
+  opacity: 1;
+  transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
+  transform-style: preserve-3d;
 }
 
 .hero-link:hover {
@@ -5137,6 +5146,8 @@ blockquote {
   width: 20px;
   height: 20px;
   padding: 5px;
+  transform: translate3d(-3px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
+  transform-style: preserve-3d;
 }
 
 .notification-button-transparent {
@@ -5800,7 +5811,7 @@ blockquote {
   display: grid;
 }
 
-.email-container {
+email-container {
   grid-column-gap: 0.8em;
   grid-row-gap: 0.8em;
   align-items: center;
@@ -7317,7 +7328,48 @@ blockquote {
 }
 
 .image-3 {
-  padding-bottom: 127px;
+  padding-bottom: 10px;
+}
+
+.google-login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  font-weight: 600;
+  color: black;
+  font-size: 20px;
+  width: fit-content;
+  margin: 0 auto;
+  outline: #000;
+  border: 1px solid #000000;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.google-icon {
+  flex-shrink: 0;
+}
+
+.google-text {
+  font-weight: 700;
+}
+
+.hero-link,
+.hero-text,
+.subscribe-form-holder {
+  opacity: 1;
+  transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
+  transform-style: preserve-3d;
 }
 
 @media screen and (min-width: 1280px) {
@@ -8294,6 +8346,10 @@ blockquote {
     font-size: 75px;
   }
 
+  .footer-social-media {
+    margin-bottom: 0;
+  }
+
   .footer-content-holder {
     grid-column-gap: 1em;
     grid-row-gap: 1em;
@@ -8796,7 +8852,7 @@ blockquote {
 
   .hero-link {
     padding: 3px;
-    font-size: 12px;
+    font-size: 18px;
   }
 
   .notification-banner {

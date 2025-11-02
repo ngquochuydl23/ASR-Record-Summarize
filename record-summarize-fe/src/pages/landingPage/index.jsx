@@ -1,968 +1,205 @@
-import {
-  Typography,
-  Button,
-  Container,
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  useTheme,
-  useMediaQuery,
-  Divider,
-  AppBar,
-  Toolbar,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  CardActions,
-  TextField,
-} from "@mui/material";
 import React from "react";
-import { motion } from "framer-motion";
-import {
-  Mic,
-  Description,
-  Psychology,
-  Security,
-  AccessTime,
-  Group,
-  Star,
-  Email,
-  Phone,
-  ArrowForward,
-  PlayCircle,
-  Summarize,
-} from "@mui/icons-material";
+import './styles.scss';
 
 const Login = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-
   const handleGoogleLogin = () => {
     window.location.href = `${process.env.REACT_APP_API_ENDPOINT}/auth/google/login-redirect`;
   };
 
-  const features = [
-    {
-      icon: <Mic sx={{ fontSize: 48, color: "#7C3AED" }} />,
-      title: "Nhận Dạng Giọng Nói",
-      description:
-        "Chuyển đổi âm thanh bài giảng video thành văn bản chính xác với AI tiên tiến",
-    },
-    {
-      icon: <Description sx={{ fontSize: 48, color: "#7C3AED" }} />,
-      title: "Tổng Hợp Nội Dung",
-      description:
-        "Tóm tắt các điểm chính từ bài giảng video một cách thông minh và ngắn gọn",
-    },
-    {
-      icon: <Psychology sx={{ fontSize: 48, color: "#7C3AED" }} />,
-      title: "Hỗ Trợ Học Tập",
-      description:
-        "Hỗ trợ tương tác với nội dung bài giảng qua mô hình ngôn ngữ lớn",
-    },
-  ];
-
-  const benefits = [
-    {
-      icon: <AccessTime sx={{ fontSize: 32, color: "#FFFFFF" }} />,
-      title: "Tiết Kiệm Thời Gian Học Tập",
-    },
-    {
-      icon: <Star sx={{ fontSize: 32, color: "#FFFFFF" }} />,
-      title: "Tăng Cường Hiểu Biết",
-    },
-    {
-      icon: <Group sx={{ fontSize: 32, color: "#FFFFFF" }} />,
-      title: "Hợp Tác Nhóm Học",
-    },
-    {
-      icon: <Security sx={{ fontSize: 32, color: "#FFFFFF" }} />,
-      title: "Bảo Mật Dữ Liệu Cá Nhân",
-    },
-  ];
-
-  const pricingPlans = [
-    {
-      title: "Miễn Phí",
-      price: "0$",
-      period: "Mỗi tháng",
-      features: ["1 Giờ Xử Lý Video", "Tóm Tắt Cơ Bản", "Hỗ Trợ Văn Bản"],
-      buttonText: "Đăng ký miễn phí",
-      variant: "outlined",
-    },
-    {
-      title: "Pro",
-      price: "8$",
-      period: "Mỗi năm",
-      features: [
-        "10 Giờ Xử Lý Video",
-        "Tóm Tắt AI Nâng Cao",
-        "Hỗ Trợ Ngôn Ngữ Lớn",
-      ],
-      buttonText: "Nâng cấp Pro",
-      variant: "contained",
-    },
-    {
-      title: "Business",
-      price: "16$",
-      period: "Mỗi năm",
-      features: [
-        "Không Giới Hạn Xử Lý",
-        "Tích Hợp Đội Nhóm",
-        "Phân Tích Chi Tiết",
-      ],
-      buttonText: "Đi Business",
-      variant: "contained",
-    },
-  ];
-
-  const testimonials = [
-    {
-      name: "_ Nguyễn Văn A",
-      comment:
-        "Ứng dụng này giúp tôi tổng hợp bài giảng nhanh chóng, tiết kiệm hàng giờ học tập.",
-    },
-    {
-      name: "_ Trần Thị B",
-      comment:
-        "Nhận dạng giọng nói chính xác cao, rất hữu ích cho sinh viên như tôi.",
-    },
-    {
-      name: "_ Lê Văn C",
-      comment:
-        "Mô hình ngôn ngữ lớn hỗ trợ trả lời câu hỏi từ bài giảng tuyệt vời.",
-    },
-  ];
-
-  const fadeInUp = {
-    initial: { opacity: 0, y: 60 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 },
-  };
-
-  const staggerContainer = {
-    animate: {
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+  const commonTransformStyle = {
+    opacity: 1,
+    transform:
+      "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
+    transformStyle: "preserve-3d",
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        width: "100vw",
-        background: "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)",
-        margin: 0,
-        padding: 0,
-        position: "relative",
-        left: "50%",
-        right: "50%",
-        marginLeft: "-50vw",
-        marginRight: "-50vw",
-        overflowX: "hidden",
-      }}
-    >
-      {/* Header */}
-      <AppBar
-        position="static"
-        sx={{
-          background: "rgba(255,255,255,0.1)",
-          backdropFilter: "blur(10px)",
-          boxShadow: "none",
-        }}
-      >
-        <Toolbar>
-          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
-            <img
-              src="./chatbot2.png"
-              alt="EasySUM Icon"
-              style={{ width: 32, height: 32, marginRight: 8 }}
-            />
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 700, color: "white", flexGrow: 1 }}
-            >
-              EasySUM
-            </Typography>
-          </Box>
-          <List sx={{ display: "flex" }}>
-            <ListItem button sx={{ color: "white" }}>
-              <ListItemText primary="Trang chủ" />
-            </ListItem>
-            <ListItem button sx={{ color: "white" }}>
-              <ListItemText primary="Câu hỏi thường gặp" />
-            </ListItem>
-            <ListItem button sx={{ color: "white" }}>
-              <ListItemText primary="Về chúng tôi" />
-            </ListItem>
-          </List>
-          <Button
-            variant="outlined"
-            sx={{ color: "white", borderColor: "white", ml: 2 }}
-            onClick={handleGoogleLogin}
-            type="button"
-          >
-            Đăng nhập
-          </Button>
-        </Toolbar>
-      </AppBar>
 
-      {/* Hero Section */}
-      <Container
-        maxWidth="xl"
-        sx={{ pt: 8, pb: 4, px: { xs: 2, sm: 3, md: 4 } }}
-      >
-        <motion.div
-          initial="initial"
-          animate="animate"
-          variants={staggerContainer}
-        >
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <motion.div variants={fadeInUp}>
-                <Typography
-                  variant={isMobile ? "h3" : "h2"}
-                  component="h1"
-                  sx={{
-                    fontWeight: 700,
-                    color: "white",
-                    mb: 2,
-                  }}
-                >
-                  Chúng tôi ở đây để
-                </Typography>
-                <Typography
-                  variant={isMobile ? "h3" : "h2"}
-                  component="h1"
-                  sx={{
-                    fontWeight: 700,
-                    color: "white",
-                    mb: 2,
-                  }}
-                >
-                  Hỗ Trợ Học Tập Của Bạn
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: "rgba(255,255,255,0.9)",
-                    mb: 4,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  Sử dụng nhận dạng giọng nói và mô hình ngôn ngữ lớn để tổng
-                  hợp nội dung bài giảng video một cách dễ dàng
-                </Typography>
-                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                  <Button
-                    onClick={handleGoogleLogin}
-                    variant="contained"
-                    size="large"
-                    sx={{
-                      px: 4,
-                      py: 1.5,
-                      fontSize: "1.1rem",
-                      fontWeight: 600,
-                      borderRadius: 3,
-                      background: "white",
-                      color: "#333",
-                    }}
-                    type="button"
-                  >
-                    Thử miễn phí
-                  </Button>
-                  <Button
-                    onClick={handleGoogleLogin}
-                    variant="outlined"
-                    size="large"
-                    sx={{
-                      px: 4,
-                      py: 1.5,
-                      fontSize: "1.1rem",
-                      fontWeight: 600,
-                      borderRadius: 3,
-                      borderColor: "white",
-                      color: "white",
-                    }}
-                  >
-                    Xem Demo
-                  </Button>
-                </Box>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <motion.div variants={fadeInUp}>
-                <Box sx={{ textAlign: "center" }}>
-                  <img
-                    src="./chatbot.png"
-                    alt="AI Lecture Summarization Illustration"
-                    style={{
-                      width: "100%",
-                      maxWidth: 600,
-                      height: "auto",
-                      borderRadius: 16,
-                    }}
-                  />
-                </Box>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </motion.div>
-      </Container>
-
-      {/* Stats Section */}
-      <Container maxWidth="xl" sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 } }}>
-        <motion.div variants={fadeInUp}>
-          <Typography
-            variant="h5"
-            align="center"
-            sx={{ color: "white", mb: 2, fontWeight: 600 }}
-          >
-            Hơn 10.000 sinh viên và giảng viên sử dụng EasySUM
-          </Typography>
-          <Grid container spacing={2} justifyContent="center">
-            <Grid item>
-              <Box sx={{ textAlign: "center", px: 2 }}>
-                <img
-                  src="./Coursera.png"
-                  alt="Coursera"
-                  style={{ height: 40 }}
-                />
-              </Box>
-            </Grid>
-            <Grid item>
-              <Box sx={{ textAlign: "center", px: 2 }}>
-                <img src="./edx.png" alt="edX" style={{ height: 40 }} />
-              </Box>
-            </Grid>
-            <Grid item>
-              <Box sx={{ textAlign: "center", px: 2 }}>
-                <img
-                  src="./KhanAcademy.png"
-                  alt="Khan Academy"
-                  style={{ height: 40 }}
-                />
-              </Box>
-            </Grid>
-            <Grid item>
-              <Box sx={{ textAlign: "center", px: 2 }}>
-                <img src="./zoom.png" alt="Zoom" style={{ height: 40 }} />
-              </Box>
-            </Grid>
-            <Grid item>
-              <Box sx={{ textAlign: "center", px: 2 }}>
-                <img
-                  src="./google-meet.png"
-                  alt="Google Meet"
-                  style={{ height: 40 }}
-                />
-              </Box>
-            </Grid>
-          </Grid>
-        </motion.div>
-      </Container>
-
-      {/* Partners Section */}
-      <Container maxWidth="xl" sx={{ py: 8, px: { xs: 2, sm: 3, md: 4 } }}>
-        <motion.div variants={staggerContainer}>
-          <Grid container spacing={4} justifyContent="center">
-            <Grid item xs={12} md={8}>
-              <motion.div variants={fadeInUp}>
-                <Typography
-                  variant="h4"
-                  align="center"
-                  sx={{ color: "white", mb: 2, fontWeight: 700 }}
-                >
-                  Chúng tôi hỗ trợ học tập trên toàn thế giới
-                </Typography>
-                <Typography
-                  variant="body1"
-                  align="center"
-                  sx={{ color: "rgba(255,255,255,0.8)", mb: 4 }}
-                >
-                  Tích hợp với các nền tảng giáo dục, công cụ ghi hình video và
-                  hệ thống quản lý học tập
-                </Typography>
-              </motion.div>
-            </Grid>
-            {/* <Grid item xs={12} md={6}>
-              <motion.div variants={fadeInUp}>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Box
-                      sx={{
-                        background: "rgba(255,255,255,0.1)",
-                        p: 2,
-                        borderRadius: 2,
-                        textAlign: "center",
-                      }}
-                    >
-                      <Typography variant="h5" sx={{ color: "white", mb: 1 }}>
-                        4.8
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "white" }}>
-                        ★★★★★
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box
-                      sx={{
-                        background: "rgba(255,255,255,0.1)",
-                        p: 2,
-                        borderRadius: 2,
-                        textAlign: "center",
-                      }}
-                    >
-                      <Typography variant="h5" sx={{ color: "white", mb: 1 }}>
-                        4.9
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "white" }}>
-                        ★★★★★
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </motion.div>
-            </Grid> */}
-          </Grid>
-        </motion.div>
-      </Container>
-
-      {/* Features Section */}
-      <Container maxWidth="xl" sx={{ py: 8, px: { xs: 2, sm: 3, md: 4 } }}>
-        <motion.div
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          variants={staggerContainer}
-        >
-          <motion.div variants={fadeInUp}>
-            <Typography
-              variant="h4"
-              align="center"
-              sx={{
-                fontWeight: 700,
-                color: "white",
-                mb: 2,
-              }}
+    <div className="hero-section">
+      <div className="container">
+        <img
+          src="https://cdn.prod.website-files.com/656deb9359eefb9acc4ba9a7/686298b1c4d26fdfeb83c513_Group%201321317263.png"
+          loading="lazy"
+          width="181"
+          alt=""
+          className="image-3"
+        />
+        <div className="hero-content">
+          <div className="flex-center-text">
+            <a
+              data-w-id="9ddaef7e-92c6-48d1-6e3b-de93cb95297f"
+              style={commonTransformStyle}
+              href="#"
+              className="hero-link w-inline-block"
             >
-              Tính Năng Của Chúng Tôi
-            </Typography>
-            <Typography
-              variant="h6"
-              align="center"
-              sx={{
-                color: "rgba(255,255,255,0.8)",
-                mb: 6,
-              }}
-            >
-              Sử dụng AI để nhận dạng giọng nói và tổng hợp nội dung bài giảng
-              video một cách hiệu quả
-            </Typography>
-          </motion.div>
-
-          <Grid container spacing={4}>
-            {features.map((feature, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <motion.div variants={fadeInUp}>
-                  <Card
-                    sx={{
-                      height: "100%",
-                      background: "rgba(255,255,255,0.95)",
-                      borderRadius: 3,
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-8px)",
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ p: 3, textAlign: "center" }}>
-                      <Box sx={{ mb: 2 }}>{feature.icon}</Box>
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: 600, color: "#333", mb: 1.5 }}
-                      >
-                        {feature.title}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "#666" }}>
-                        {feature.description}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </Grid>
-            ))}
-          </Grid>
-          <Box sx={{ textAlign: "center", mt: 4 }}>
-            <Button
-              onClick={handleGoogleLogin}
-              variant="contained"
-              sx={{
-                px: 4,
-                py: 1.5,
-                fontSize: "1.1rem",
-                background: "white",
-                color: "#333",
-              }}
-            >
-              Bắt đầu
-            </Button>
-          </Box>
-        </motion.div>
-      </Container>
-
-      {/* Benefits Section */}
-      <Container maxWidth="xl" sx={{ py: 8, px: { xs: 2, sm: 3, md: 4 } }}>
-        <motion.div variants={staggerContainer}>
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <motion.div variants={fadeInUp}>
-                <Typography
-                  variant="h4"
-                  sx={{ color: "white", mb: 2, fontWeight: 700 }}
-                >
-                  Lợi Ích Bạn Sẽ Nhận Được
-                </Typography>
-                <img
-                  src="./chatbot1.jpg"
-                  alt="Lecture Benefits Illustration"
-                  style={{ width: "100%", borderRadius: 16 }}
-                />
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <motion.div variants={fadeInUp}>
-                <List sx={{ pl: 0 }}>
-                  {benefits.map((benefit, index) => (
-                    <ListItem key={index} sx={{ py: 1 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 2,
-                        }}
-                      >
-                        {benefit.icon}
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            color: "#FFFFFF",
-                            textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {benefit.title}
-                        </Typography>
-                      </Box>
-                    </ListItem>
-                  ))}
-                </List>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </motion.div>
-      </Container>
-
-      {/* Pricing Section */}
-      <Container maxWidth="xl" sx={{ py: 8, px: { xs: 2, sm: 3, md: 4 } }}>
-        <motion.div
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          variants={staggerContainer}
-        >
-          <motion.div variants={fadeInUp}>
-            <Typography
-              variant="h4"
-              align="center"
-              sx={{
-                fontWeight: 700,
-                color: "white",
-                mb: 2,
-              }}
-            >
-              Chọn Gói Phù Hợp Với Bạn
-            </Typography>
-            <Typography
-              variant="h6"
-              align="center"
-              sx={{
-                color: "rgba(255,255,255,0.8)",
-                mb: 6,
-              }}
-            >
-              Chọn gói phù hợp nhất cho nhu cầu học tập và tổng hợp bài giảng
-              của bạn
-            </Typography>
-          </motion.div>
-
-          <Grid container spacing={4} justifyContent="center">
-            {pricingPlans.map((plan, index) => (
-              <Grid item xs={12} sm={4} key={index}>
-                <motion.div variants={fadeInUp}>
-                  <Card
-                    sx={{
-                      height: "100%",
-                      background: "rgba(255,255,255,0.95)",
-                      borderRadius: 3,
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                      textAlign: "center",
-                      p: 3,
-                    }}
-                  >
-                    <CardContent>
-                      <Typography
-                        variant="h5"
-                        sx={{ fontWeight: 700, color: "#333", mb: 1 }}
-                      >
-                        {plan.title}
-                      </Typography>
-                      <Typography
-                        variant="h3"
-                        sx={{ fontWeight: 700, color: "#7C3AED", mb: 0.5 }}
-                      >
-                        {plan.price}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "#666", mb: 2 }}>
-                        {plan.period}
-                      </Typography>
-                      <List sx={{ pl: 0, mb: 3 }}>
-                        {plan.features.map((feature, fIndex) => (
-                          <ListItem
-                            key={fIndex}
-                            sx={{ justifyContent: "center", py: 0.5 }}
-                          >
-                            <ListItemText
-                              primary={feature}
-                              sx={{ textAlign: "center" }}
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </CardContent>
-                    <CardActions sx={{ justifyContent: "center" }}>
-                      <Button
-                        variant={plan.variant}
-                        onClick={handleGoogleLogin}
-                        sx={{
-                          width: "100%",
-                          borderRadius: 2,
-                          ...(plan.variant === "contained" && {
-                            background: "#7C3AED",
-                            color: "white",
-                          }),
-                        }}
-                        type="button"
-                      >
-                        {plan.buttonText}
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </motion.div>
-              </Grid>
-            ))}
-          </Grid>
-        </motion.div>
-      </Container>
-
-      {/* Testimonials Section */}
-      <Container maxWidth="xl" sx={{ py: 8, px: { xs: 2, sm: 3, md: 4 } }}>
-        <motion.div
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          variants={staggerContainer}
-        >
-          <motion.div variants={fadeInUp}>
-            <Typography
-              variant="h4"
-              align="center"
-              sx={{
-                fontWeight: 700,
-                color: "white",
-                mb: 2,
-              }}
-            >
-              Mọi Người Đang Nói
-            </Typography>
-            <Typography
-              variant="h6"
-              align="center"
-              sx={{
-                color: "rgba(255,255,255,0.8)",
-                mb: 6,
-              }}
-            >
-              Về EasySUM và hỗ trợ tổng hợp bài giảng
-            </Typography>
-          </motion.div>
-
-          <Grid container spacing={4} justifyContent="center">
-            {testimonials.map((testimonial, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <motion.div variants={fadeInUp}>
-                  <Card
-                    sx={{
-                      background: "rgba(255,255,255,0.95)",
-                      borderRadius: 3,
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                      p: 3,
-                    }}
-                  >
-                    <CardContent>
-                      <Typography
-                        variant="body1"
-                        sx={{ color: "#333", mb: 2, fontWeight: "bold" }}
-                      >
-                        "{testimonial.comment}"
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "flex-end",
-                        }}
-                      >
-                        <Box>
-                          <Typography
-                            variant="h6"
-                            sx={{ color: "#7C3AED", fontStyle: "italic" }}
-                          >
-                            {testimonial.name}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </Grid>
-            ))}
-          </Grid>
-        </motion.div>
-      </Container>
-
-      {/* CTA Section */}
-      <Container maxWidth="lg" sx={{ py: 8, px: { xs: 2, sm: 3, md: 4 } }}>
-        <motion.div variants={fadeInUp}>
-          <Box
-            sx={{
-              background: "rgba(255,255,255,0.1)",
-              backdropFilter: "blur(10px)",
-              borderRadius: 4,
-              p: 6,
-              textAlign: "center",
-              border: "1px solid rgba(255,255,255,0.2)",
-            }}
-          >
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: "white",
-                mb: 2,
-              }}
-            >
-              Bắt Đầu Tổng Hợp Bài Giảng
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{
-                color: "rgba(255,255,255,0.9)",
-                mb: 4,
-              }}
-            >
-              Nhập email để nhận hướng dẫn sử dụng
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                gap: 2,
-                justifyContent: "center",
-              }}
-            >
-              <TextField
-                placeholder="Email của bạn"
-                variant="outlined"
-                sx={{
-                  width: { xs: "100%", md: 300 },
-                  "& .MuiOutlinedInput-root": {
-                    backgroundColor: "rgba(255,255,255,0.1)",
-                    borderRadius: 3,
-                    color: "white",
-                    "& fieldset": {
-                      borderColor: "rgba(255,255,255,0.3)",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "white",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "white",
-                    },
-                  },
-                  "& .MuiInputBase-input::placeholder": {
-                    color: "rgba(255,255,255,0.7)",
-                  },
-                  "& .MuiInputBase-input": {
-                    color: "white",
-                  },
-                }}
-                InputProps={{
-                  style: { color: "white" },
+              <div className="hero-link-gradient">
+                <div>New</div>
+              </div>
+              <div>
+                <strong>New Updates — Early Access October 2025</strong>
+              </div>
+              <div
+                className="hero-link-arrow"
+                style={{
+                  transform:
+                    "translate3d(-3px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
+                  transformStyle: "preserve-3d",
                 }}
               />
-              <Button
-                onClick={handleGoogleLogin}
-                variant="contained"
-                sx={{
-                  width: { xs: "100%", md: 300 },
-                  px: 4,
-                  py: 1.5,
-                  background: "white",
-                  color: "#333",
-                  borderRadius: 3,
-                  padding: "26px !important",
-                }}
-              >
-                Bắt Đầu Thử Nghiệm Miễn Phí
-              </Button>
-            </Box>
-          </Box>
-        </motion.div>
-      </Container>
+            </a>
 
-      {/* Footer */}
-      <Box
-        sx={{
-          background: "rgba(0,0,0,0.8)",
-          py: 6,
-          mt: 4,
-        }}
-      >
-        <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={3}>
-              <motion.div variants={fadeInUp}>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                  <img
-                    src="./chatbot2.png"
-                    alt="EasySUM Icon"
-                    style={{ width: 32, height: 32, marginRight: 8 }}
+            <a
+              data-w-id="67f7d081-e774-b538-0f4e-7ccf8180a82d"
+              style={commonTransformStyle}
+              href="#"
+              className="hero-link w-inline-block"
+            >
+              <div className="hero-link-gradient">
+                <div>New</div>
+              </div>
+              <div>
+                <strong>AI Stores. Hosting. Payments. Fully Automated</strong>
+              </div>
+              <div
+                className="hero-link-arrow"
+                style={{
+                  transform:
+                    "translate3d(-3px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
+                  transformStyle: "preserve-3d",
+                }}
+              />
+            </a>
+
+            <h1
+              data-w-id="775cac5c-1aa2-262a-db52-01cc6bff5d4b"
+              style={commonTransformStyle}
+              className="hero-text"
+            >
+              <strong>The Fastest Way to Launch Your </strong>
+              <span className="text-span-2">Brand</span>
+            </h1>
+
+            <div
+              data-w-id="94ad1a15-a764-a1ee-f194-0bd3f8dcd9ce"
+              className="subscribe-form-holder w-form"
+              style={commonTransformStyle}
+            >
+              <form
+                id="wf-form-Waiting-List-Form-V2-30jun"
+                name="wf-form-Waiting-List-Form-V2-30jun"
+                data-name="Waiting List Form V2 (30jun)"
+                method="get"
+                className="subscribe-form"
+                data-wf-page-id="656deb9359eefb9acc4ba9df"
+                data-wf-element-id="94ad1a15-a764-a1ee-f194-0bd3f8dcd9cf"
+                data-turnstile-sitekey="0x4AAAAAAAQTptj2So4dx43e"
+                aria-label="Waiting List Form V2 (30jun)"
+              >
+                <input
+                  className="subscribe-email w-input"
+                  maxLength={256}
+                  name="Email"
+                  data-name="Email"
+                  placeholder="Your mail address"
+                  type="email"
+                  id="Email"
+                  required
+                />
+
+                <a href="#" className="button-gradient w-inline-block">
+                  <div className="button-text">Get Access</div>
+                </a>
+
+                <div
+                  data-w-id="f3c9c12d-963a-9c3b-d373-cfdaaf5475cd"
+                  className="form-button-holder"
+                >
+                  <input
+                    type="submit"
+                    data-wait="Let's start..."
+                    data-w-id="f3c9c12d-963a-9c3b-d373-cfdaaf5475ce"
+                    className="form-submit-button w-button"
+                    value="Reserve Spot"
+                    style={{ color: "rgb(0, 0, 0)" }}
                   />
-                  <Typography
-                    variant="h6"
-                    sx={{ color: "white", fontWeight: 700 }}
-                  >
-                    EasySUM
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "rgba(255,255,255,0.8)" }}
-                >
-                  © 2025 EasySUM. Tất cả quyền được bảo lưu.
-                </Typography>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <motion.div variants={fadeInUp}>
-                <Typography
-                  variant="h6"
-                  sx={{ color: "white", mb: 2, fontWeight: 600 }}
-                >
-                  Sản phẩm
-                </Typography>
-                <List sx={{ pl: 0 }}>
-                  <ListItem sx={{ py: 0.5 }}>
-                    <ListItemText
-                      primary="Nhận Dạng Giọng Nói"
-                      sx={{ color: "rgba(255,255,255,0.8)" }}
+                  <div className="add-to-cart-button-border-holder">
+                    <div className="add-to-cart-button-border" />
+                  </div>
+                  <div className="add-to-cart-button-gradient" style={{ opacity: 0 }} />
+                </div>
+
+                <div>
+                  <div>
+                    <iframe
+                      src="https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/ov2/av0/rch/0gvpo/0x4AAAAAAAQTptj2So4dx43e/auto/fbE/auto_expire/normal/auto"
+                      allow="cross-origin-isolated; fullscreen; autoplay"
+                      sandbox="allow-same-origin allow-scripts allow-popups"
+                      id="cf-chl-widget-0gvpo"
+                      tabIndex={-1}
+                      title="Tiện ích chứa thách thức bảo mật Cloudflare"
+                      aria-hidden="true"
+                      style={{
+                        border: "none",
+                        overflow: "hidden",
+                        width: 0,
+                        height: 0,
+                        position: "absolute",
+                        visibility: "hidden",
+                      }}
                     />
-                  </ListItem>
-                  <ListItem sx={{ py: 0.5 }}>
-                    <ListItemText
-                      primary="Tổng Hợp Bài Giảng"
-                      sx={{ color: "rgba(255,255,255,0.8)" }}
+                    <input
+                      type="hidden"
+                      name="cf-turnstile-response"
+                      id="cf-chl-widget-0gvpo_response"
+                      value="0.XEUh6wn0Fc9bPeBbu6Xny1ykBBh6y-9b9ALkPIEQ_DSqyvfU1L1lhDN0AN2JST3tqn_m7Ro1X3PBp4Bdgpp4XU7cdMxvrAITSaikRBWC2NK2lApP-WBjn8WXDfD54jcaOKQrAXojTGzU0WdedM2ShNpThDPEXRYsGllWL7WEYEBktMVs4q-LWCr2MhNzfYSAT0lTQeE1UYqSygIhS936s7TsNEJMRiLA41T-dx7WhefmrqLKu1TTHrHU2qRyhgSKyhsw186vRoePn89XIZ0lk4IUR1WQ_89kRt-qyj9XZPSP3MWKyGKUQVqajaVYucDB_-0F7OSEJPeapaE9m5zaFQRw7Gr9g87DBjQ2_X0gzD3MbXfhUxfAhsV-1uwOS-dnbh8aw--hXh1OuzsmPbXT7wEWYpO_nxud1NQ4JBa1y-E0yAYygU_MeTNqTtphxdXP7Xf_eocPCXFB5mfsLWte5vhta12-dVbu9jOOfH2sA8Rw9ey0y30wHHLNasiriNygZJyGaT1y7kWcwB2tjEq1oH-WPxAilsQLJ86JAlFAOB6uFItkYEzmuEikJdbQFl4sWctSllUdaV-x-k6KNc710DJ894I9oMk24CYHwW6Dwq4vHnVlCFLSWbGw0fhiLdIVNQI-DCE-LTcGebc92zm3-JcSbXYMrhenW9kC3HZZKy9FKIvGPZvonAHnV2WTyNaNkBgExLf1Xv-aReo9nSRykhUS9xMLeKy_NdZJ3ociTDnfiAGwloMFpiEEHNE8D8uyzX_S_0OXeUgqUHZXX2AWPnGvwmh0GNQ9eBas8Cvln19uuTS2X9VOSsp5w3zrOXfV0EQZV-UpjXhcfKzG2UHDKjgj4EVtsDZlutgS-h4_IYI-fJn4_56mpMFMwGmF7L-L3w4JIiYRigbobh024jMcQw9kxDMQ83fo5DioEA-LLZY.6Z7MKPygqZKOlYNWWO0MQQ.a4e29776b55908cccc8d3a6232046854926ba67953134184963dc5a360ff431f"
                     />
-                  </ListItem>
-                  <ListItem sx={{ py: 0.5 }}>
-                    <ListItemText
-                      primary="Hỗ Trợ AI"
-                      sx={{ color: "rgba(255,255,255,0.8)" }}
-                    />
-                  </ListItem>
-                </List>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <motion.div variants={fadeInUp}>
-                <Typography
-                  variant="h6"
-                  sx={{ color: "white", mb: 2, fontWeight: 600 }}
-                >
-                  Hỗ trợ
-                </Typography>
-                <List sx={{ pl: 0 }}>
-                  <ListItem sx={{ py: 0.5 }}>
-                    <ListItemText
-                      primary="Trung tâm trợ giúp"
-                      sx={{ color: "rgba(255,255,255,0.8)" }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ py: 0.5 }}>
-                    <ListItemText
-                      primary="Liên hệ hỗ trợ"
-                      sx={{ color: "rgba(255,255,255,0.8)" }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ py: 0.5 }}>
-                    <ListItemText
-                      primary="Hướng dẫn sử dụng"
-                      sx={{ color: "rgba(255,255,255,0.8)" }}
-                    />
-                  </ListItem>
-                </List>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <motion.div variants={fadeInUp}>
-                <Typography
-                  variant="h6"
-                  sx={{ color: "white", mb: 2, fontWeight: 600 }}
-                >
-                  Liên hệ
-                </Typography>
-                <List sx={{ pl: 0 }}>
-                  <ListItem sx={{ py: 0.5 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Email
-                        sx={{ color: "rgba(255,255,255,0.8)", fontSize: 20 }}
-                      />
-                      <ListItemText
-                        primary="Liên hệ với chúng tôi"
-                        sx={{ color: "rgba(255,255,255,0.8)" }}
-                      />
-                    </Box>
-                  </ListItem>
-                </List>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "rgba(255,255,255,0.8)", mt: 2 }}
-                >
-                  Điều khoản và Điều kiện | Chính sách bảo mật
-                </Typography>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
-    </Box>
+                  </div>
+                </div>
+              </form>
+
+              <div
+                className="success-message w-form-done"
+                tabIndex={-1}
+                role="region"
+                aria-label="Waiting List Form V2 (30jun) success"
+              >
+                <div className="gradient-text">Thank you! We got you!</div>
+              </div>
+
+              <div
+                className="error-message w-form-fail"
+                tabIndex={-1}
+                role="region"
+                aria-label="Waiting List Form V2 (30jun) failure"
+              >
+                <div>Oops! Something went wrong. Try again!</div>
+              </div>
+            </div>
+
+            <div
+              data-w-id="b043cab7-b293-8915-b3e5-69e971017d2c"
+              style={commonTransformStyle}
+              className="hero-description"
+            >
+              Everything you need to start selling — your store or landing page, done for you with AI in seconds.
+            </div>
+          </div>
+        </div>
+
+        <div
+          data-w-id="fb4bc833-1ed5-26d2-d6d8-631c2c09a613"
+          style={{ opacity: 1 }}
+          className="trusted-by-container"
+        >
+          <div className="trusted-grid-holder" />
+          <div className="trusted-by-text">Built with AI to save you time — designed to help you sell more.</div>
+        </div>
+      </div>
+
+      <div className="gradient-center-holder">
+        <div className="gradient-center" />
+      </div>
+    </div>
   );
 };
 

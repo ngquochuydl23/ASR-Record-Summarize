@@ -207,8 +207,14 @@ const ChatView = ({ record, state = ChatbotPreparingStateEnum.PREPARING, onRetry
         recordId={record?.id}
         open={openHistory}
         onClose={() => setOpenHistory(false)}
-        onConversationClick={(id) => setSearchParams({ conversationId: id })}
-        onCreateConversation={() => setSearchParams({})} />
+        onConversationClick={(id) => {
+          // force setSearchParams by including a timestamp to ensure the URL changes
+          setSearchParams({ conversationId: id, _ts: Date.now().toString() })
+        }}
+        onCreateConversation={() => {
+          // clear params using a fresh URLSearchParams to force update
+          setSearchParams(new URLSearchParams())
+        }} />
     </div>
   );
 };

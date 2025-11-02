@@ -23,26 +23,6 @@ services:
     networks:
       - api-local-network
 
-  record-tgenerator-api:
-    container_name: record-tgenerator-api
-    build:
-      context: ./record-tgenerator-api
-      dockerfile: Dockerfile
-    volumes:
-      - ./keras-cache:/root/.keras/
-    ports:
-      - "2026:2026"
-    environment:
-      NVIDIA_VISIBLE_DEVICES: all
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
-    restart: always
-    networks:
-      - api-local-network
-
   record-summarize-fe:
     container_name: record-summarize-fe
     build:

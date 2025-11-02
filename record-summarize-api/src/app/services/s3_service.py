@@ -5,6 +5,8 @@ from botocore.exceptions import BotoCoreError, NoCredentialsError
 from fastcrud.exceptions.http_exceptions import BadRequestException
 from fastapi import UploadFile
 from typing import List, Union
+
+from ..core.exceptions.app_exception import AppException
 from ..dtos.storage import UploadFileResponseDto
 import asyncio
 import os
@@ -51,7 +53,7 @@ class S3Service:
         key = f"{folder}/{uuid.uuid4()}.{extension}"
 
         if len(content) > settings.MAX_FILE_SIZE_BYTES:
-            raise BadRequestException(f"File size exceeds {settings.MAX_FILE_SIZE_MB}MB limit.")
+            raise AppException(f"File size exceeds {settings.MAX_FILE_SIZE_MB}MB limit.")
         try:
             if local_cache:
                 with open(key, "wb") as file:

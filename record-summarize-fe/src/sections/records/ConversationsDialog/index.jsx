@@ -195,7 +195,7 @@ const ConversationsDialog = ({
                       <Checkbox color="primary" onChange={(e) => handleSelectOne(e, item)} checked={selected} inputProps={{}} />
                     </TableCell>
                     <TableCell>
-                      <Link onClick={() => handleClick(item.id)}>{item?.title}</Link>
+                      <div className={styles.conversationName} onClick={() => handleClick(item.id)}>{item?.title}</div>
                     </TableCell>
                     <TableCell>{moment(item.created_at).startOf('day').fromNow()}</TableCell>
                   </TableRow>

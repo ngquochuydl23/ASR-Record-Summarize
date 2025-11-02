@@ -20,6 +20,12 @@
   }
 }
 
+.conversationName {
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .tablePagination {
   width: 100%;
   padding: 0;

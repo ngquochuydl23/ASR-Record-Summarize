@@ -38,11 +38,16 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { getYoutubeEmbedUrl } from "@/utils/youtube";
+import classNames from "classnames";
+import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 
 const CreateRecordDrawer = ({ open, onClose }) => {
   const navigate = useNavigate();
   const playerRef = useRef();
   const { enqueueSnackbar } = useSnackbar();
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [thumbnailUpload, setThumbnailUpload] = useState(null);
   const [loading, setLoading] = useState(false);
   const [videoUploading, setVideoUploading] = useState(false);
   const [youtubeChecking, setYoutubeChecking] = useState(false);
@@ -57,6 +62,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
         "Vui lòng nhập đường dẫn Youtube hợp lệ"
       )
       .optional(),
+    thumbnail: Yup.string().optional()
   });
 
   const handleSubmit = async (values, { setFieldError, resetForm }) => {
@@ -91,10 +97,48 @@ const CreateRecordDrawer = ({ open, onClose }) => {
       .finally(() => setLoading(false));
   };
 
-  const handleUploadVideo = (e, setFieldValue, setFieldError) => {
+  const generateVideoThumbnail = (file) => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(file);
+      video.crossOrigin = 'anonymous';
+      video.muted = true;
+      video.playsInline = true;
+
+      video.addEventListener('loadeddata', () => {
+        video.currentTime = 1;
+      });
+
+      video.addEventListener('seeked', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject('Thumbnail generation failed');
+        }, 'image/jpeg', 0.8);
+      });
+
+      video.addEventListener('error', reject);
+    });
+  };
+
+  const handleUploadHandThumbnail = (e) => {
+     if (_.isEmpty(e.target.files) || !e.target.files[0]) return;
+  }
+
+  const handleUploadVideo = async (e, setFieldValue, setFieldError) => {
     if (_.isEmpty(e.target.files) || !e.target.files[0]) return;
+    const videoFile = e.target.files[0];
+    const thumbnailBlob = await generateVideoThumbnail(videoFile);
+    const thumbnailUrl = URL.createObjectURL(thumbnailBlob);
+    setThumbnailPreview(thumbnailUrl);
+
     setVideoUploading(true);
-    uploadFile(e.target.files[0])
+    uploadFile(videoFile)
       .then(({ data }) => {
         setFieldValue('url', data.url);
       })
@@ -118,6 +162,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
 
   const handleCheckYoutube = (link) => {
     if (_.isEmpty(link)) return Promise.resolve(false);
+    setThumbnailPreview(null);
     setYoutubeChecking(true);
     return new Promise((resolve) => {
       setTimeout(async () => {
@@ -422,7 +467,7 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                     handleUploadVideo(e, setFieldValue, setFieldError)
                   }
                 />
-                <div className={styles.gridMedia}>
+                <div className={classNames(styles.gridMedia, { [styles.local]: values.source_type === "local" })}>
                   <div className="flex flex-col w-full">
                     <h5 className="font-[600] w-full mt-4">Video</h5>
                     <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
@@ -549,138 +594,173 @@ const CreateRecordDrawer = ({ open, onClose }) => {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col w-full overflow-hidden">
-                    <h5 className="font-[600] w-full mt-4">
-                      Tải lên tài liệu đính kèm
-                    </h5>
-                    <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
-                      Tải lên tài liệu đính kèm (pdf, doc, xls, ppt, txt) muốn
-                      tóm tắt.
-                    </div>
-                    <div className={styles.attachmentContainer}>
-                      <FieldArray name="attachments">
-                        {({ push, remove, replace }) => {
-                          const handleUploadFile = (event) => {
-                            if (_.isEmpty(event.target.files)) return;
-                            Array.from(event.target.files).forEach(
-                              (file, idx) => {
-                                const index = values.attachments.length + idx;
-                                push({
-                                  filename: file.name,
-                                  mime: file.type,
-                                  size: file.size,
-                                  url: null,
-                                  loading: true,
-                                  state: "uploading",
-                                });
-                                uploadFile(file)
-                                  .then(({ data }) => {
-                                    console.log(index);
-                                    replace(index, {
-                                      ...data,
-                                      loading: false,
-                                      state: "success",
-                                    });
-                                  })
-                                  .catch((error) => {
-                                    console.log(error);
-                                    replace(index, {
-                                      ...values.attachments[index],
-                                      loading: false,
-                                      state: "error",
-                                    });
-                                  });
+                  {values.source_type === "local" &&
+                    <div className="flex flex-col w-full mt-2">
+                      <h5 className="font-[600] w-full mt-4">Hình thu nhỏ</h5>
+                      <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
+                        Chọn hình thu nhỏ nổi bật để thu hút sự chú ý của người xem. <a className={styles.researchLink} href="/">Tìm hiểu thêm</a>
+                      </div>
+                      <div className={styles.thumbnailPreview}>
+                        <div className={styles.thumbnailPreviewItem}>
+                          <div className={styles.overlay}>
+                            <input
+                              id="media.thumbnail.hand.pick"
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) =>
+                                handleUploadVideo(e, setFieldValue, setFieldError)
                               }
-                            );
-                          };
-                          return (
-                            <div className={styles.attachments}>
-                              {values.attachments.map((attachment, index) => {
-                                const isTxt = attachment?.mime === "text/plain";
-                                const isExcel =
-                                  attachment?.mime ===
-                                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                                const isDocx =
-                                  attachment?.mime ===
-                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-                                  attachment?.mime === "application/msword";
-                                const isPdf =
-                                  attachment?.mime === "application/pdf";
-                                return (
-                                  <div
-                                    className={styles.attachmentItem}
-                                    key={index}
-                                  >
-                                    {isDocx && <IcMsWord />}
-                                    {isPdf && <IcPdf />}
-                                    {isExcel && <IcExcel />}
-                                    <div className="flex flex-col overflow-hidden w-full">
-                                      <div className={styles.titleWrapper}>
-                                        <Tooltip title={attachment?.filename}>
-                                          <span className={styles.title}>
-                                            {attachment?.filename}
-                                          </span>
-                                        </Tooltip>
-                                      </div>
-                                      {isDocx && (
-                                        <div className={styles.mime}>
-                                          {"application/docx"}
-                                        </div>
-                                      )}
-                                      {isPdf && (
-                                        <div className={styles.mime}>
-                                          {"application/pdf"}
-                                        </div>
-                                      )}
-                                      {isExcel && (
-                                        <div className={styles.mime}>
-                                          {"application/sheet"}
-                                        </div>
-                                      )}
+                            />
+                            <AddPhotoAlternateOutlinedIcon />
+                            Tải tệp lên
+                          </div>
+                        </div>
+                        <div className={styles.thumbnailPreviewItem}>
+                          {thumbnailPreview && thumbnailPreview.length > 0 &&
+                            <img src={thumbnailPreview} alt="thumbnail-preview-as-auto" />
+                          }
+                          <div className={classNames(styles.overlay, { [styles.autoGenerated]: thumbnailPreview && thumbnailPreview.length > 0 })}>
+                            <AutoAwesomeOutlinedIcon />
+                            Tạo tự động
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <div className="flex flex-col w-full overflow-hidden mt-3">
+                  <h5 className="font-[600] w-full mt-4">
+                    Tải lên tài liệu đính kèm
+                  </h5>
+                  <div className="text-textSecondaryColor text-[12px] mt-[2px] w-full">
+                    Tải lên tài liệu đính kèm (pdf, doc, xls, ppt, txt) muốn
+                    tóm tắt.
+                  </div>
+                  <div className={styles.attachmentContainer}>
+                    <FieldArray name="attachments">
+                      {({ push, remove, replace }) => {
+                        const handleUploadFile = (event) => {
+                          if (_.isEmpty(event.target.files)) return;
+                          Array.from(event.target.files).forEach(
+                            (file, idx) => {
+                              const index = values.attachments.length + idx;
+                              push({
+                                filename: file.name,
+                                mime: file.type,
+                                size: file.size,
+                                url: null,
+                                loading: true,
+                                state: "uploading",
+                              });
+                              uploadFile(file)
+                                .then(({ data }) => {
+                                  console.log(index);
+                                  replace(index, {
+                                    ...data,
+                                    loading: false,
+                                    state: "success",
+                                  });
+                                })
+                                .catch((error) => {
+                                  console.log(error);
+                                  replace(index, {
+                                    ...values.attachments[index],
+                                    loading: false,
+                                    state: "error",
+                                  });
+                                });
+                            }
+                          );
+                        };
+                        return (
+                          <div className={styles.attachments}>
+                            {values.attachments.map((attachment, index) => {
+                              const isTxt = attachment?.mime === "text/plain";
+                              const isExcel =
+                                attachment?.mime ===
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                              const isDocx =
+                                attachment?.mime ===
+                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+                                attachment?.mime === "application/msword";
+                              const isPdf =
+                                attachment?.mime === "application/pdf";
+                              return (
+                                <div
+                                  className={styles.attachmentItem}
+                                  key={index}
+                                >
+                                  {isDocx && <IcMsWord />}
+                                  {isPdf && <IcPdf />}
+                                  {isExcel && <IcExcel />}
+                                  <div className="flex flex-col overflow-hidden w-full">
+                                    <div className={styles.titleWrapper}>
+                                      <Tooltip title={attachment?.filename}>
+                                        <span className={styles.title}>
+                                          {attachment?.filename}
+                                        </span>
+                                      </Tooltip>
                                     </div>
-                                    {attachment.loading && (
-                                      <div className={styles.loadingContainer}>
-                                        <CircularProgress size="20px" />
+                                    {isDocx && (
+                                      <div className={styles.mime}>
+                                        {"application/docx"}
                                       </div>
                                     )}
-                                    {!attachment.loading &&
-                                      attachment.state === "success" && (
-                                        <IconButton
-                                          onClick={() => remove(index)}
-                                        >
-                                          <DeleteOutlineIcon
-                                            sx={{ color: colors.errorColor }}
-                                          />
-                                        </IconButton>
-                                      )}
+                                    {isPdf && (
+                                      <div className={styles.mime}>
+                                        {"application/pdf"}
+                                      </div>
+                                    )}
+                                    {isExcel && (
+                                      <div className={styles.mime}>
+                                        {"application/sheet"}
+                                      </div>
+                                    )}
                                   </div>
-                                );
-                              })}
-                              <Button
-                                variant="outlined"
-                                className="mt-4"
-                                type="button"
-                                onClick={() => {
-                                  document
-                                    .getElementById("media.attachments")
-                                    ?.click();
-                                }}
-                              >
-                                Thêm tệp đính kèm
-                              </Button>
-                              <input
-                                id="media.attachments"
-                                type="file"
-                                multiple
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
-                                style={{ display: "none" }}
-                                onChange={handleUploadFile}
-                              ></input>
-                            </div>
-                          );
-                        }}
-                      </FieldArray>
-                    </div>
+                                  {attachment.loading && (
+                                    <div className={styles.loadingContainer}>
+                                      <CircularProgress size="20px" />
+                                    </div>
+                                  )}
+                                  {!attachment.loading &&
+                                    attachment.state === "success" && (
+                                      <IconButton
+                                        onClick={() => remove(index)}
+                                      >
+                                        <DeleteOutlineIcon
+                                          sx={{ color: colors.errorColor }}
+                                        />
+                                      </IconButton>
+                                    )}
+                                </div>
+                              );
+                            })}
+                            <Button
+                              variant="outlined"
+                              className="mt-4"
+                              type="button"
+                              onClick={() => {
+                                document
+                                  .getElementById("media.attachments")
+                                  ?.click();
+                              }}
+                            >
+                              Thêm tệp đính kèm
+                            </Button>
+                            <input
+                              id="media.attachments"
+                              type="file"
+                              multiple
+                              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                              style={{ display: "none" }}
+                              onChange={handleUploadFile}
+                            ></input>
+                          </div>
+                        );
+                      }}
+                    </FieldArray>
                   </div>
                 </div>
               </div>

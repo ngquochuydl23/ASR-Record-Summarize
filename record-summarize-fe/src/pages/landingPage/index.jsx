@@ -25,45 +25,26 @@ const Login = () => {
               <div className="hero-link-gradient">
                 <div>New</div>
               </div>
-              <div>
-                <strong>Nhận dạng giọng nói</strong>
-              </div>
+              <div className="label">Nhận dạng giọng nói</div>
               <div className="hero-link-arrow" />
             </a>
 
-            <a
-              data-w-id="67f7d081-e774-b538-0f4e-7ccf8180a82d"
-              className="hero-link w-inline-block"
-            >
-              <div className="hero-link-gradient">
-                <div>New</div>
-              </div>
-              <div>
-                <strong>Chatbot AI & Mô hình ngôn ngữ lớn</strong>
-              </div>
+            <a data-w-id="67f7d081-e774-b538-0f4e-7ccf8180a82d" className="hero-link w-inline-block">
+              <div className="hero-link-gradient"><div>New</div></div>
+              <div className="label">Chatbot AI & Mô hình ngôn ngữ lớn</div>
               <div className="hero-link-arrow" />
             </a>
-
-            <h1
-              data-w-id="775cac5c-1aa2-262a-db52-01cc6bff5d4b"
-              className="hero-text"
-            >
+            <h1 data-w-id="775cac5c-1aa2-262a-db52-01cc6bff5d4b" className="hero-text">
               <strong>Nhận dạng giọng nói và </strong>
               <span className="text-span-2">Tổng hợp bài giảng thông minh</span>
             </h1>
-
-            {/* Nút Google Login - Tròn & Gradient */}
-            <div
-              data-w-id="94ad1a15-a764-a1ee-f194-0bd3f8dcd9ce"
-              className="subscribe-form-holder"
-            >
+            <div data-w-id="94ad1a15-a764-a1ee-f194-0bd3f8dcd9ce" className="subscribe-form-holder">
               <div
                 onClick={handleGoogleLogin}
                 className="google-login-button"
                 tabIndex={0}
                 role="button"
-                aria-label="Tiếp tục với Google"
-              >
+                aria-label="Tiếp tục với Google">
                 <svg className="google-icon" width="20" height="20" viewBox="0 0 48 48">
                   <path
                     fill="#EA4335"

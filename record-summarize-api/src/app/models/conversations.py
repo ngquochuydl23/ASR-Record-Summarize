@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, DateTime, String
+from sqlalchemy import ForeignKey, DateTime, String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from dataclasses import dataclass
 
@@ -28,3 +28,6 @@ class ConversationModel(Base, BaseMixin):
     owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey(f"{USER_TABLE_NAME}.id"), default=None)
     record = relationship("RecordModel", back_populates="conversations")
     record_id: Mapped[uuid.UUID] = mapped_column(ForeignKey(f"{RECORD_TABLE_NAME}.id"), default=None)
+
+    is_pinned: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
+    pinned_at: Mapped[datetime] = mapped_column(DateTime, default=None, nullable=True)

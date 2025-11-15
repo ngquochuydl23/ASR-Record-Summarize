@@ -34,3 +34,10 @@ export const retryChatbot = (id) => http.post(`/records/${id}/retry-chatbot`);
 
 export const rerunWF = (recordId, body) =>
   http.post(`/records/${recordId}/rerun-workflow`, body);
+
+export const getSuggestPrompts = (recordId, limit = 5, max_prompt_length = 25) =>
+  http.get(`/records/${recordId}/suggestion-prompts`, {
+    params: {
+      limit, max_prompt_length
+    },
+  });

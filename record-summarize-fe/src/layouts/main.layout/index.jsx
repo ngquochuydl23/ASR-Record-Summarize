@@ -55,11 +55,9 @@ const MainLayout = () => {
         <Sidebar />
         <div className="flex flex-col w-full parentLayout">
           <MainLayoutHeader openNotificationList={openNotificationList} />
-          <Scrollbars>
-            <div className={classNames("p-4 innerLayout", { "isShowStagingLabel": process.env.REACT_APP_ENVIRONMENT === 'Staging' })} >
-              <Outlet />
-            </div>
-          </Scrollbars>
+          <div className={classNames("innerLayout", { "isShowStagingLabel": process.env.REACT_APP_ENVIRONMENT === 'Staging' })} >
+            <Outlet />
+          </div>
         </div>
       </div>
 

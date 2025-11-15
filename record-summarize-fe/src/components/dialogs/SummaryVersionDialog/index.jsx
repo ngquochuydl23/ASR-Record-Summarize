@@ -1,12 +1,11 @@
 import CloseIcon from '@mui/icons-material/Close';
-import { DialogContent, Dialog, DialogTitle, IconButton, DialogActions, Button, Backdrop, Chip, Tooltip, CircularProgress } from '@mui/material';
+import { DialogContent, Dialog, DialogTitle, IconButton, Chip, Tooltip, CircularProgress } from '@mui/material';
 import styles from './styles.module.scss';
-import { deleteSummaryVersionById, getListSummaryVerionsByRecord, getSummaryVersionById, publishedSummaryVersion } from '@/repositories/summary-version.repository';
+import { deleteSummaryVersionById, getListSummaryVerionsByRecord, publishedSummaryVersion } from '@/repositories/summary-version.repository';
 import LoadingBackdrop from '@/components/LoadingBackdrop';
 import { useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined';
-import LoadingButton from '@/components/buttons/LoadingButton';
 import _ from 'lodash';
 import moment from 'moment';
 import SlideshowOutlinedIcon from '@mui/icons-material/SlideshowOutlined';

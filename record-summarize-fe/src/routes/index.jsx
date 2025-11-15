@@ -20,7 +20,7 @@ const PersonalInfoPage = Loadable(lazy(() => import("../pages/settings/personal-
 const CollectionPage = Loadable(lazy(() => import("../pages/collections")));
 const LandingPage = Loadable(lazy(() => import("../pages/landingPage")));
 const Page404 = Loadable(lazy(() => import("../pages/Page404")));
-const HistoryChatAIPage = Loadable(lazy(() => import("../pages/history")));
+const ChatAIPage = Loadable(lazy(() => import("../pages/chat")));
 
 export default function Router() {
   return useRoutes([
@@ -45,7 +45,7 @@ export default function Router() {
       children: [
         { element: <Navigate to={AppRoute.RECORDS} replace />, index: true },
         { path: AppRoute.RECORDS, element: <RecordPage />, index: true },
-        { path: AppRoute.HISTORY, element: <HistoryChatAIPage /> },
+        { path: AppRoute.CHAT, element: <ChatAIPage /> },
         { path: AppRoute.COLLECTIONS, element: <CollectionPage /> },
         { path: "/records/:recordId/setting", element: <RecordSettingPage /> },
         { path: "/settings", element: <SettingPage /> },

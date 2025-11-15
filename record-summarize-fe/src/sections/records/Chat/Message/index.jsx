@@ -42,7 +42,7 @@ export const AIAgentMessageItem = ({ id, content, onAgree, onDecline }) => {
                   ) : (<code className="bg-gray-100 px-1 py-0.5 rounded" {...props}>{children}</code>);
                 },
               }}
-              urlTransform
+               
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw]}
             >

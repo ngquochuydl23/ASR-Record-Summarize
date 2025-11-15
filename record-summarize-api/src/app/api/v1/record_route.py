@@ -482,6 +482,152 @@ async def generate_form_helper(body: RequestGenerateFormRecordDto):
     return json.loads(json_str)
 
 
+@router.get("/records/{record_id}/suggestion-prompts")
+async def get_suggestion_prompts_by_record(
+        record_id: str,
+        current_user: Annotated[UserDto, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(async_get_db)],
+        limit: int = Query(10, ge=1, le=50, description="Number of suggestion prompts to return"),
+        max_prompt_length: int = Query(25, ge=1, le=50),
+) -> dict:
+    result = await db.execute(
+        select(RecordModel)
+        .options(
+            selectinload(RecordModel.creator),
+            selectinload(RecordModel.current_version),
+            noload(RecordModel.attachments),
+            noload(RecordModel.pipeline_items),
+            noload(RecordModel.rag_documents),
+        )
+        .where(RecordModel.id == record_id
+               and UserModel.id == current_user.id
+               and not RecordModel.is_deleted)
+    )
+    record = result.scalar_one_or_none()
+    
+    if not record:
+        raise AppException("Record not found")
+    
+    if not record.subtitle_url:
+        raise AppException("Record subtitle not available yet")
+    
+    subtitle_content = await s3_service.read_s3_file(record.subtitle_url)
+    content_type_prompts = {
+        RecordContentType.MEETING: [
+            "Những quyết định chính nào đã được đưa ra trong cuộc họp?",
+            "Ai là người chịu trách nhiệm cho các nhiệm vụ được giao?",
+            "Những vấn đề nào cần được giải quyết khẩn cấp?",
+            "Kế hoạch tiếp theo là gì và thời hạn như thế nào?",
+            "Có những rào cản nào đã được thảo luận?"
+        ],
+        RecordContentType.LECTURE_CLASS: [
+            "Những khái niệm chính trong bài giảng là gì?",
+            "Giảng viên đã đưa ra những ví dụ nào để minh họa?",
+            "Những điểm mấu chốt cần ghi nhớ là gì?",
+            "Có những công thức hay mô hình lý thuyết nào được đề cập?",
+            "Tài liệu nào được giảng viên khuyến nghị tham khảo thêm?"
+        ],
+        RecordContentType.TUTORIAL_TRAINING: [
+            "Những bước cần thực hiện theo thứ tự là gì?",
+            "Công cụ và yêu cầu chuẩn bị gồm những gì?",
+            "Những lỗi thường gặp và cách khắc phục là gì?",
+            "Có những mẹo hay best practices nào được đề cập?",
+            "Làm thế nào để áp dụng kỹ năng này vào thực tế?"
+        ],
+        RecordContentType.INTERVIEW: [
+            "Quan điểm chính của người được phỏng vấn về chủ đề này là gì?",
+            "Những kinh nghiệm nào đã được chia sẻ?",
+            "Có những câu chuyện hoặc ví dụ nào đáng chú ý?",
+            "Lời khuyên quan trọng nhất là gì?",
+            "Những thách thức nào đã được nhắc đến?"
+        ],
+        RecordContentType.TALKSHOW: [
+            "Những chủ đề chính được thảo luận là gì?",
+            "Quan điểm của các khách mời khác nhau như thế nào?",
+            "Những khoảnh khắc đáng chú ý trong chương trình là gì?",
+            "Có những tranh luận hoặc ý kiến trái chiều nào không?",
+            "Thông điệp chính từ chương trình là gì?"
+        ],
+        RecordContentType.NEWS: [
+            "Sự kiện chính là gì và ai liên quan?",
+            "Khi nào và ở đâu sự việc xảy ra?",
+            "Nguyên nhân dẫn đến sự việc là gì?",
+            "Hậu quả và tác động của sự kiện này là gì?",
+            "Có những phản ứng chính thức nào được ghi nhận?"
+        ],
+        RecordContentType.DOCUMENTARY: [
+            "Luận đề chính của tài liệu là gì?",
+            "Những bằng chứng nào được sử dụng để chứng minh?",
+            "Quan điểm của các chuyên gia là gì?",
+            "Những phát hiện quan trọng là gì?",
+            "Tài liệu kết luận như thế nào về chủ đề này?"
+        ],
+        RecordContentType.ENTERTAINMENT: [
+            "Những tình huống thú vị trong chương trình là gì?",
+            "Ai là nhân vật nổi bật nhất?",
+            "Những khoảnh khắc hài hước hoặc cảm động là gì?",
+            "Thử thách hay trò chơi nào đã diễn ra?",
+            "Kết quả cuối cùng của chương trình là gì?"
+        ]
+    }
+    
+    base_prompts = content_type_prompts.get(
+        record.record_content_type,
+        [
+            "Nội dung chính của record này là gì?",
+            "Những điểm quan trọng cần lưu ý là gì?",
+            "Có những thông tin nào đáng chú ý?",
+            "Tóm tắt ngắn gọn về nội dung này?",
+            "Những ý chính được đề cập là gì?"
+        ]
+    )
+    
+    try:
+        ai_prompt_count = max(5, min(20, limit // 2))
+        custom_prompt = f"""
+        Bạn là một trợ lý AI. Dựa trên transcript video sau và loại nội dung "{record.record_content_type.value}", 
+        hãy tạo ra {ai_prompt_count} câu hỏi gợi ý thông minh và cụ thể mà người dùng có thể muốn hỏi về nội dung này.
+        
+        Tiêu đề: {record.title}
+        Mô tả: {record.description or "Không có mô tả"}
+        Loại nội dung: {record.record_content_type.value}
+        
+        Transcript (1000 ký tự đầu):
+        {subtitle_content[:1000]}
+        Sửa lỗi chính tả, bởi vì gợi ý thì không được sai.
+        Tối đa {max_prompt_length} ký tự một suggest
+        Chỉ trả về một JSON array chứa {ai_prompt_count} câu hỏi, không thêm giải thích:
+        ["câu hỏi 1", "câu hỏi 2", "câu hỏi 3", ...]
+        """
+        
+        ai_response = await asyncio.to_thread(llm_service.generate_text_gemini, custom_prompt)
+        match = re.search(r"\[.*\]", ai_response, re.DOTALL)
+        if match:
+            ai_prompts = json.loads(match.group(0))
+            suggested_prompts = ai_prompts + base_prompts
+
+            seen = set()
+            unique_prompts = []
+            for prompt in suggested_prompts:
+                if prompt.lower() not in seen:
+                    seen.add(prompt.lower())
+                    unique_prompts.append(prompt)
+            suggested_prompts = unique_prompts[:limit]
+        else:
+            suggested_prompts = base_prompts[:limit]
+    except Exception as e:
+        logging.warning(f"Failed to generate AI prompts: {str(e)}, using base prompts")
+        suggested_prompts = base_prompts[:limit]
+    
+    return {
+        "record_id": str(record.id),
+        "title": record.title,
+        "record_content_type": record.record_content_type.value,
+        "suggested_prompts": suggested_prompts,
+        "total": len(suggested_prompts)
+    }
+
+
 @router.post("/records/{record_id}/retry-chatbot")
 async def retry_chatbot(db: Annotated[AsyncSession, Depends(async_get_db)], record_id: str):
     result = await db.execute(

@@ -2,7 +2,7 @@ export const AppRoute = {
   RECORDS: "/records",
   PLAY_RECORDS: "/records/:recordId/play",
   COLLECTIONS: "/collections",
-  HISTORY: "/history",
+  CHAT: "/chat",
   DASHBOARD: "/dashboard",
   INIT_STORE: "/init-store",
   ORDERS: "/orders",

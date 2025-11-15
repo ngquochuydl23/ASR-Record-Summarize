@@ -1,0 +1,6 @@
+.dashboard-card {
+  height: calc(100vh - 60px);
+  &-inner {
+    padding: 2rem;
+  }
+}

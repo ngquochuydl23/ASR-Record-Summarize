@@ -7,7 +7,8 @@ from sqlalchemy.orm import noload, selectinload, joinedload
 from .record_route import rag_index_service
 from ...core.exceptions.app_exception import AppException
 from ...core.logger import logging
-from ...dtos.conversation_dto import ConversationDto, CreateConversationDto, PaginatedConversationsDto
+from ...dtos.conversation_dto import ConversationDto, CreateConversationDto, PaginatedConversationsDto, \
+    ConversationRecordDto, PinConversationBody, UpdateConversationBody
 from ...dtos.message_dto import CreateMessageDto, MessageDto
 from ...dtos.user import UserDto
 from ...models import RecordModel, UserModel
@@ -30,6 +31,70 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "templates", 
 router = APIRouter(tags=["Conversations"])
 llm_service = LLMService()
 rag_index_service = RagIndexService()
+
+
+@router.get("/conversations/{conversation_id}", status_code=200, response_model=ConversationRecordDto)
+async def get_conversation_by_id(
+        conversation_id: str,
+        db: Annotated[AsyncSession, Depends(async_get_db)],
+        current_user: Annotated[UserDto, Depends(get_current_user)]
+):
+    result = await db.execute(
+        select(ConversationModel)
+        .options(
+            selectinload(ConversationModel.record),
+            noload(ConversationModel.owner),
+            noload(ConversationModel.messages)
+        )
+        .where(ConversationModel.id == conversation_id and not ConversationModel.is_deleted)
+    )
+    conversation = result.scalar_one_or_none()
+    if not conversation:
+        raise AppException(f"Conversation {conversation_id} not found")
+
+    return cast(ConversationRecordDto, conversation)
+
+
+@router.get("/conversations", status_code=200, response_model=PaginatedConversationsDto)
+async def get_conversations_by_record_id(
+        db: Annotated[AsyncSession, Depends(async_get_db)],
+        current_user: Annotated[UserDto, Depends(get_current_user)],
+        s: Optional[str] = None,
+        page: int = Query(1, ge=1),
+        limit: int = Query(10, gt=0, le=100),
+):
+    offset, limit = apply_paginate(page, limit)
+    conditions = [
+        ConversationModel.is_deleted == False,
+        ConversationModel.owner_id == current_user["id"]
+    ]
+    if s:
+        search = f"%{s.lower()}%"
+        conditions.append(func.lower(ConversationModel.title).like(search))
+    query = (
+        select(ConversationModel)
+        .options(selectinload(ConversationModel.record))
+        .options(noload(ConversationModel.messages))
+        .where(and_(*conditions))
+        .order_by(
+            ConversationModel.is_pinned.desc(),
+            ConversationModel.pinned_at.desc(),
+            ConversationModel.created_at.desc()
+        )
+    )
+
+    result = await db.execute(query.offset(offset).limit(limit))
+    conversations = result.unique().scalars().all()
+    count_stmt = select(func.count()).select_from(ConversationModel).where(and_(*conditions))
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    return PaginatedConversationsDto(
+        total=total,
+        page=page,
+        limit=limit,
+        items=[ConversationDto.model_validate(c) for c in conversations]
+    )
+
 
 
 @router.get("/conversations/by-record/{record_id}", status_code=200, response_model=PaginatedConversationsDto)
@@ -89,6 +154,73 @@ async def delete_items(
     await db.commit()
     return {"deleted": result.rowcount}
 
+
+@router.patch("/conversations/{conversation_id}/pin", status_code=200)
+async def pin_conversation(
+    conversation_id: uuid.UUID,
+    body: PinConversationBody,
+    current_user: Annotated[dict, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(async_get_db)]
+):
+    result = await db.execute(
+        select(ConversationModel).where(
+            and_(
+                ConversationModel.id == conversation_id,
+                ConversationModel.owner_id == current_user["id"],
+                ConversationModel.is_deleted == False
+            )
+        )
+    )
+    conversation = result.scalars().first()
+    if not conversation:
+        raise AppException(f"Conversation {conversation_id} not found or access denied")
+
+    if body.is_pinned:
+        conversation.is_pinned = True
+        conversation.pinned_at = datetime.now()
+    else:
+        conversation.is_pinned = False
+        conversation.pinned_at = None
+
+    await db.commit()
+    await db.refresh(conversation)
+    return {
+        "message": f"Conversation {'pinned' if body.is_pinned else 'unpinned'} successfully",
+        "conversation_id": str(conversation.id),
+        "is_pinned": conversation.is_pinned,
+        "pinned_at": conversation.pinned_at,
+    }
+
+@router.patch("/conversations/{conversation_id}/title", status_code=200)
+async def update_title_conversation(
+    conversation_id: uuid.UUID,
+    body: UpdateConversationBody,
+    current_user: Annotated[dict, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(async_get_db)]
+):
+    result = await db.execute(
+        select(ConversationModel).where(
+            and_(
+                ConversationModel.id == conversation_id,
+                ConversationModel.owner_id == current_user["id"],
+                ConversationModel.is_deleted == False
+            )
+        )
+    )
+    conversation = result.scalars().first()
+    if not conversation:
+        raise AppException(f"Conversation {conversation_id} not found or access denied")
+
+    if body.title == '':
+        raise AppException(f"body.title invalid")
+
+    conversation.title = body.title
+    await db.commit()
+    await db.refresh(conversation)
+    return {
+        "message": "updated"
+    }
+
 @router.post("/conversations", status_code=201)
 async def create_conversation(
         body: CreateConversationDto,
@@ -107,6 +239,8 @@ async def create_conversation(
         owner_id=current_user["id"],
         start_time=datetime.now(),
         title=generated_title,
+        pinned_at=None,
+        is_pinned=False,
         messages=[
             MessageModel(
                 id=uuid.uuid4(),

@@ -1,0 +1,21 @@
+.suggestionPromptsContainer {
+  border-top: 1px solid #e0e0e0;
+  background-color: white;
+
+  .suggestionPrompts {
+    display: flex;
+    padding: 12px 15px;
+    max-width: calc(70vw);
+    overflow-x: auto;
+    gap: 8px;
+  }
+}
+
+.suggestionPrompts::-webkit-scrollbar {
+  height: 6px;
+}
+
+.suggestionPrompts::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 3px;
+}

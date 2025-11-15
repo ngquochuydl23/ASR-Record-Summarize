@@ -1,7 +1,7 @@
 import { http } from "./https";
 import qs from "qs";
 
-export const getMyConversations = (params) => http.get(`conversations/`, { params });
+export const getMyConversations = (params) => http.get(`conversations`, { params });
 
 export const getConversationsByRecordId = (recordId, params) => http.get(`conversations/by-record/${recordId}`, { params });
 

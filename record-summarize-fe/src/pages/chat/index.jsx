@@ -327,7 +327,7 @@ const Page = () => {
                       }}
                     />
                   )}
-                  <Tooltip title={conversation?.title} enterDelay={5}>
+                  <Tooltip title={conversation?.title} enterDelay={5} placement="left-end">
                     <Typography
                       variant="body2"
                       fontWeight={500}
@@ -442,7 +442,7 @@ const Page = () => {
 
       <section className="chat-main">
         {!sidebarOpen && (
-          <IconButton onClick={() => setSidebarOpen(true)} className="toggle-btn">
+          <IconButton onClick={() => setSidebarOpen(true)} className="toggle-btn" sx={{ width: 'fit-content'}}>
             <MenuIcon />
           </IconButton>
         )}

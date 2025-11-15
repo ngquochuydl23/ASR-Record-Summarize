@@ -13,7 +13,7 @@ const Page = () => {
       <div className="flex flex-col">
         <AdminHeader title={"Cài đặt"} />
         <div className="grid grid-cols-12 w-full gap-4 mt-4">
-          <div className="col-span-6">
+          {/* <div className="col-span-6">
             <MenuSettingitem
               icon={<IcStoreSign />}
               href={AppRoute.STORE_SETTING}
@@ -45,7 +45,7 @@ const Page = () => {
               title={"Chính sách đổi trả"}
               subtitle={`Liên kết các đơn vị vận chuyển GiaoHangNhanh`}
             />
-          </div>
+          </div> */}
         </div>
       </div>
     </DashboardCard>

@@ -12,10 +12,11 @@ const WelcomeView = ({ recordId, onSuggestClick }) => {
 
   useEffect(() => {
     const fetchSuggestedPrompts = async () => {
+      if (!recordId) return;
+      
       try {
         setLoading(true);
-        const count = !recordId ? 10 : 5;
-        const response = await getSuggestPrompts(recordId, count, 25);
+        const response = await getSuggestPrompts(recordId, 5, 25);
         setSuggestions(response.suggested_prompts || []);
       } catch (error) {
         console.error('Failed to fetch suggested prompts:', error);

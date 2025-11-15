@@ -9,11 +9,7 @@ const NotificationDrawer = ({ open, onClose }) => {
         <Typography variant='h5'>Thông báo</Typography>
       </div>
       <div className='flex flex-col gap-2'>
-        <NotificationItem />
-        <NotificationItem />
-        <NotificationItem />
-        <NotificationItem />
-        <NotificationItem />
+
       </div>
     </BaseDrawer>
   )

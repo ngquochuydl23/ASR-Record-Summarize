@@ -1,5 +1,5 @@
 import { colors } from "@/theme/theme.global";
-const { SvgIcon } = require("@mui/material");
+import { SvgIcon } from "@mui/material";
 
 const IcAgreeAnswer = () => (
   <SvgIcon sx={{ height: '15px', width: '15px', ml: '5px' }}>

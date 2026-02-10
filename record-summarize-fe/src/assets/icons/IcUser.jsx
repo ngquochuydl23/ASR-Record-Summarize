@@ -1,4 +1,4 @@
-const { SvgIcon } = require("@mui/material");
+import { SvgIcon } from "@mui/material";
 
 const IcUser = () => (
     <SvgIcon sx={{ height: '24px', width: '24px' }}>

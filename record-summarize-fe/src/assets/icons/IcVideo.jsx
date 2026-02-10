@@ -1,4 +1,4 @@
-const { SvgIcon } = require("@mui/material");
+import { SvgIcon } from "@mui/material";
 const IcVideo = () => (
     <SvgIcon sx={{ height: '24px', width: '24px' }}>
         <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

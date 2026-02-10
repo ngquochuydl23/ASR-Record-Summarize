@@ -1,6 +1,5 @@
 import { colors } from "@/theme/theme.global";
-
-const { SvgIcon } = require("@mui/material");
+import { SvgIcon } from "@mui/material";
 
 const IcActiveCategory = () => (
   <SvgIcon sx={{ height: '24px', width: '24px' }}>

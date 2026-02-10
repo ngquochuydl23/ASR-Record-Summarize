@@ -1,4 +1,4 @@
-const { SvgIcon } = require("@mui/material");
+import { SvgIcon } from "@mui/material";
 
 const IcPinRoomFilled = () => (
     <SvgIcon sx={{ height: '18px', width: '18px' }}>

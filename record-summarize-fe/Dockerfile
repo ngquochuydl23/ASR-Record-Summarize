@@ -1,15 +1,13 @@
-FROM node:lts AS development
+FROM node:lts AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
 RUN yarn install
 
-WORKDIR /app
-COPY . /app
-
+COPY . .
 RUN yarn build
 
 
-FROM development AS build
 FROM nginx:alpine
 COPY --from=build /app/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 WORKDIR /usr/share/nginx/html

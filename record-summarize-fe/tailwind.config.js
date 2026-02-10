@@ -13,7 +13,9 @@ module.exports = {
       lg: breakpoints.lg + 'px',
       xl: breakpoints.xl + 'px',
     },
-    colors: colors,
+    extend: {
+      colors: colors,
+    },
   },
   plugins: [],
 }

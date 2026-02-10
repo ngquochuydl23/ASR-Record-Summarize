@@ -1,4 +1,4 @@
-const { SvgIcon } = require("@mui/material");
+import { SvgIcon } from "@mui/material";
 
 const IcGoogleSSO = () => (
     <SvgIcon sx={{ height: '20px', width: '20px' }}>
